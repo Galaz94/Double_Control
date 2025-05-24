@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Doble Control de Ítems v2.6 (GitHub Sync)</title>
+  <style>
+    /* ... (Tus Estilos CSS existentes van aquí, no los repito por brevedad) ... */
+    /* Añadimos un estilo para el panel de inicio */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f7f6;
+      color: #333;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 15px;
+      background-color: #fff;
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    h1, h2, h3 {
+      color: #2c3e50;
+      text-align: center;
+    }
+    h1 { margin-bottom: 30px; font-size: 1.8em;}
+    h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.5em;}
+    h3 { margin-bottom: 15px; font-size: 1.2em; text-align: left;}
+
+    .section {
+      border: 1px solid #e0e0e0;
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 8px;
+      background-color: #fdfdfd;
+    }
+    .hidden { display: none !important; }
+    .panel-inicio-info {
+        font-size: 1.1em;
+        color: #27ae60; /* Verde para mensaje positivo */
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #e8f8f0;
+        border-left: 5px solid #27ae60;
+        border-radius: 4px;
+    }
+    .panel-inicio-info.warning { color: #f39c12; background-color: #fef9e7; border-left-color: #f39c12;}
+    .panel-inicio-info.error { color: #c0392b; background-color: #fdedec; border-left-color: #c0392b;}
+    .panel-inicio-info.info { color: #2980b9; background-color: #eaf2f8; border-left-color: #2980b9;}
+
+    .panel-inicio-actions button { margin-top: 10px; width: 100%; box-sizing: border-box; padding: 12px;}
+
+
+    .input-group { margin-bottom: 20px; }
+    .input-group label, .file-options label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #555;
+      font-size: 0.95em;
+    }
+    textarea, input[type="file"], select, input[type="text"], input[type="search"], input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    textarea { min-height: 100px; }
+    .file-options { border: 1px solid #ddd; padding: 15px; margin-top: -10px; margin-bottom:15px; border-radius: 0 0 4px 4px; background-color: #f9f9f9;}
+    .input-columns { display: flex; gap: 15px; align-items: flex-end; }
+    .input-columns > div { flex: 1; }
+    .input-columns input[type="checkbox"] { width: auto; margin-right: 5px; vertical-align: middle;}
+
+
+    button {
+      background-color: #3498db; /* Azul principal */
+      color: white;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+      margin-right: 8px;
+      margin-top: 5px;
+    }
+    button:hover { background-color: #2980b9; /* Azul más oscuro */ }
+    button.secondary { background-color: #95a5a6; /* Gris secundario */ }
+    button.secondary:hover { background-color: #7f8c8d; /* Gris más oscuro */ }
+    button.danger { background-color: #e74c3c; /* Rojo peligro */ }
+    button.danger:hover { background-color: #c0392b; }
+    button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+
+    .preview-area, .search-results-area {
+      background-color: #ecf0f1;
+      border: 1px dashed #bdc3c7;
+      padding: 12px;
+      min-height: 60px;
+      margin-top:10px;
+      font-size: 0.9em;
+      border-radius: 4px;
+      word-break: break-word;
+      max-height: 200px; overflow-y: auto;
+    }
+    .preview-item, .search-result-item {
+        padding: 6px 3px;
+        border-bottom: 1px solid #dde;
+        display: flex;
+        justify-content: space-between;
+    }
+    .preview-item:last-child, .search-result-item:last-child { border-bottom: none; }
+    .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; }
+    .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 10px; font-style: italic; text-align: right; }
+
+
+    .results-summary {
+      margin-bottom: 25px;
+      background-color: #eaf5ff;
+      padding: 18px;
+      border-radius: 6px;
+      border: 1px solid #c1d9ed;
+    }
+    .results-summary p { margin: 8px 0; font-size: 1.05em; }
+    .results-summary strong { color: #2980b9; }
+    /* Estilos para la sección de confirmación de cambios */
+    #confirmacionCambiosStep .preview-area { max-height: 120px; margin-bottom: 10px; background-color: #fff; }
+    #confirmacionCambiosStep h3 { font-size: 1.1em; margin-bottom:5px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    #confirmacionCambiosStep li { font-size: 0.9em; padding: 3px 0; border-bottom: 1px dotted #eee; }
+    #confirmacionCambiosStep li:last-child { border-bottom: none; }
+    #confirmacionCambiosStep li s { color: #e74c3c; } /* Tachado para descripciones antiguas */
+
+
+    #outputResults.list .barcode-item-container { margin: 10px 0; background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px;}
+    #outputResults.grid .barcode-item-container { background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between;}
+    #outputResults.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+    
+    .barcode-item-code { font-weight: bold; text-align: center; margin-bottom: 4px; font-size: 1em; color: #333; }
+    .barcode-item-desc { text-align: center; margin-bottom: 6px; font-size: 0.9em; color: #555; font-style: italic; }
+    .barcode-item-svg svg { max-width: 100%; height: auto; display: block; margin: 0 auto;}
+
+
+    #scannerContainerVerify { max-width: 400px; margin: 15px auto; border: 1px solid #ccc; padding: 5px; border-radius: 4px;}
+    #readerVerify { width: 100%; }
+
+    footer {
+      text-align: center;
+      margin-top: 30px;
+      padding: 20px;
+      font-size: 0.9em;
+      color: #777;
+      border-top: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Sistema de Doble Control de Ítems v2.6 (GitHub Sync)</h1>
+
+    <div id="panelInicio" class="section hidden">
+      <h2>Panel de Inicio</h2>
+      <div id="panelInicioInfo" class="panel-inicio-info info">
+        Cargando información de Lista Maestra...
+      </div>
+      <div class="panel-inicio-actions">
+        <button id="btnIniciarCotejoDesdePanel" disabled>➡️ Iniciar Nuevo Cotejo</button>
+        <button id="btnVerActualizarMaestraDesdePanel" class="secondary" disabled>🔄 Ver / Actualizar Lista Maestra</button>
+        <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 20px;">🗑️ Borrar Lista Maestra Local y Resincronizar</button>
+      </div>
+    </div>
+
+    <div id="confirmacionCambiosStep" class="section hidden">
+      <h2>Confirmar Cambios de Lista Maestra (desde GitHub)</h2>
+      <p>Se han detectado los siguientes cambios respecto a tu lista local guardada:</p>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
+          <div id="resumenNuevos"><h3>Nuevos Ítems:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
+          <div id="resumenEliminados"><h3>Ítems Eliminados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
+          <div id="resumenModificados"><h3>Ítems Modificados (descripción):</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
+      </div>
+      <p>¿Deseas aplicar estos cambios y usar la versión de GitHub en tu sesión actual?</p>
+      <div style="text-align: center;">
+        <button id="btnConfirmarCambiosGitHub">Sí, Aplicar Cambios de GitHub</button>
+        <button id="btnRechazarCambiosGitHub" class="secondary">No, Mantener Mi Versión Local</button>
+      </div>
+    </div>
+
+    <div id="gestionMaestraStep" class="section hidden">
+      <h2>Gestión de Lista Maestra (Ítems Foco)</h2>
+      <p style="font-size:0.9em; color: #555;">
+        Cargue, edite o visualice su lista maestra. Los cambios se pueden guardar en la sesión actual (LocalStorage).
+        Para actualizar el archivo central en GitHub, deberá exportar la lista y subirla manualmente a su repositorio.
+        <br>Formato para Textarea: <code>CÓDIGO,Descripción</code> (uno por línea).
+      </p>
+
+      <div class="input-group">
+        <label for="focoTextarea">Pegar ítems (<code>CÓDIGO,Descripción</code> por línea):</label>
+        <textarea id="focoTextarea" rows="5" placeholder="Ej: 1001,Producto Alfa&#10;1002 (sin descripción)&#10;1003,Artículo Beta"></textarea>
+      </div>
+
+      <div class="input-group">
+        <label>Subir archivo de Lista Maestra (para fusionar o reemplazar temporalmente):</label>
+        <div class="input-columns">
+            <div><label for="focoFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label><input type="file" id="focoFileTxtCsv" accept=".txt,.csv"></div>
+            <div><label for="focoFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label><input type="file" id="focoFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+        </div>
+        <div class="file-options">
+            <div class="input-columns">
+                <div><label for="focoCodigoCol">Col. Código (ej: 1):</label><input type="number" id="focoCodigoCol" value="1" min="1"></div>
+                <div><label for="focoDescCol">Col. Descripción (0 si no hay):</label><input type="number" id="focoDescCol" value="2" min="0"></div>
+            </div>
+            <div><label for="focoCsvDelimiter">Delimitador CSV:</label><input type="text" id="focoCsvDelimiter" value=","></div>
+            <label><input type="checkbox" id="focoHasHeader" checked> El archivo tiene encabezados</label>
+        </div>
+      </div>
+      <hr>
+      <h3>Lista Maestra Actual y Búsqueda</h3>
+      <div class="input-group">
+        <label for="searchFocoInput">Buscar Ítem en Lista Maestra (por código numérico):</label>
+        <input type="text" id="searchFocoInput" inputmode="numeric" pattern="[0-9]*" placeholder="Ingrese solo números para buscar código...">
+      </div>
+      <div id="focoSearchResults" class="search-results-area">Resultados de la búsqueda aparecerán aquí...</div>
+      <div id="focoPreview" class="preview-area" style="margin-top: 20px;">(Vista previa de la Lista Maestra)</div>
+      
+      <div style="margin-top:15px; text-align:center;">
+        <button id="btnGuardarCambiosMaestra">💾 Guardar Cambios en Sesión Local</button>
+        <button id="btnExportarMaestraParaGitHub" class="secondary">📤 Exportar Maestra para GitHub (CSV)</button> 
+        <button id="btnUsarMaestraYCotejar" class="secondary">➡️ Usar esta Maestra e Iniciar Cotejo</button>
+        <button id="btnVolverAlPanel" class="secondary">↩️ Volver al Panel de Inicio</button> 
+      </div>
+    </div>
+
+    <div id="cotejoStep" class="section hidden">
+      <h2>Paso 2: Cargar Lista de Ítems a Cotejar</h2>
+      <div class="input-group">
+        <label for="verifyTextarea">Pegar códigos a cotejar (uno por línea o separados por espacio/tabulador):</label>
+        <textarea id="verifyTextarea" rows="5" inputmode="numeric"></textarea>
+      </div>
+       <div class="input-group">
+        <label>Subir archivo con códigos a cotejar:</label>
+        <p style="font-size:0.85em; color:#666;">Se tomarán los códigos de la columna especificada.</p>
+        <div class="input-columns">
+            <div><label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label><input type="file" id="verifyFileTxtCsv" accept=".txt,.csv"></div>
+            <div><label for="verifyFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label><input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+        </div>
+        <div class="file-options">
+            <div class="input-columns">
+                <div><label for="verifyCodigoCol">Col. Código (ej: 1):</label><input type="number" id="verifyCodigoCol" value="1" min="1"></div>
+                 <div><label for="verifyCsvDelimiter">Delimitador CSV:</label><input type="text" id="verifyCsvDelimiter" value=","></div>
+            </div>
+             <label><input type="checkbox" id="verifyHasHeader" checked> El archivo tiene encabezados</label>
+        </div>
+      </div>
+      <div class="input-group">
+        <button id="startScanVerifyBtn">📷 Escanear Códigos</button>
+        <div id="scannerContainerVerify" class="hidden"><div id="readerVerify"></div></div>
+        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">Códigos escaneados:</label>
+        <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los códigos escaneados aparecerán aquí..." readonly></textarea>
+      </div>
+      <div id="verifyPreview" class="preview-area">Aún no se han cargado ítems a cotejar.</div>
+      <hr style="margin: 20px 0;">
+      <button id="btnVolverGestionMaestra" class="secondary">&larr; Volver a Gestión Maestra</button>
+      <button id="btnCompare">Cotejar y Mostrar Ítems Concordantes &rarr;</button>
+    </div>
+
+    <div id="resultadosStep" class="section hidden">
+      <h2>Resultados: Ítems Concordantes</h2>
+      <div id="resultsSummary" class="results-summary">
+        <p>Total Ítems en Lista Maestra: <strong id="totalFoco">0</strong></p>
+        <p>Total Ítems en Lista a Cotejar: <strong id="totalVerify">0</strong></p>
+        <p>Ítems Concordantes Verificados: <strong id="totalMatches">0</strong></p>
+      </div>
+      <h3>Detalle de Ítems Concordantes</h3>
+      <div style="margin-bottom: 15px;">
+          <button id="layoutToggleResultsBtn">📊 Cambiar Vista</button>
+          <button id="downloadPdfResultsBtn" class="secondary">📄 Descargar PDF</button>
+          <button id="downloadCsvResultsBtn" class="secondary">💾 Descargar CSV de Concordancias</button>
+      </div>
+      <div id="outputResults" class="list"><p>No se han encontrado coincidencias o no se ha realizado el cotejo.</p></div>
+      <hr style="margin: 20px 0;">
+      <button id="btnNewVerification">✨ Iniciar Nueva Verificación</button>
+    </div>
+  </div>
+
+  <footer>
+    Sistema de Doble Control de Ítems v2.6 - Desarrollado por fgalaz - Chile, 2025
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <script>
+    // ----- URL DE LA LISTA MAESTRA EN GITHUB -----
+    // !!! IMPORTANTE: Reemplaza esta URL con la URL RAW de tu archivo maestra.csv en GitHub !!!
+    // Ejemplo: 'https://raw.githubusercontent.com/tu-usuario/tu-repositorio/main/maestra.csv'
+    // O si usas GitHub Pages y el archivo está en la raíz: 'https://tu-usuario.github.io/tu-repositorio/maestra.csv'
+    const URL_LISTA_MAESTRA_GITHUB = 'PON_AQUI_LA_URL_RAW_DE_TU_MAESTRA.CSV_EN_GITHUB';
+
+
+    // ----- ESTADO DE LA APLICACIÓN -----
+    let listaFoco = new Map();
+    let listaVerificar = new Set();
+    let coincidencias = new Map();
+    let currentView = ''; 
+    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.6';
+    let listaFocoCacheadaLocalmente = new Map(); // NUEVO: Para la comparación con GitHub
+
+    // ----- SELECTORES DOM (Actualizados) -----
+    const panelInicioDiv = document.getElementById('panelInicio');
+    const gestionMaestraStepDiv = document.getElementById('gestionMaestraStep');
+    const cotejoStepDiv = document.getElementById('cotejoStep');
+    const resultadosStepDiv = document.getElementById('resultadosStep');
+    const confirmacionCambiosStepDiv = document.getElementById('confirmacionCambiosStep'); // NUEVO
+
+    // Panel Inicio
+    const panelInicioInfo = document.getElementById('panelInicioInfo');
+    const btnIniciarCotejoDesdePanel = document.getElementById('btnIniciarCotejoDesdePanel');
+    const btnVerActualizarMaestraDesdePanel = document.getElementById('btnVerActualizarMaestraDesdePanel');
+    const btnBorrarMaestraStorage = document.getElementById('btnBorrarMaestraStorage');
+    // Gestión Maestra (Paso 1)
+    const focoTextarea = document.getElementById('focoTextarea');
+    const focoFileTxtCsv = document.getElementById('focoFileTxtCsv'), focoFileExcel = document.getElementById('focoFileExcel');
+    const focoCodigoColInput = document.getElementById('focoCodigoCol'), focoDescColInput = document.getElementById('focoDescCol');
+    const focoCsvDelimiterInput = document.getElementById('focoCsvDelimiter'), focoHasHeaderCheckbox = document.getElementById('focoHasHeader');
+    const searchFocoInput = document.getElementById('searchFocoInput'), focoSearchResultsDiv = document.getElementById('focoSearchResults');
+    const focoPreview = document.getElementById('focoPreview');
+    const btnGuardarCambiosMaestra = document.getElementById('btnGuardarCambiosMaestra');
+    const btnExportarMaestraParaGitHub = document.getElementById('btnExportarMaestraParaGitHub'); // NUEVO
+    const btnUsarMaestraYCotejar = document.getElementById('btnUsarMaestraYCotejar');
+    const btnVolverAlPanel = document.getElementById('btnVolverAlPanel');
+    // Cotejo (Paso 2) - Selectores sin cambios mayores
+    const verifyTextarea = document.getElementById('verifyTextarea');
+    const verifyFileTxtCsv = document.getElementById('verifyFileTxtCsv'), verifyFileExcel = document.getElementById('verifyFileExcel');
+    const verifyCodigoColInput = document.getElementById('verifyCodigoCol'), verifyCsvDelimiterInput = document.getElementById('verifyCsvDelimiter');
+    const verifyHasHeaderCheckbox = document.getElementById('verifyHasHeader');
+    const verifyPreview = document.getElementById('verifyPreview');
+    const startScanVerifyBtn = document.getElementById('startScanVerifyBtn'), scannerContainerVerify = document.getElementById('scannerContainerVerify');
+    const readerVerifyDiv = document.getElementById('readerVerify'), scannedCodesVerifyTextarea = document.getElementById('scannedCodesVerifyTextarea');
+    const btnVolverGestionMaestra = document.getElementById('btnVolverGestionMaestra');
+    const btnCompare = document.getElementById('btnCompare');
+    // Resultados (Paso 3) - Selectores sin cambios mayores
+    const totalFocoSpan = document.getElementById('totalFoco'), totalVerifySpan = document.getElementById('totalVerify'), totalMatchesSpan = document.getElementById('totalMatches');
+    const outputResultsDiv = document.getElementById('outputResults');
+    const layoutToggleResultsBtn = document.getElementById('layoutToggleResultsBtn');
+    const downloadPdfResultsBtn = document.getElementById('downloadPdfResultsBtn'), downloadCsvResultsBtn = document.getElementById('downloadCsvResultsBtn');
+    const btnNewVerification = document.getElementById('btnNewVerification');
+    // Confirmación Cambios GitHub (NUEVO)
+    const resumenNuevosUl = document.querySelector('#resumenNuevos ul');
+    const resumenEliminadosUl = document.querySelector('#resumenEliminados ul');
+    const resumenModificadosUl = document.querySelector('#resumenModificados ul');
+    const btnConfirmarCambiosGitHub = document.getElementById('btnConfirmarCambiosGitHub');
+    const btnRechazarCambiosGitHub = document.getElementById('btnRechazarCambiosGitHub');
+
+    let html5QrCodeVerifier = null;
+    let scannerVerifierActive = false;
+
+    // ----- INICIALIZACIÓN -----
+    document.addEventListener('DOMContentLoaded', () => {
+      checkInitialState();
+    });
+
+    // ----- NUEVO: Lógica de Carga y Sincronización con GitHub -----
+    async function cargarMaestraDesdeGitHub() {
+        if (!URL_LISTA_MAESTRA_GITHUB || URL_LISTA_MAESTRA_GITHUB === 'PON_AQUI_LA_URL_RAW_DE_TU_MAESTRA.CSV_EN_GITHUB') {
+            console.warn('URL_LISTA_MAESTRA_GITHUB no configurada.');
+            return null;
+        }
+        try {
+            const response = await fetch(URL_LISTA_MAESTRA_GITHUB + '?t=' + new Date().getTime()); // Cache busting
+            if (!response.ok) {
+                console.error('Error al cargar la Lista Maestra desde GitHub:', response.status, response.statusText);
+                return null;
+            }
+            const csvText = await response.text();
+            const itemsArray = parsearMaestraCSV(csvText); // Usar parser CSV
+
+            const nuevaListaMap = new Map();
+            itemsArray.forEach(item => {
+                const codigoLimpio = cleanCode(item.codigo);
+                if (codigoLimpio) {
+                    nuevaListaMap.set(codigoLimpio, {
+                        codigo: codigoLimpio,
+                        descripcion: cleanDescription(item.descripcion)
+                    });
+                }
+            });
+            return nuevaListaMap;
+        } catch (error) {
+            console.error('Excepción al cargar/procesar la Lista Maestra desde GitHub:', error);
+            return null;
+        }
+    }
+
+    function parsearMaestraCSV(csvText) { // Asume cabecera: Codigo,Descripcion
+        const items = [];
+        const lineas = csvText.trim().split(/\r\n|\n/); // Considerar ambos tipos de salto de línea
+        const cabeceraPresente = true; // Ajusta si tu CSV no tiene cabecera
+        const indiceInicio = cabeceraPresente ? 1 : 0;
+
+        for (let i = indiceInicio; i < lineas.length; i++) {
+            const linea = lineas[i].trim();
+            if (!linea) continue;
+            
+            const partes = linea.split(/,(.+)/); // Separa en la primera coma: [codigo, descripcionCompleta]
+            if (partes.length >= 1 && partes[0]) {
+                items.push({ 
+                    codigo: partes[0].trim(), 
+                    descripcion: (partes[1] || "").trim() // Si no hay descripción, string vacío
+                });
+            }
+        }
+        return items;
+    }
+
+    function compararListas(listaLocalMap, listaRemotaMap) {
+        const nuevos = [];
+        const eliminados = [];
+        const modificados = [];
+
+        listaRemotaMap.forEach((itemRemoto, codigo) => {
+            if (!listaLocalMap.has(codigo)) {
+                nuevos.push(itemRemoto);
+            } else {
+                const itemLocal = listaLocalMap.get(codigo);
+                if (itemLocal.descripcion !== itemRemoto.descripcion) {
+                    modificados.push({ ...itemRemoto, descripcionAnterior: itemLocal.descripcion });
+                }
+            }
+        });
+        listaLocalMap.forEach((itemLocal, codigo) => {
+            if (!listaRemotaMap.has(codigo)) {
+                eliminados.push(itemLocal);
+            }
+        });
+        return { nuevos, eliminados, modificados };
+    }
+
+    function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraGitHubMap) {
+        const popularListaResumen = (ulElement, items, formatter) => {
+            ulElement.innerHTML = items.length > 0 ? items.map(formatter).join('') : '<li>Ninguno</li>';
+        };
+
+        popularListaResumen(resumenNuevosUl, nuevos, item => `<li><span class="code">${item.codigo}</span>: <span class="desc">${item.descripcion}</span></li>`);
+        popularListaResumen(resumenEliminadosUl, eliminados, item => `<li><span class="code">${item.codigo}</span>: <span class="desc">${item.descripcion}</span></li>`);
+        popularListaResumen(resumenModificadosUl, modificados, item => `<li><span class="code">${item.codigo}</span>: <span class="desc"><s>${item.descripcionAnterior}</s> &rarr; ${item.descripcion}</span></li>`);
+
+        btnConfirmarCambiosGitHub.onclick = () => {
+            listaFoco = new Map(maestraGitHubMap);
+            saveListaFocoToStorage(); // Guarda la versión de GitHub en localStorage
+            updateFocoPreviewAndSearch();
+            panelInicioInfo.innerHTML = `✅ Lista Maestra actualizada desde GitHub (${listaFoco.size} ítems) y guardada localmente.`;
+            panelInicioInfo.className = 'panel-inicio-info'; // Reset class
+            btnVolverAlPanel.classList.remove('hidden'); // Asegurar visibilidad si estaba oculta
+            navigateToView('panelInicio');
+        };
+        btnRechazarCambiosGitHub.onclick = () => {
+            // listaFoco ya tiene la versión de listaFocoCacheadaLocalmente, no es necesario reasignar explícitamente
+            updateFocoPreviewAndSearch(); // Actualiza la preview con la lista local
+            panelInicioInfo.innerHTML = `ℹ️ Cambios de GitHub ignorados. Se mantiene la Lista Maestra local (${listaFoco.size} ítems).`;
+            panelInicioInfo.className = 'panel-inicio-info info';
+            btnVolverAlPanel.classList.remove('hidden');
+            navigateToView('panelInicio');
+        };
+        navigateToView('confirmacionCambiosStep');
+    }
+    
+    async function checkInitialState() {
+        loadListaFocoFromStorage(false); // Carga de localStorage si existe
+        listaFocoCacheadaLocalmente = new Map(listaFoco); // Guarda snapshot de lo que había en localStorage
+
+        panelInicioInfo.innerHTML = '🔄 Sincronizando Lista Maestra desde GitHub...';
+        panelInicioInfo.className = 'panel-inicio-info info';
+        btnIniciarCotejoDesdePanel.disabled = true;
+        btnVerActualizarMaestraDesdePanel.disabled = true;
+        btnVolverAlPanel.classList.add('hidden'); // Ocultar botón de volver al panel mientras se decide
+
+        const maestraDesdeGitHub = await cargarMaestraDesdeGitHub();
+
+        btnIniciarCotejoDesdePanel.disabled = false;
+        btnVerActualizarMaestraDesdePanel.disabled = false;
+
+        if (maestraDesdeGitHub) {
+            const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeGitHub);
+
+            if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && listaFocoCacheadaLocalmente.size === maestraDesdeGitHub.size) {
+                listaFoco = new Map(maestraDesdeGitHub); // Asegurar que la listaFoco sea la de GitHub
+                if (JSON.stringify(Array.from(listaFocoCacheadaLocalmente.entries())) !== JSON.stringify(Array.from(maestraDesdeGitHub.entries()))){
+                     saveListaFocoToStorage(); // Guardar en localStorage solo si hubo alguna diferencia sutil que no contó como cambio (ej. orden)
+                }
+                panelInicioInfo.innerHTML = `✅ Lista Maestra desde GitHub (${listaFoco.size} ítems) está actualizada y cargada.`;
+                panelInicioInfo.className = 'panel-inicio-info';
+                btnVolverAlPanel.classList.remove('hidden');
+                updateFocoPreviewAndSearch();
+                navigateToView('panelInicio');
+            } else {
+                panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Lista Maestra de GitHub. Revisa y confirma.`;
+                panelInicioInfo.className = 'panel-inicio-info warning';
+                mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeGitHub);
+            }
+        } else {
+            // Falló la carga desde GitHub, usar la de localStorage (listaFoco ya la tiene)
+            if (listaFoco.size > 0) {
+                panelInicioInfo.innerHTML = `⚠️ Error al cargar desde GitHub. Usando Lista Maestra local (${listaFoco.size} ítems).`;
+                panelInicioInfo.className = 'panel-inicio-info warning';
+                btnVolverAlPanel.classList.remove('hidden');
+            } else {
+                panelInicioInfo.innerHTML = `❌ Error al cargar desde GitHub y no hay Lista Maestra local. Por favor, gestione una.`;
+                panelInicioInfo.className = 'panel-inicio-info error';
+                btnVolverAlPanel.classList.add('hidden'); // No hay panel al que volver si no hay lista
+            }
+            updateFocoPreviewAndSearch();
+            navigateToView(listaFoco.size > 0 ? 'panelInicio' : 'gestionMaestraStep');
+        }
+    }
+    // ----- NAVEGACIÓN DE VISTAS (Actualizada) -----
+    function navigateToView(viewName) {
+      currentView = viewName;
+      [panelInicioDiv, gestionMaestraStepDiv, cotejoStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv].forEach(div => div.classList.add('hidden'));
+      
+      if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden');
+      else if (viewName === 'gestionMaestraStep') gestionMaestraStepDiv.classList.remove('hidden');
+      else if (viewName === 'cotejoStep') cotejoStepDiv.classList.remove('hidden');
+      else if (viewName === 'resultadosStep') resultadosStepDiv.classList.remove('hidden');
+      else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden'); // NUEVO
+
+      if (viewName === 'gestionMaestraStep') {
+          updateFocoPreviewAndSearch();
+          if (listaFoco.size > 0 || localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO)) { // Si hay lista en memoria o guardada
+              btnVolverAlPanel.classList.remove('hidden');
+          } else {
+              btnVolverAlPanel.classList.add('hidden');
+          }
+      }
+    }
+
+    // ----- UTILIDADES (cleanCode, cleanDescription, resetFileInput, getDelimiterRegex) -----
+    function cleanCode(code) { if (typeof code !== 'string' && typeof code !== 'number') return ''; return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); }
+    function cleanDescription(desc) { if (typeof desc !== 'string') return ''; return desc.trim(); }
+    function resetFileInput(el) { if(el) el.value = null; }
+    function getDelimiterRegex(d) { if (d.toLowerCase()==='<tab>') return /\t/; return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
+
+
+    // ----- GESTIÓN LISTA FOCO (gestionMaestraStep) -----
+    function updateFocoPreviewAndSearch(itemsToShow = null) {
+        const itemsForPreview = itemsToShow || Array.from(listaFoco.values());
+        focoPreview.innerHTML = `<strong>Lista Maestra Actual (${listaFoco.size} ítems):</strong> ${itemsForPreview.length > 0 ? 'Primeros 5 mostrados abajo.' : 'Vacía.'}<br>`;
+        itemsForPreview.slice(0, 5).forEach(item => {
+            const p = document.createElement('div'); p.className = 'preview-item';
+            p.innerHTML = `<span class="code">${item.codigo}</span><span class="desc">${item.descripcion || '(Sin descripción)'}</span>`;
+            focoPreview.appendChild(p);
+        });
+        if (itemsToShow === null && searchFocoInput.value === '') {
+             focoSearchResultsDiv.innerHTML = 'Ingrese código numérico para buscar...';
+        }
+    }
+    function processAndSetFocoData(itemsArray) {
+        listaFoco.clear();
+        (itemsArray || []).forEach(item => {
+            const cleanedCode = cleanCode(item.codigo);
+            if (cleanedCode) {
+                listaFoco.set(cleanedCode, { codigo: cleanedCode, descripcion: cleanDescription(item.descripcion) });
+            }
+        });
+        updateFocoPreviewAndSearch(); searchFocoInput.value = '';
+    }
+    focoTextarea.addEventListener('input', () => {
+        const lines = focoTextarea.value.trim().split('\n');
+        const items = lines.map(line => {
+            const parts = line.split(/,(.+)/); let codigo = parts[0]; let descripcion = parts[1] || '';
+            if (parts.length === 1 && line.trim() && !line.includes(',')) { 
+                codigo = line.trim(); descripcion = '';
+            }
+            return { codigo, descripcion };
+        }).filter(item => cleanCode(item.codigo) !== '');
+        processAndSetFocoData(items);
+    });
+
+    function saveListaFocoToStorage() {
+        if (listaFoco.size === 0 && !confirm("La Lista Maestra está vacía. ¿Desea guardar una lista vacía (esto borrará cualquier lista previamente guardada en localStorage)?")) {
+            return false;
+        }
+        try {
+            localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values())));
+            // No mostramos alert aquí si la sincronización de GitHub ya dio feedback.
+            // Podríamos añadir un feedback sutil si el guardado es manual desde gestiónMaestraStep
+            if (currentView === 'gestionMaestraStep') alert(`Lista Maestra con ${listaFoco.size} ítems guardada en sesión local.`);
+            btnVolverAlPanel.classList.remove('hidden'); 
+            return true;
+        } catch (e) {
+            alert("Error al guardar la Lista Maestra en sesión local: " + e.message);
+            return false;
+        }
+    }
+    btnGuardarCambiosMaestra.addEventListener('click', saveListaFocoToStorage);
+
+    // NUEVO: Exportar Maestra para GitHub
+    btnExportarMaestraParaGitHub.addEventListener('click', () => {
+        if (listaFoco.size === 0) {
+            alert("La Lista Maestra está vacía. No hay nada que exportar.");
+            return;
+        }
+        let csvContent = "Codigo,Descripcion\n"; // Cabecera
+        listaFoco.forEach(item => {
+            const desc = `"${(item.descripcion || '').replace(/"/g, '""')}"`; // Manejar comillas en descripción
+            csvContent += `${item.codigo},${desc}\n`;
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `maestra_exportada_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        alert("Archivo CSV generado. Súbelo a tu repositorio de GitHub para actualizar la maestra central.");
+    });
+
+
+    function loadListaFocoFromStorage(showAlerts = true) { 
+        const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
+        listaFoco.clear(); // Siempre empezar con listaFoco vacía antes de cargar
+        if (data) {
+            try {
+                const itemsArray = JSON.parse(data); 
+                itemsArray.forEach(item => { // Asegurar que se procese como en processAndSetFocoData
+                    const cleanedCode = cleanCode(item.codigo);
+                    if (cleanedCode) {
+                        listaFoco.set(cleanedCode, { codigo: cleanedCode, descripcion: cleanDescription(item.descripcion) });
+                    }
+                });
+                if (showAlerts) alert(`Lista Maestra local con ${listaFoco.size} ítems cargada.`);
+            } catch (e) {
+                if (showAlerts) alert("Error al cargar Lista Maestra local: datos corruptos. Se borrará.");
+                localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
+            }
+        } else { if (showAlerts && currentView !== '') alert("No hay Lista Maestra guardada localmente."); } // Evitar alerta al inicio
+    }
+    
+    searchFocoInput.addEventListener('input', () => {
+        const searchTerm = cleanCode(searchFocoInput.value);
+        focoSearchResultsDiv.innerHTML = '';
+        if (!searchTerm) { focoSearchResultsDiv.innerHTML = 'Ingrese código numérico para buscar...'; updateFocoPreviewAndSearch(); return; }
+        const results = Array.from(listaFoco.values()).filter(item => item.codigo.includes(searchTerm));
+        if (results.length > 0) {
+            results.slice(0, 20).forEach(item => { const p = document.createElement('div'); p.className = 'search-result-item'; p.innerHTML = `<span class="code">${item.codigo}</span><span class="desc">${item.descripcion || '(Sin descripción)'}</span>`; focoSearchResultsDiv.appendChild(p); });
+            if (results.length > 20) focoSearchResultsDiv.innerHTML += `<p>... y ${results.length - 20} más.</p>`;
+        } else { focoSearchResultsDiv.innerHTML = 'No se encontraron ítems con ese código.'; }
+        updateFocoPreviewAndSearch(results);
+    });
+    searchFocoInput.addEventListener('beforeinput', (e) => {if (e.data && !/^[0-9]*$/.test(e.data)) e.preventDefault();});
+
+
+    btnUsarMaestraYCotejar.addEventListener('click', () => {
+        if (listaFoco.size === 0) {
+            alert("La Lista Maestra está vacía. Por favor, cargue o ingrese ítems primero, o sincronice con GitHub.");
+            return;
+        }
+        // Ya no es necesario guardar aquí si la idea es que se sincronice o se guarde explícitamente
+        listaVerificar.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = '';
+        verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview();
+        navigateToView('cotejoStep');
+    });
+    btnVolverAlPanel.addEventListener('click', () => navigateToView('panelInicio')); // checkInitialState() se llama al inicio o al borrar
+
+
+    // ----- LECTURA DE ARCHIVOS (Actualizada para usar los nuevos botones y lógica) -----
+    function handleFileUpload(file, isFocoList, isExcel) { 
+        if (!file) return;
+        const previewEl = isFocoList ? focoPreview : verifyPreview;
+        previewEl.innerHTML = `Procesando "${file.name}"... <small>(Puede tardar unos segundos)</small>`;
+
+        const codigoCol = parseInt(isFocoList ? focoCodigoColInput.value : verifyCodigoColInput.value) - 1;
+        const descCol = isFocoList ? (parseInt(focoDescColInput.value) - 1) : -1; 
+        const delimiter = isFocoList ? focoCsvDelimiterInput.value : verifyCsvDelimiterInput.value;
+        const hasHeader = isFocoList ? focoHasHeaderCheckbox.checked : verifyHasHeaderCheckbox.checked;
+        const targetFileElement = isFocoList ? (isExcel ? focoFileExcel : focoFileTxtCsv) : (isExcel ? verifyFileExcel : verifyFileTxtCsv);
+
+        if (codigoCol < 0) { alert("Columna Código debe ser >= 1."); previewEl.textContent = "Error: Config. columna."; resetFileInput(targetFileElement); return; }
+        if (isFocoList && descCol < -1) { alert("Columna Descripción debe ser >= 0."); previewEl.textContent = "Error: Config. columna."; resetFileInput(targetFileElement); return; }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const content = e.target.result; let itemsFromFile = [];
+            try {
+                if (isExcel) itemsFromFile = processExcelData(content, codigoCol, descCol, hasHeader, isFocoList);
+                else itemsFromFile = processTextCsvData(content, codigoCol, descCol, hasHeader, isFocoList, delimiter);
+
+                if (isFocoList) {
+                     // Si se carga un archivo en gestión maestra, se reemplaza la listaFoco actual.
+                     // Luego se puede guardar en localStorage o exportar para GitHub.
+                    processAndSetFocoData(itemsFromFile);
+                    alert(`Archivo "${file.name}" procesado. ${itemsFromFile.length} ítems cargados en la sesión actual. \nGuarde los cambios o expórtelos si desea actualizar su maestra central.`);
+                } else { 
+                    listaVerificar.clear(); 
+                    itemsFromFile.forEach(c => {const cl=cleanCode(c); if(cl)listaVerificar.add(cl);}); 
+                    updateVerifyPreview(); 
+                }
+            } catch (error) { alert(`Error procesando ${file.name}: ${error.message}`); previewEl.textContent = `Error al cargar ${file.name}.`; }
+            resetFileInput(targetFileElement);
+        };
+        reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); previewEl.textContent = `Error al leer ${file.name}.`; resetFileInput(targetFileElement); };
+        if (isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
+    }
+    function processTextCsvData(content, codigoColIdx, descColIdx, hasHeader, isFoco, delimiter = ',') { const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const codigo = parts[codigoColIdx] ? String(parts[codigoColIdx]).trim() : null; if (isFoco) { const descripcion = (descColIdx >= 0 && parts[descColIdx]) ? String(parts[descColIdx]).trim() : ''; if (codigo) items.push({ codigo, descripcion }); } else { if (codigo) items.push(codigo); } }); return items; }
+    function processExcelData(arrayBuffer, codigoColIdx, descColIdx, hasHeader, isFoco) { const items = []; const data = new Uint8Array(arrayBuffer); const workbook = XLSX.read(data, {type:"array"}); const firstSheetName = workbook.SheetNames[0]; if (!firstSheetName) throw new Error("Excel sin hojas."); const worksheet = workbook.Sheets[firstSheetName]; const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: true, defval:null }); const dataRows = hasHeader ? jsonData.slice(1) : jsonData; dataRows.forEach(row => { if (!row) return; const codigo = (row[codigoColIdx] !== null && row[codigoColIdx] !== undefined) ? String(row[codigoColIdx]).trim() : null; if (isFoco) { const descripcion = (descColIdx >= 0 && row[descColIdx] !== null && row[descColIdx] !== undefined) ? String(row[descColIdx]).trim() : ''; if (codigo) items.push({ codigo, descripcion }); } else { if (codigo) items.push(codigo); } }); return items; }
+
+    focoFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], true, false));
+    focoFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], true, true));
+    verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], false, false));
+    verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], false, true));
+
+
+    // ----- MANEJO LISTA A COTEJAR (cotejoStep) -----
+    function updateVerifyPreview() { verifyPreview.textContent = `Lista a Cotejar: ${listaVerificar.size} ítems. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 3 ? '...' : ''}` : 'Vacía.'}`; }
+    function collectVerifyDataFromInputs() { listaVerificar.clear(); const tr = verifyTextarea.value.trim(); if(tr)tr.split(/\s+/).forEach(c=>{const cl=cleanCode(c);if(cl)listaVerificar.add(cl);}); const sr=scannedCodesVerifyTextarea.value.trim(); if(sr)sr.split('\n').forEach(c=>{const cl=cleanCode(c);if(cl)listaVerificar.add(cl);}); updateVerifyPreview();}
+
+    btnVolverGestionMaestra.addEventListener('click', () => navigateToView('gestionMaestraStep'));
+    btnCompare.addEventListener('click', () => { 
+        collectVerifyDataFromInputs();
+        if (listaVerificar.size === 0) { alert("Cargue ítems en la Lista a Cotejar."); return; }
+        if (listaFoco.size === 0) { alert("La Lista Maestra está vacía. Sincronice con GitHub o cargue una lista."); navigateToView('gestionMaestraStep'); return; }
+        compareListsAndDisplayResults(); navigateToView('resultadosStep');
+    });
+    function onScanSuccessVerify(decodedText, decodedResult){ const c=cleanCode(decodedText); if(c){const t=scannedCodesVerifyTextarea.value.trim();const e=t?t.split('\n'):[];if(!e.includes(c))scannedCodesVerifyTextarea.value=t?`${t}\n${c}`:c;}}
+    startScanVerifyBtn.addEventListener('click', () => { if(scannerVerifierActive){if(html5QrCodeVerifier&&html5QrCodeVerifier.isScanning){html5QrCodeVerifier.stop().then(()=>{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear Códigos';}).catch(err=>console.error("Error deteniendo escáner:",err));}else{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear Códigos';}}else{if(location.protocol !=='https:'&&!['localhost','127.0.0.1'].includes(location.hostname)){alert('El escáner requiere HTTPS o localhost.');return;}scannerContainerVerify.classList.remove('hidden');startScanVerifyBtn.textContent='🛑 Detener Escáner';if(!html5QrCodeVerifier)html5QrCodeVerifier=new Html5Qrcode("readerVerify",{verbose:false});const config={fps:10,qrbox:{width:250,height:100},rememberLastUsedCamera:true,supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA]};html5QrCodeVerifier.start({facingMode:"environment"},config,onScanSuccessVerify,(error)=>{/*ignorar*/}).then(()=>scannerVerifierActive=true).catch(err=>{alert(`Error al iniciar escáner: ${err.message||err}`);scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear Códigos';scannerVerifierActive=false;});}});
+
+
+    // ----- COMPARACIÓN Y RESULTADOS (resultadosStep) -----
+    function compareListsAndDisplayResults(){coincidencias.clear();listaVerificar.forEach(cAV=>{const c=cleanCode(cAV);if(listaFoco.has(c))coincidencias.set(c,listaFoco.get(c));});displayFinalResults();}
+    function displayFinalResults(){totalFocoSpan.textContent=listaFoco.size;totalVerifySpan.textContent=listaVerificar.size;totalMatchesSpan.textContent=coincidencias.size;outputResultsDiv.innerHTML='';outputResultsDiv.className='list';if(coincidencias.size===0){outputResultsDiv.innerHTML='<p>No se encontraron ítems concordantes.</p>';}else{coincidencias.forEach(item=>{const cD=document.createElement("div");cD.className="barcode-item-container";const cP=document.createElement("p");cP.className="barcode-item-code";cP.textContent=item.codigo;cD.appendChild(cP);if(item.descripcion){const dP=document.createElement("p");dP.className="barcode-item-desc";dP.textContent=item.descripcion;cD.appendChild(dP);}const sD=document.createElement("div");sD.className="barcode-item-svg";const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");try{JsBarcode(svg,item.codigo,{format:"CODE128",width:2,height:50,displayValue:false,margin:5});sD.appendChild(svg);}catch(e){sD.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`;}cD.appendChild(sD);outputResultsDiv.appendChild(cD);});}}
+    layoutToggleResultsBtn.addEventListener('click',()=>{outputResultsDiv.classList.toggle('grid');outputResultsDiv.classList.toggle('list');});
+    downloadCsvResultsBtn.addEventListener('click',()=>{if(coincidencias.size===0){alert("No hay ítems concordantes.");return;}let cC="CodigoConcordante,Descripcion\n";coincidencias.forEach(item=>{const d=`"${(item.descripcion||'').replace(/"/g,'""')}"`;cC+=`${item.codigo},${d}\n`;});const b=new Blob([cC],{type:'text/csv;charset=utf-8;'});const l=document.createElement("a");const u=URL.createObjectURL(b);l.setAttribute("href",u);l.setAttribute("download",`concordancias_v2.6_${new Date().toISOString().slice(0,10)}.csv`);document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);});
+    downloadPdfResultsBtn.addEventListener('click',async()=>{if(coincidencias.size===0){alert("No hay ítems concordantes para PDF.");return;}downloadPdfResultsBtn.textContent='Generando PDF...';downloadPdfResultsBtn.disabled=true;const pC=document.createElement("div");pC.style.display="grid";pC.style.gridTemplateColumns="repeat(3, 1fr)";pC.style.gap="10px";pC.style.padding="10mm";outputResultsDiv.querySelectorAll(".barcode-item-container").forEach(iEl=>{const cI=iEl.cloneNode(true);cI.style.border="1px solid #ccc";cI.style.padding="5px";cI.style.pageBreakInside="avoid";cI.querySelectorAll('.barcode-item-code, .barcode-item-desc').forEach(p=>p.style.color='#000');pC.appendChild(cI);});if(pC.children.length===0){alert("No hay elementos válidos para PDF.");downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;return;}const opt={margin:10,filename:`concordancias_v2.6_${new Date().toISOString().slice(0,10)}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}};try{await html2pdf().from(pC).set(opt).save();}catch(error){alert("Error al generar PDF.");}finally{downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;}});
+
+
+    // ----- BOTONES PANEL INICIO -----
+    btnIniciarCotejoDesdePanel.addEventListener('click', () => {
+        if (listaFoco.size === 0) {
+            alert("No hay Lista Maestra cargada. Sincronice con GitHub o gestione la Lista Maestra primero.");
+            navigateToView('gestionMaestraStep');
+        } else {
+            listaVerificar.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = '';
+            verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview();
+            navigateToView('cotejoStep');
+        }
+    });
+    btnVerActualizarMaestraDesdePanel.addEventListener('click', () => navigateToView('gestionMaestraStep'));
+    btnBorrarMaestraStorage.addEventListener('click', () => {
+        if (confirm("¿Está seguro de que desea borrar la Lista Maestra guardada localmente? \nAl recargar, se intentará sincronizar con GitHub.")) {
+            localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
+            listaFoco.clear(); 
+            listaFocoCacheadaLocalmente.clear(); // Limpiar también la caché
+            alert("Lista Maestra local borrada. Se intentará resincronizar con GitHub.");
+            checkInitialState(); // Re-sincronizar
+        }
+    });
+
+    // ----- NUEVA VERIFICACIÓN -----
+    btnNewVerification.addEventListener('click', () => {
+        listaVerificar.clear(); coincidencias.clear();
+        verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = '';
+        verifyFileTxtCsv.value = null; verifyFileExcel.value = null;
+        updateVerifyPreview();
+        outputResultsDiv.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado el cotejo.</p>';
+        totalVerifySpan.textContent = '0'; totalMatchesSpan.textContent = '0';
+        if(scannerVerifierActive && html5QrCodeVerifier && html5QrCodeVerifier.isScanning) {
+            html5QrCodeVerifier.stop().catch(err => console.error("Error deteniendo escáner:", err));
+            scannerVerifierActive = false; scannerContainerVerify.classList.add('hidden'); startScanVerifyBtn.textContent = '📷 Escanear Códigos';
+        }
+        // Vuelve al panel de inicio (que re-evaluará la lista maestra, potencialmente desde GitHub si hubo cambios)
+        // No se llama a checkInitialState() directamente aquí para no forzar una resincronización
+        // si el usuario solo quiere hacer un nuevo cotejo con la maestra ya cargada y confirmada.
+        // Si se quiere forzar re-sincro, se podría usar btnVolverAlPanel y luego Iniciar Cotejo, o checkInitialState().
+        // Por ahora, asumimos que la maestra actual es la que se quiere usar.
+        navigateToView('panelInicio'); 
+    });
+
+  </script>
+</body>
+</html>
+
