@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Doble Control de Ítems v2.7 (UPC & Brand)</title> <style>
-    /* ... (Tus Estilos CSS existentes van aquí, no los repito por brevedad) ... */
+  <title>Sistema de Doble Control de Ítems v2.7.1 (UPC & Brand Ready)</title>
+  <style>
+    /* ... (Estilos CSS de la v2.7 se mantienen, no los repito por brevedad) ... */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
@@ -177,7 +178,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Sistema de Doble Control de Ítems v2.7 (UPC & Brand)</h1>
+    <h1>Sistema de Doble Control de Ítems v2.7.1 (UPC & Brand Ready)</h1>
 
     <div id="panelInicio" class="section">
       <h2>Panel de Inicio</h2>
@@ -222,7 +223,7 @@
 
     <div id="dobleControlStep" class="section hidden">
       <h2>Paso 2: Cargar Lista de Ítems para Doble Control</h2>
-      <p style="font-size:0.9em; color: #555;">Puede escanear el UPC del artículo físico o ingresar el código interno.</p>
+      <p style="font-size:0.9em; color: #555;">Puede escanear el UPC del artículo físico (si su Lista Maestra contiene UPCs) o ingresar el código interno.</p>
       <div class="input-group">
         <label for="verifyTextarea">Pegar códigos internos a verificar (uno por línea o separados por espacio/tabulador):</label>
         <textarea id="verifyTextarea" rows="5" inputmode="numeric"></textarea>
@@ -284,7 +285,7 @@
   </div>
 
   <footer>
-    Sistema de Doble Control de Ítems v2.7 - Desarrollado por fgalaz - Chile, 2025
+    Sistema de Doble Control de Ítems v2.7.1 - Desarrollado por fgalaz - Chile, 2025
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -298,14 +299,14 @@
 
 
     // ----- ESTADO DE LA APLICACIÓN -----
-    let listaFoco = new Map(); // Stores {codigo: {codigo, upc, descripcion, brand}}
-    let upcToCodigoMap = new Map(); // NUEVO: Stores {upc: codigo} for quick lookup
-    let listaVerificar = new Set(); // Stores internal codes to verify
-    let coincidencias = new Map(); // Stores {codigo: {codigo, upc, descripcion, brand}} of matched items
-    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.7'; // Version bump
+    let listaFoco = new Map();
+    let upcToCodigoMap = new Map();
+    let listaVerificar = new Set();
+    let coincidencias = new Map();
+    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.7.1'; // Version bump
     let listaFocoCacheadaLocalmente = new Map();
 
-    // ----- SELECTORES DOM -----
+    // ----- SELECTORES DOM (sin cambios respecto a v2.7) -----
     const panelInicioDiv = document.getElementById('panelInicio');
     const gestionMaestraStepDiv = document.getElementById('gestionMaestraStep');
     const dobleControlStepDiv = document.getElementById('dobleControlStep');
@@ -316,21 +317,14 @@
     const modalItemDescripcion = document.getElementById('modalItemDescripcion');
     const modalItemUPC = document.getElementById('modalItemUPC');
     const modalItemBrand = document.getElementById('modalItemBrand');
-
-
-    // Panel Inicio
     const panelInicioInfo = document.getElementById('panelInicioInfo');
     const btnIniciarDobleControlDesdePanel = document.getElementById('btnIniciarDobleControlDesdePanel');
     const btnGestionMaestraDesdePanel = document.getElementById('btnGestionMaestraDesdePanel');
     const btnBorrarMaestraStorage = document.getElementById('btnBorrarMaestraStorage');
-
-    // Gestión Maestra
     const searchFocoInput = document.getElementById('searchFocoInput');
     const focoSearchResultsDiv = document.getElementById('focoSearchResults');
     const focoPreview = document.getElementById('focoPreview');
     const btnVolverAlPanelDesdeGestion = document.getElementById('btnVolverAlPanelDesdeGestion');
-
-    // Doble Control (Paso 2)
     const verifyTextarea = document.getElementById('verifyTextarea');
     const verifyFileTxtCsv = document.getElementById('verifyFileTxtCsv'), verifyFileExcel = document.getElementById('verifyFileExcel');
     const verifyCodigoColInput = document.getElementById('verifyCodigoCol'), verifyCsvDelimiterInput = document.getElementById('verifyCsvDelimiter');
@@ -341,15 +335,11 @@
     const readerVerifyDiv = document.getElementById('readerVerify'), scannedCodesVerifyTextarea = document.getElementById('scannedCodesVerifyTextarea');
     const btnVolverAlPanelDesdeDobleControl = document.getElementById('btnVolverAlPanelDesdeDobleControl');
     const btnCompare = document.getElementById('btnCompare');
-
-    // Resultados (Paso 3)
     const totalFocoSpan = document.getElementById('totalFoco'), totalVerifySpan = document.getElementById('totalVerify'), totalMatchesSpan = document.getElementById('totalMatches');
     const outputResultsDiv = document.getElementById('outputResults');
     const layoutToggleResultsBtn = document.getElementById('layoutToggleResultsBtn');
     const downloadPdfResultsBtn = document.getElementById('downloadPdfResultsBtn'), downloadCsvResultsBtn = document.getElementById('downloadCsvResultsBtn');
     const btnNewVerification = document.getElementById('btnNewVerification');
-
-    // Confirmación Cambios GitHub
     const resumenNuevosUl = document.querySelector('#resumenNuevos ul');
     const resumenEliminadosUl = document.querySelector('#resumenEliminados ul');
     const resumenModificadosUl = document.querySelector('#resumenModificados ul');
@@ -363,7 +353,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       checkInitialState();
       navigateToView('panelInicio');
-      // Close modal if clicked outside content
       itemDetailModal.addEventListener('click', function(event) {
         if (event.target === itemDetailModal) {
           closeItemDetailModal();
@@ -372,33 +361,43 @@
     });
 
     // ----- Lógica de Carga y Sincronización con GitHub -----
-    function cleanText(text) {
+    function cleanText(text) { // Renamed from cleanDescription for general use
         return text ? String(text).trim() : '';
     }
 
     function parsearMaestraCSV(csvText) {
         const items = [];
         const lineas = csvText.trim().split(/\r\n|\n/);
-        // Asumimos cabecera: codigo,UPC,description,brand
-        const cabeceraPresente = true;
+        const cabeceraPresente = true; // Asumimos que siempre hay cabecera
         const indiceInicio = cabeceraPresente ? 1 : 0;
 
         for (let i = indiceInicio; i < lineas.length; i++) {
             const linea = lineas[i].trim();
             if (!linea) continue;
             
-            // Split by comma, but be careful with commas within quoted fields (not handled robustly here)
-            // For simple CSV (no commas in fields or fields are not quoted), this is okay.
-            // A more robust CSV parser would be needed for complex CSVs.
-            const partes = linea.split(','); 
+            const partes = linea.split(','); // Simple split, ver nota sobre comas en campos
 
-            if (partes.length >= 1 && partes[0]) { // Must have at least a codigo
-                items.push({
+            if (partes.length >= 1 && partes[0]) { // Debe tener al menos un código
+                let itemData = {
                     codigo: cleanText(partes[0]),
-                    upc: cleanText(partes[1]), // UPC can be empty
-                    descripcion: cleanText(partes[2]),
-                    brand: cleanText(partes[3])
-                });
+                    upc: '', // Default a vacío
+                    descripcion: '', // Default a vacío
+                    brand: '' // Default a vacío
+                };
+
+                if (partes.length === 3) { // Formato actual: Codigo,description,brand
+                    itemData.descripcion = cleanText(partes[1]);
+                    itemData.brand = cleanText(partes[2]);
+                } else if (partes.length >= 4) { // Formato futuro: Codigo,UPC,description,brand
+                    itemData.upc = cleanText(partes[1]);
+                    itemData.descripcion = cleanText(partes[2]);
+                    itemData.brand = cleanText(partes[3]);
+                } else if (partes.length === 2) { // Codigo,description (sin brand ni UPC)
+                    itemData.descripcion = cleanText(partes[1]);
+                }
+                // Si solo hay código, los otros campos quedan vacíos por defecto.
+                
+                items.push(itemData);
             }
         }
         return items;
@@ -407,10 +406,11 @@
     function rebuildUpcToCodigoMap() {
         upcToCodigoMap.clear();
         listaFoco.forEach(item => {
-            if (item.upc) { // Only map if UPC exists
-                upcToCodigoMap.set(item.upc, item.codigo);
+            if (item.upc && item.upc.trim() !== '') { // Solo mapear si UPC existe y no está vacío
+                upcToCodigoMap.set(item.upc.trim(), item.codigo);
             }
         });
+         console.log("UPC to Code Map rebuilt:", upcToCodigoMap.size, "entries");
     }
 
     async function cargarMaestraDesdeGitHub() {
@@ -425,17 +425,17 @@
                 return null;
             }
             const csvText = await response.text();
-            const itemsArray = parsearMaestraCSV(csvText);
+            const itemsArray = parsearMaestraCSV(csvText); // Usa la nueva función de parseo
 
             const nuevaListaMap = new Map();
             itemsArray.forEach(item => {
-                const codigoLimpio = cleanCode(item.codigo); // cleanCode for internal codigo still relevant
+                const codigoLimpio = cleanCode(item.codigo); // cleanCode para el código interno sigue siendo relevante
                 if (codigoLimpio) {
                     nuevaListaMap.set(codigoLimpio, {
                         codigo: codigoLimpio,
-                        upc: item.upc, // Store as parsed
-                        descripcion: item.descripcion, // Store as parsed
-                        brand: item.brand     // Store as parsed
+                        upc: item.upc, // Ya viene limpio de parsearMaestraCSV
+                        descripcion: item.descripcion, // Ya viene limpio
+                        brand: item.brand // Ya viene limpio
                     });
                 }
             });
@@ -457,9 +457,17 @@
             } else {
                 const itemLocal = listaLocalMap.get(codigo);
                 let changedFields = {};
-                if (itemLocal.descripcion !== itemRemoto.descripcion) changedFields.descripcion = { old: itemLocal.descripcion, new: itemRemoto.descripcion};
-                if (itemLocal.upc !== itemRemoto.upc) changedFields.upc = { old: itemLocal.upc, new: itemRemoto.upc};
-                if (itemLocal.brand !== itemRemoto.brand) changedFields.brand = { old: itemLocal.brand, new: itemRemoto.brand};
+                // Comparar campos asegurándose de que ambos existan o sean tratados como string vacío
+                const localDesc = itemLocal.descripcion || '';
+                const remoteDesc = itemRemoto.descripcion || '';
+                const localUpc = itemLocal.upc || '';
+                const remoteUpc = itemRemoto.upc || '';
+                const localBrand = itemLocal.brand || '';
+                const remoteBrand = itemRemoto.brand || '';
+
+                if (localDesc !== remoteDesc) changedFields.descripcion = { old: localDesc, new: remoteDesc};
+                if (localUpc !== remoteUpc) changedFields.upc = { old: localUpc, new: remoteUpc};
+                if (localBrand !== remoteBrand) changedFields.brand = { old: localBrand, new: remoteBrand};
                 
                 if (Object.keys(changedFields).length > 0) {
                     modificados.push({ ...itemRemoto, changedFields });
@@ -479,11 +487,11 @@
             ulElement.innerHTML = items.length > 0 ? items.map(formatter).join('') : '<li>Ninguno</li>';
         };
 
-        popularListaResumen(resumenNuevosUl, nuevos, item => `<li><span class="code">${item.codigo}</span>: D:${item.descripcion}, U:${item.upc || 'N/A'}, B:${item.brand || 'N/A'}</span></li>`);
-        popularListaResumen(resumenEliminadosUl, eliminados, item => `<li><span class="code">${item.codigo}</span>: D:${item.descripcion}, U:${item.upc || 'N/A'}, B:${item.brand || 'N/A'}</span></li>`);
+        popularListaResumen(resumenNuevosUl, nuevos, item => `<li><span class="code">${item.codigo}</span>: D:${item.descripcion || 'N/A'}, U:${item.upc || 'N/A'}, B:${item.brand || 'N/A'}</span></li>`);
+        popularListaResumen(resumenEliminadosUl, eliminados, item => `<li><span class="code">${item.codigo}</span>: D:${item.descripcion || 'N/A'}, U:${item.upc || 'N/A'}, B:${item.brand || 'N/A'}</span></li>`);
         popularListaResumen(resumenModificadosUl, modificados, item => {
             let changesHtml = '';
-            if(item.changedFields.descripcion) changesHtml += `<span class="field-change">Desc: <s>${item.changedFields.descripcion.old}</s> &rarr; ${item.changedFields.descripcion.new}</span>`;
+            if(item.changedFields.descripcion) changesHtml += `<span class="field-change">Desc: <s>${item.changedFields.descripcion.old || 'N/A'}</s> &rarr; ${item.changedFields.descripcion.new || 'N/A'}</span>`;
             if(item.changedFields.upc) changesHtml += `<span class="field-change">UPC: <s>${item.changedFields.upc.old || 'N/A'}</s> &rarr; ${item.changedFields.upc.new || 'N/A'}</span>`;
             if(item.changedFields.brand) changesHtml += `<span class="field-change">Brand: <s>${item.changedFields.brand.old || 'N/A'}</s> &rarr; ${item.changedFields.brand.new || 'N/A'}</span>`;
             return `<li><span class="code">${item.codigo}</span>${changesHtml}</li>`;
@@ -492,7 +500,7 @@
 
         btnConfirmarCambiosGitHub.onclick = () => {
             listaFoco = new Map(maestraGitHubMap);
-            rebuildUpcToCodigoMap(); // NUEVO
+            rebuildUpcToCodigoMap();
             saveListaFocoToStorage();
             updateFocoPreviewAndSearch();
             panelInicioInfo.innerHTML = `✅ Lista Maestra actualizada desde GitHub (${listaFoco.size} ítems) y guardada localmente.`;
@@ -500,8 +508,7 @@
             navigateToView('panelInicio');
         };
         btnRechazarCambiosGitHub.onclick = () => {
-            // listaFoco already has listaFocoCacheadaLocalmente
-            rebuildUpcToCodigoMap(); // NUEVO: Rebuild map even if rejecting, to be consistent with listaFoco
+            rebuildUpcToCodigoMap(); // Reconstruir con la listaFoco actual (local)
             updateFocoPreviewAndSearch();
             panelInicioInfo.innerHTML = `ℹ️ Cambios de GitHub ignorados. Se mantiene la Lista Maestra local (${listaFoco.size} ítems).`;
             panelInicioInfo.className = 'panel-inicio-info info';
@@ -511,7 +518,7 @@
     }
     
     async function checkInitialState() {
-        loadListaFocoFromStorage(false); // This also rebuilds upcToCodigoMap
+        loadListaFocoFromStorage(false);
         listaFocoCacheadaLocalmente = new Map(listaFoco);
 
         panelInicioInfo.innerHTML = '🔄 Sincronizando Lista Maestra desde GitHub...';
@@ -526,34 +533,44 @@
 
         if (maestraDesdeGitHub) {
             const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeGitHub);
-
-            if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && listaFocoCacheadaLocalmente.size === maestraDesdeGitHub.size) {
-                let localIsIdentical = true; // Check for deep equality including new fields
+            // Check for deep equality including new fields and considering '' vs undefined
+            let localIsIdentical = true;
+            if (listaFocoCacheadaLocalmente.size !== maestraDesdeGitHub.size) {
+                localIsIdentical = false;
+            } else {
                 for (const [key, remoteItem] of maestraDesdeGitHub.entries()) {
                     const localItem = listaFocoCacheadaLocalmente.get(key);
-                    if (!localItem || localItem.descripcion !== remoteItem.descripcion || localItem.upc !== remoteItem.upc || localItem.brand !== remoteItem.brand) {
+                    if (!localItem ||
+                        (localItem.descripcion || '') !== (remoteItem.descripcion || '') ||
+                        (localItem.upc || '') !== (remoteItem.upc || '') ||
+                        (localItem.brand || '') !== (remoteItem.brand || '')) {
                         localIsIdentical = false;
                         break;
                     }
                 }
+            }
 
-                if (localIsIdentical) {
-                   panelInicioInfo.innerHTML = `✅ Lista Maestra desde GitHub (${listaFoco.size} ítems) está actualizada y cargada.`;
-                } else {
-                    listaFoco = new Map(maestraDesdeGitHub); // Ensure listaFoco is the GitHub version
-                    rebuildUpcToCodigoMap();
-                    saveListaFocoToStorage(false);
-                    panelInicioInfo.innerHTML = `✅ Lista Maestra actualizada desde GitHub (${listaFoco.size} ítems) con cambios menores y guardada.`;
-                }
-                panelInicioInfo.className = 'panel-inicio-info';
-                updateFocoPreviewAndSearch();
-                navigateToView('panelInicio');
-            } else {
+            if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && localIsIdentical) {
+                 panelInicioInfo.innerHTML = `✅ Lista Maestra desde GitHub (${listaFoco.size} ítems) está actualizada y cargada.`;
+            } else if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && !localIsIdentical) {
+                // Subtle differences (e.g. undefined vs empty string after parsing, or if local had extra fields not in remote schema)
+                // Force update from GitHub to ensure consistency
+                listaFoco = new Map(maestraDesdeGitHub);
+                rebuildUpcToCodigoMap();
+                saveListaFocoToStorage(false); // Save the clean version silently
+                panelInicioInfo.innerHTML = `✅ Lista Maestra desde GitHub (${listaFoco.size} ítems) actualizada (cambios menores) y cargada.`;
+            } else { // Hay cambios significativos
                 panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Lista Maestra de GitHub. Revisa y confirma.`;
                 panelInicioInfo.className = 'panel-inicio-info warning';
                 mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeGitHub);
+                // No navegamos a panelInicio aquí, se queda en confirmación
+                return; // Evitar que se ejecute el navigateToView de abajo si estamos en confirmación
             }
-        } else {
+            panelInicioInfo.className = 'panel-inicio-info'; // Reset a success si no hubo confirmación
+            updateFocoPreviewAndSearch();
+            navigateToView('panelInicio');
+
+        } else { // Falló carga desde GitHub
             if (listaFoco.size > 0) {
                 panelInicioInfo.innerHTML = `⚠️ Error al cargar desde GitHub. Usando Lista Maestra local (${listaFoco.size} ítems).`;
                 panelInicioInfo.className = 'panel-inicio-info warning';
@@ -568,10 +585,10 @@
         }
     }
 
-    // ----- NAVEGACIÓN DE VISTAS -----
+    // ----- NAVEGACIÓN DE VISTAS (sin cambios) -----
     function navigateToView(viewName) {
       [panelInicioDiv, gestionMaestraStepDiv, dobleControlStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv, itemDetailModal].forEach(div => div.classList.add('hidden'));
-      if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none'; // Ensure modal specific display none
+      if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none';
 
       if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden');
       else if (viewName === 'gestionMaestraStep') {
@@ -583,14 +600,13 @@
       else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden');
     }
 
-    // ----- UTILIDADES -----
+    // ----- UTILIDADES (sin cambios) -----
     function cleanCode(code) { if (typeof code !== 'string' && typeof code !== 'number') return ''; return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); }
-    // cleanDescription is removed as we use cleanText for all text fields from CSV
     function resetFileInput(el) { if(el) el.value = null; }
     function getDelimiterRegex(d) { if (d.toLowerCase()==='<tab>') return /\t/; return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
 
 
-    // ----- GESTIÓN LISTA FOCO (BÚSQUEDA Y VISTA PREVIA) -----
+    // ----- GESTIÓN LISTA FOCO (BÚSQUEDA Y VISTA PREVIA) (sin cambios) -----
     function updateFocoPreviewAndSearch(itemsToShow = null) {
         const itemsForGeneralPreview = Array.from(listaFoco.values());
         focoPreview.innerHTML = `<strong>Lista Maestra Actual (${listaFoco.size} ítems):</strong> ${listaFoco.size > 0 ? 'Primeros 5 mostrados abajo.' : 'Vacía.'}<br>`;
@@ -601,7 +617,7 @@
         });
 
         const searchTerm = searchFocoInput.value.toLowerCase().trim();
-        if (itemsToShow) { // itemsToShow is usually from an active search
+        if (itemsToShow) {
             focoSearchResultsDiv.innerHTML = '';
              if (itemsToShow.length > 0) {
                 itemsToShow.slice(0, 20).forEach(item => {
@@ -611,7 +627,7 @@
                     focoSearchResultsDiv.appendChild(p);
                 });
                 if (itemsToShow.length > 20) focoSearchResultsDiv.innerHTML += `<p>... y ${itemsToShow.length - 20} más.</p>`;
-            } else if (searchTerm !== '') { // Only show "no results" if a search term was entered
+            } else if (searchTerm !== '') {
                 focoSearchResultsDiv.innerHTML = 'No se encontraron ítems con ese término de búsqueda.';
             } else {
                 focoSearchResultsDiv.innerHTML = 'Ingrese un término para buscar...';
@@ -620,7 +636,6 @@
              focoSearchResultsDiv.innerHTML = 'Ingrese un término para buscar...';
         }
     }
-
 
     function saveListaFocoToStorage(showAlert = true) {
         if (listaFoco.size === 0 && showAlert) {
@@ -644,36 +659,34 @@
         if (data) {
             try {
                 const itemsArray = JSON.parse(data);
-                itemsArray.forEach(item => { // Item should have {codigo, upc, descripcion, brand}
-                    const cleanedInternalCode = cleanCode(item.codigo); // Still clean the internal code
+                itemsArray.forEach(item => {
+                    const cleanedInternalCode = cleanCode(item.codigo);
                     if (cleanedInternalCode) {
                         listaFoco.set(cleanedInternalCode, {
                             codigo: cleanedInternalCode,
-                            upc: item.upc || '', // Ensure UPC is at least an empty string
+                            upc: item.upc || '',
                             descripcion: item.descripcion || '',
                             brand: item.brand || ''
                         });
                     }
                 });
-                rebuildUpcToCodigoMap(); // Rebuild map after loading
                 if (showAlerts) alert(`Lista Maestra local con ${listaFoco.size} ítems cargada.`);
             } catch (e) {
                 if (showAlerts) alert("Error al cargar Lista Maestra local: datos corruptos. Se borrará.");
                 localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
                 listaFoco.clear();
-                rebuildUpcToCodigoMap();
             }
         } else {
             if (showAlerts) alert("No hay Lista Maestra guardada localmente.");
-            rebuildUpcToCodigoMap(); // Ensure map is clear if no data
         }
+        rebuildUpcToCodigoMap(); // Siempre reconstruir el mapa después de cargar/limpiar
     }
 
     searchFocoInput.addEventListener('input', () => {
         const searchTerm = searchFocoInput.value.toLowerCase().trim();
         if (!searchTerm) {
             focoSearchResultsDiv.innerHTML = 'Ingrese un término para buscar...';
-            updateFocoPreviewAndSearch(); // Update preview part, clear search results
+            updateFocoPreviewAndSearch();
             return;
         }
         const results = Array.from(listaFoco.values()).filter(item =>
@@ -684,33 +697,26 @@
         );
         updateFocoPreviewAndSearch(results);
     });
-    // Removed beforeinput listener for numbers only, as search is now general text
 
     btnVolverAlPanelDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
-
-    // ----- LECTURA DE ARCHIVOS (Solo para la lista de verificación - códigos internos) -----
+    // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) (sin cambios) -----
     function handleFileUpload(file, isExcel) {
         if (!file) return;
         verifyPreview.innerHTML = `Procesando "${file.name}"...`;
-
         const codigoCol = parseInt(verifyCodigoColInput.value) - 1;
         const delimiter = verifyCsvDelimiterInput.value;
         const hasHeader = verifyHasHeaderCheckbox.checked;
         const targetFileElement = isExcel ? verifyFileExcel : verifyFileTxtCsv;
-
         if (codigoCol < 0) { alert("Columna Código debe ser >= 1."); verifyPreview.textContent = "Error: Config. columna."; resetFileInput(targetFileElement); return; }
-
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result; let itemsFromFile = [];
             try {
-                // processTextCsvData/ExcelData expect isFoco to be false for verify list (returns array of codes)
-                if (isExcel) itemsFromFile = processExcelData(content, codigoCol, -1, hasHeader, false);
-                else itemsFromFile = processTextCsvData(content, codigoCol, -1, hasHeader, false, delimiter);
-
+                if (isExcel) itemsFromFile = processExcelDataForVerify(content, codigoCol, hasHeader);
+                else itemsFromFile = processTextCsvDataForVerify(content, codigoCol, hasHeader, delimiter);
                 listaVerificar.clear();
-                itemsFromFile.forEach(c => {const cl=cleanCode(c); if(cl)listaVerificar.add(cl);}); // cleanCode for internal codes
+                itemsFromFile.forEach(c => {const cl=cleanCode(c); if(cl)listaVerificar.add(cl);});
                 updateVerifyPreview();
             } catch (error) { alert(`Error procesando ${file.name}: ${error.message}`); verifyPreview.textContent = `Error al cargar ${file.name}.`; }
             resetFileInput(targetFileElement);
@@ -718,116 +724,102 @@
         reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); verifyPreview.textContent = `Error al leer ${file.name}.`; resetFileInput(targetFileElement); };
         if (isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
     }
-    // processTextCsvData y processExcelData remain largely the same, isFoco=false means they return array of codes from specified column
-    function processTextCsvData(content, codigoColIdx, descColIdx, hasHeader, isFoco, delimiter = ',') { const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const codigo = parts[codigoColIdx] ? String(parts[codigoColIdx]).trim() : null; if (isFoco) { const upc = (parts[1]) ? String(parts[1]).trim() : ''; const descripcion = (descColIdx >=0 && parts[descColIdx]) ? String(parts[descColIdx]).trim() : ''; const brand = (parts[3]) ? String(parts[3]).trim() : ''; if (codigo) items.push({ codigo, upc, descripcion, brand });} else { if (codigo) items.push(codigo); } }); return items; }
-    function processExcelData(arrayBuffer, codigoColIdx, descColIdx, hasHeader, isFoco) { const items = []; const data = new Uint8Array(arrayBuffer); const workbook = XLSX.read(data, {type:"array"}); const firstSheetName = workbook.SheetNames[0]; if (!firstSheetName) throw new Error("Excel sin hojas."); const worksheet = workbook.Sheets[firstSheetName]; const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: true, defval:null }); const dataRows = hasHeader ? jsonData.slice(1) : jsonData; dataRows.forEach(row => { if (!row) return; const codigo = (row[codigoColIdx] !== null && row[codigoColIdx] !== undefined) ? String(row[codigoColIdx]).trim() : null; if (isFoco) { const upc = (row[1] !== null && row[1] !== undefined) ? String(row[1]).trim() : ''; const descripcion = (descColIdx >=0 && row[descColIdx] !== null && row[descColIdx] !== undefined) ? String(row[descColIdx]).trim() : ''; const brand = (row[3] !== null && row[3] !== undefined) ? String(row[3]).trim() : ''; if (codigo) items.push({ codigo, upc, descripcion, brand });} else { if (codigo) items.push(codigo); } }); return items; }
-
+    // Estas funciones son solo para la lista de verificación (extraen solo códigos)
+    function processTextCsvDataForVerify(content, codigoColIdx, hasHeader, delimiter = ',') { const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const codigo = parts[codigoColIdx] ? String(parts[codigoColIdx]).trim() : null; if (codigo) items.push(codigo); }); return items; }
+    function processExcelDataForVerify(arrayBuffer, codigoColIdx, hasHeader) { const items = []; const data = new Uint8Array(arrayBuffer); const workbook = XLSX.read(data, {type:"array"}); const firstSheetName = workbook.SheetNames[0]; if (!firstSheetName) throw new Error("Excel sin hojas."); const worksheet = workbook.Sheets[firstSheetName]; const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: true, defval:null }); const dataRows = hasHeader ? jsonData.slice(1) : jsonData; dataRows.forEach(row => { if (!row) return; const codigo = (row[codigoColIdx] !== null && row[codigoColIdx] !== undefined) ? String(row[codigoColIdx]).trim() : null; if (codigo) items.push(codigo); }); return items; }
 
     verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], false));
     verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], true));
 
-
-    // ----- MANEJO LISTA A VERIFICAR (dobleControlStep) -----
+    // ----- MANEJO LISTA A VERIFICAR (DOBLE CONTROL) (sin cambios) -----
     function updateVerifyPreview() { verifyPreview.textContent = `Lista de Códigos Internos a Verificar: ${listaVerificar.size} ítems. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 5 ? '...' : ''}` : 'Vacía.'}`; }
     function collectVerifyDataFromInputs() {
-      // Keep listaVerificar for internal codes only
-      // Textarea input remains for internal codes
       const textVerifyCodes = verifyTextarea.value.trim();
       if (textVerifyCodes) {
           textVerifyCodes.split(/\s+/).forEach(c => {
-              const cl = cleanCode(c); // Clean as internal code
+              const cl = cleanCode(c);
               if (cl) listaVerificar.add(cl);
           });
       }
-      // Scanned codes are already added as internal codes by onScanSuccessVerify
       updateVerifyPreview();
     }
-
-
     btnVolverAlPanelDesdeDobleControl.addEventListener('click', () => navigateToView('panelInicio'));
     btnCompare.addEventListener('click', () => {
-        collectVerifyDataFromInputs(); // This collects from textarea and assumes scanned codes are already in listaVerificar
+        collectVerifyDataFromInputs();
         if (listaVerificar.size === 0) { alert("Cargue o escanee ítems para la Lista de Verificación."); return; }
         if (listaFoco.size === 0) { alert("La Lista Maestra está vacía. Sincronice con GitHub."); navigateToView('panelInicio'); return; }
         compareListsAndDisplayResults(); navigateToView('resultadosStep');
     });
 
     function onScanSuccessVerify(decodedText, decodedResult){
-        const scannedUPC = cleanText(decodedText); // The scanned text is expected to be a UPC
+        const scannedUPC = cleanText(decodedText);
         if (scannedUPC) {
+            if (upcToCodigoMap.size === 0) {
+                alert("El mapa de UPC a Código Interno está vacío. Asegúrese de que su Lista Maestra contenga UPCs y haya sido cargada correctamente.");
+                return;
+            }
             const internalCode = upcToCodigoMap.get(scannedUPC);
             if (internalCode) {
                 if (!listaVerificar.has(internalCode)) {
-                    listaVerificar.add(internalCode); // Add the internal code to the verification list
-                    
+                    listaVerificar.add(internalCode);
                     const currentScannedText = scannedCodesVerifyTextarea.value.trim();
                     scannedCodesVerifyTextarea.value = currentScannedText ? `${currentScannedText}\n${internalCode} (UPC: ${scannedUPC})` : `${internalCode} (UPC: ${scannedUPC})`;
-                    updateVerifyPreview(); // Update the preview of codes to be verified
+                    updateVerifyPreview();
                 } else {
-                    // Optionally, provide feedback that this UPC (and its internal code) is already listed
                     console.log(`El código interno ${internalCode} (UPC: ${scannedUPC}) ya está en la lista de verificación.`);
+                    alert(`El artículo (Código Interno: ${internalCode}) correspondiente a este UPC (${scannedUPC}) ya fue agregado a la lista de verificación.`);
                 }
             } else {
-                // Optionally, provide feedback that the scanned UPC is not in the master list
                 alert(`UPC escaneado (${scannedUPC}) no encontrado en la Lista Maestra.`);
             }
         }
     }
-
     startScanVerifyBtn.addEventListener('click', () => { if(scannerVerifierActive){if(html5QrCodeVerifier&&html5QrCodeVerifier.isScanning){html5QrCodeVerifier.stop().then(()=>{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}).catch(err=>console.error("Error deteniendo escáner:",err));}else{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}}else{if(location.protocol !=='https:'&&!['localhost','127.0.0.1'].includes(location.hostname)){alert('El escáner requiere HTTPS o localhost.');return;}scannerContainerVerify.classList.remove('hidden');startScanVerifyBtn.textContent='🛑 Detener Escáner';if(!html5QrCodeVerifier)html5QrCodeVerifier=new Html5Qrcode("readerVerify",{verbose:false});const config={fps:10,qrbox:{width:250,height:100},rememberLastUsedCamera:true,supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA]};html5QrCodeVerifier.start({facingMode:"environment"},config,onScanSuccessVerify,(error)=>{/*ignorar*/}).then(()=>scannerVerifierActive=true).catch(err=>{alert(`Error al iniciar escáner: ${err.message||err}`);scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';scannerVerifierActive=false;});}});
 
-
-    // ----- COMPARACIÓN Y RESULTADOS (resultadosStep) -----
+    // ----- COMPARACIÓN Y RESULTADOS (sin cambios) -----
     function compareListsAndDisplayResults(){
         coincidencias.clear();
-        listaVerificar.forEach(internalCodeToVerify => { // listaVerificar contains internal codes
+        listaVerificar.forEach(internalCodeToVerify => {
             if(listaFoco.has(internalCodeToVerify)) {
                 coincidencias.set(internalCodeToVerify, listaFoco.get(internalCodeToVerify));
             }
         });
         displayFinalResults();
     }
-
     function displayFinalResults(){
         totalFocoSpan.textContent=listaFoco.size;
         totalVerifySpan.textContent=listaVerificar.size;
         totalMatchesSpan.textContent=coincidencias.size;
         outputResultsDiv.innerHTML='';
-        outputResultsDiv.className='list'; // Default to list view
-
+        outputResultsDiv.className='list';
         if(coincidencias.size===0){
             outputResultsDiv.innerHTML='<p>No se encontraron ítems concordantes.</p>';
         } else {
-            coincidencias.forEach(item => { // item here is {codigo, upc, descripcion, brand}
+            coincidencias.forEach(item => {
                 const cD = document.createElement("div");
                 cD.className="barcode-item-container";
-                cD.setAttribute('data-codigo', item.codigo); // Store codigo for click lookup
+                cD.setAttribute('data-codigo', item.codigo);
                 cD.addEventListener('click', () => openItemDetailModal(item.codigo));
-
                 const cP = document.createElement("p");
                 cP.className="barcode-item-code";
                 cP.textContent = item.codigo;
                 cD.appendChild(cP);
-
                 if(item.descripcion){
                     const dP = document.createElement("p");
                     dP.className="barcode-item-desc";
                     dP.textContent = item.descripcion;
                     cD.appendChild(dP);
                 }
-                // Optionally, show UPC/Brand in brief here too, or rely on modal
                 const upcBrandP = document.createElement("p");
                 upcBrandP.style.fontSize = "0.8em";
                 upcBrandP.style.textAlign = "center";
                 upcBrandP.textContent = `UPC: ${item.upc || 'N/A'} | Marca: ${item.brand || 'N/A'}`;
                 cD.appendChild(upcBrandP);
-
-
                 const sD = document.createElement("div");
                 sD.className="barcode-item-svg";
                 const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
                 try{
-                    JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); // Barcode of internal code
+                    JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5});
                     sD.appendChild(svg);
                 } catch(e) {
                     sD.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`;
@@ -837,7 +829,6 @@
             });
         }
     }
-
     function openItemDetailModal(codigo) {
         const item = listaFoco.get(codigo) || coincidencias.get(codigo);
         if (item) {
@@ -853,12 +844,10 @@
         itemDetailModal.classList.add('hidden');
         itemDetailModal.style.display = 'none';
     }
-
-
     layoutToggleResultsBtn.addEventListener('click',()=>{outputResultsDiv.classList.toggle('grid');outputResultsDiv.classList.toggle('list');});
     downloadCsvResultsBtn.addEventListener('click',()=>{
         if(coincidencias.size===0){alert("No hay ítems concordantes.");return;}
-        let cC="CodigoInterno,UPC,Descripcion,Marca\n"; // Updated CSV header
+        let cC="CodigoInterno,UPC,Descripcion,Marca\n";
         coincidencias.forEach(item=>{
             const desc = `"${(item.descripcion||'').replace(/"/g,'""')}"`;
             const upcVal = `"${(item.upc||'').replace(/"/g,'""')}"`;
@@ -868,28 +857,23 @@
         const b=new Blob([cC],{type:'text/csv;charset=utf-8;'});
         const l=document.createElement("a");const u=URL.createObjectURL(b);
         l.setAttribute("href",u);
-        l.setAttribute("download",`concordancias_v2.7_${new Date().toISOString().slice(0,10)}.csv`);
+        l.setAttribute("download",`concordancias_v2.7.1_${new Date().toISOString().slice(0,10)}.csv`);
         document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);
     });
     downloadPdfResultsBtn.addEventListener('click',async()=>{
         if(coincidencias.size===0){alert("No hay ítems concordantes para PDF.");return;}
         downloadPdfResultsBtn.textContent='Generando PDF...'; downloadPdfResultsBtn.disabled=true;
         const pC=document.createElement("div");pC.style.display="grid";pC.style.gridTemplateColumns="repeat(3, 1fr)";pC.style.gap="10px";pC.style.padding="10mm";
-        
         outputResultsDiv.querySelectorAll(".barcode-item-container").forEach(iEl=>{
             const codigo = iEl.getAttribute('data-codigo');
-            const itemData = coincidencias.get(codigo); // Get full data
-
-            const cI=document.createElement('div'); // Create a new container for PDF content
+            const itemData = coincidencias.get(codigo);
+            const cI=document.createElement('div');
             cI.style.border="1px solid #ccc"; cI.style.padding="5px"; cI.style.pageBreakInside="avoid";cI.style.textAlign="center";
-
             const codeP = document.createElement('p'); codeP.textContent = `Código: ${itemData.codigo}`; codeP.style.fontWeight="bold";
             const descP = document.createElement('p'); descP.textContent = `Desc: ${itemData.descripcion || 'N/A'}`;
             const upcP = document.createElement('p'); upcP.textContent = `UPC: ${itemData.upc || 'N/A'}`;
             const brandP = document.createElement('p'); brandP.textContent = `Marca: ${itemData.brand || 'N/A'}`;
-            
             cI.appendChild(codeP); cI.appendChild(descP); cI.appendChild(upcP); cI.appendChild(brandP);
-
             const svgOriginal = iEl.querySelector(".barcode-item-svg svg");
             if (svgOriginal) {
                 const svgClone = svgOriginal.cloneNode(true);
@@ -899,15 +883,13 @@
             }
             pC.appendChild(cI);
         });
-
         if(pC.children.length===0){alert("No hay elementos válidos para PDF.");downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;return;}
-        const opt={margin:10,filename:`concordancias_v2.7_${new Date().toISOString().slice(0,10)}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}};
+        const opt={margin:10,filename:`concordancias_v2.7.1_${new Date().toISOString().slice(0,10)}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}};
         try{await html2pdf().from(pC).set(opt).save();}catch(error){console.error("Error PDF:", error); alert("Error al generar PDF.");}
         finally{downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;}
     });
 
-
-    // ----- BOTONES PANEL INICIO -----
+    // ----- BOTONES PANEL INICIO (sin cambios) -----
     btnIniciarDobleControlDesdePanel.addEventListener('click', () => {
         if (listaFoco.size === 0) {
             alert("No hay Lista Maestra cargada. Sincronice con GitHub primero."); return;
@@ -917,7 +899,6 @@
         navigateToView('dobleControlStep');
     });
     btnGestionMaestraDesdePanel.addEventListener('click', () => navigateToView('gestionMaestraStep'));
-
     btnBorrarMaestraStorage.addEventListener('click', () => {
         if (confirm("¿Está seguro de que desea borrar la Lista Maestra guardada localmente? \nSe intentará resincronizar con GitHub.")) {
             localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
@@ -927,7 +908,7 @@
         }
     });
 
-    // ----- NUEVA VERIFICACIÓN -----
+    // ----- NUEVA VERIFICACIÓN (sin cambios) -----
     btnNewVerification.addEventListener('click', () => {
         listaVerificar.clear(); coincidencias.clear();
         verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = '';
