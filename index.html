@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Doble Control de Ítems v2.7.2 (Filtro Números > 5 dígitos)</title>
+  <title>Sistema de Doble Control de Ítems v2.8.2 (Estadísticas Maestra)</title>
   <style>
-    /* ... (Estilos CSS de la v2.7.1 se mantienen, no los repito por brevedad) ... */
+    /* ... (Estilos CSS de la v2.8.1 se mantienen) ... */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
@@ -106,19 +106,27 @@
       font-size: 0.9em;
       border-radius: 4px;
       word-break: break-word;
-      max-height: 200px; overflow-y: auto;
     }
+    #focoPreview { /* Estilos específicos para el área de estadísticas */
+        max-height: none; /* Permitir que crezca si es necesario */
+    }
+    #focoPreview ul { list-style-type: none; padding-left: 0; }
+    #focoPreview li { margin-bottom: 5px; font-size: 0.95em; }
+    #focoPreview strong { color: #34495e; }
+
+
+    .search-results-area { max-height: 200px; overflow-y: auto; } /* Mantener scroll para resultados */
     .preview-item, .search-result-item {
         padding: 6px 3px;
         border-bottom: 1px solid #dde;
         display: flex;
         justify-content: space-between;
-        align-items: center; /* Align items vertically */
+        align-items: center; 
     }
     .preview-item:last-child, .search-result-item:last-child { border-bottom: none; }
     .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; flex-shrink: 0; margin-right: 10px;}
     .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 10px; font-style: italic; text-align: right; flex-grow: 1; }
-    .preview-item .upc-brand, .search-result-item .upc-brand { font-size: 0.85em; color: #555; margin-left: 10px; }
+    .preview-item .upc-brand-url, .search-result-item .upc-brand-url { font-size: 0.85em; color: #555; margin-left: 10px; }
 
 
     .results-summary {
@@ -130,12 +138,12 @@
     }
     .results-summary p { margin: 8px 0; font-size: 1.05em; }
     .results-summary strong { color: #2980b9; }
-    /* Estilos para la sección de confirmación de cambios */
-    #confirmacionCambiosStep .preview-area { max-height: 120px; margin-bottom: 10px; background-color: #fff; }
+    
+    #confirmacionCambiosStep .preview-area { max-height: 120px; margin-bottom: 10px; background-color: #fff; overflow-y: auto;}
     #confirmacionCambiosStep h3 { font-size: 1.1em; margin-bottom:5px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
     #confirmacionCambiosStep li { font-size: 0.9em; padding: 3px 0; border-bottom: 1px dotted #eee; }
     #confirmacionCambiosStep li:last-child { border-bottom: none; }
-    #confirmacionCambiosStep li s { color: #e74c3c; } /* Tachado para descripciones antiguas */
+    #confirmacionCambiosStep li s { color: #e74c3c; } 
     #confirmacionCambiosStep li .field-change { display: block; margin-left: 15px; font-size: 0.9em;}
 
 
@@ -154,14 +162,17 @@
     }
     #itemDetailModal .modal-content {
       background-color: #fefefe; margin: auto; padding: 25px; border: 1px solid #888;
-      width: 80%; max-width: 500px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-align: center; 
+      position: relative;
     }
     #itemDetailModal .modal-content h3 { margin-top: 0; color: #3498db; }
-    #itemDetailModal .modal-content p { margin: 8px 0; font-size: 1.1em;}
+    #itemDetailModal .modal-content p { margin: 8px 0; font-size: 1.1em; text-align: left;}
     #itemDetailModal .modal-content strong { color: #555;}
-    #itemDetailModal .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+    #itemDetailModal #modalItemImageContainer { margin-top: 15px; margin-bottom: 15px; min-height: 50px; }
+    #itemDetailModal #modalItemImage { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain; }
+    #itemDetailModal .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; top: 10px; right: 20px; }
     #itemDetailModal .close-modal:hover, #itemDetailModal .close-modal:focus { color: black; text-decoration: none; }
-
 
     #scannerContainerVerify { max-width: 400px; margin: 15px auto; border: 1px solid #ccc; padding: 5px; border-radius: 4px;}
     #readerVerify { width: 100%; }
@@ -178,45 +189,58 @@
 </head>
 <body>
   <div class="container">
-    <h1>Sistema de Doble Control de Ítems v2.7.2 (Filtro Números > 5 dígitos)</h1>
+    <h1>Sistema de Doble Control de Ítems v2.8.2</h1>
 
     <div id="panelInicio" class="section">
       <h2>Panel de Inicio</h2>
       <div id="panelInicioInfo" class="panel-inicio-info info">
-        Cargando información de Lista Maestra...
+        Cargando información de Lista Maestra desde el repositorio...
       </div>
       <div class="panel-inicio-actions">
         <button id="btnIniciarDobleControlDesdePanel" disabled>➡️ Iniciar Doble Control</button>
-        <button id="btnGestionMaestraDesdePanel" class="secondary" disabled>🔄 Ver Lista Maestra y Buscar</button>
-        <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 20px;">🗑️ Borrar Lista Maestra Local y Resincronizar</button>
+        <button id="btnGestionMaestraDesdePanel" class="secondary" disabled>🔎 Ver Lista Maestra y Buscar</button>
+        <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 20px;">🗑️ Borrar Maestra Local y Resincronizar</button>
       </div>
     </div>
 
     <div id="confirmacionCambiosStep" class="section hidden">
-      <h2>Confirmar Cambios de Lista Maestra (desde GitHub)</h2>
+      <h2>Confirmar Cambios de Lista Maestra (desde Repositorio)</h2>
       <p>Se han detectado los siguientes cambios respecto a tu lista local guardada:</p>
       <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
           <div id="resumenNuevos"><h3>Nuevos Ítems:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
           <div id="resumenEliminados"><h3>Ítems Eliminados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
           <div id="resumenModificados"><h3>Ítems Modificados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
       </div>
-      <p>¿Deseas aplicar estos cambios y usar la versión de GitHub en tu sesión actual?</p>
+      <p>¿Deseas aplicar estos cambios y usar la versión del repositorio en tu sesión actual?</p>
       <div style="text-align: center;">
-        <button id="btnConfirmarCambiosGitHub">Sí, Aplicar Cambios de GitHub</button>
-        <button id="btnRechazarCambiosGitHub" class="secondary">No, Mantener Mi Versión Local</button>
+        <button id="btnConfirmarCambiosRepositorio">Sí, Aplicar Cambios del Repositorio</button>
+        <button id="btnRechazarCambiosRepositorio" class="secondary">No, Mantener Mi Versión Local</button>
       </div>
     </div>
 
     <div id="gestionMaestraStep" class="section hidden">
       <h2>Ver Lista Maestra y Buscar</h2>
       <div class="input-group">
-        <label for="searchFocoInput">Buscar Ítem en Lista Maestra (por código, UPC, descripción o marca):</label>
+        <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción, marca o URL de imagen):</label>
         <input type="text" id="searchFocoInput" placeholder="Ingrese término de búsqueda...">
       </div>
-      <div id="focoSearchResults" class="search-results-area">Resultados de la búsqueda aparecerán aquí...</div>
-      <div id="focoPreview" class="preview-area" style="margin-top: 20px;">(Vista previa de la Lista Maestra completa - primeros ítems)</div>
+      <div id="focoSearchResults" class="search-results-area" style="margin-bottom: 20px;">Resultados de la búsqueda aparecerán aquí...</div>
+      
+      <div id="focoPreview" class="preview-area">
+        <h3>Estadísticas de la Lista Maestra</h3>
+        <ul id="masterListStats">
+            <li>Total de Ítems: <strong id="statTotalItems">0</strong></li>
+            <li>Ítems sin URL de imagen: <strong id="statNoImageUrl">0</strong></li>
+            <li>Ítems sin UPC: <strong id="statNoUpc">0</strong></li>
+            <li>Ítems sin Descripción: <strong id="statNoDescription">0</strong></li>
+            <li>Ítems sin Marca: <strong id="statNoBrand">0</strong></li>
+        </ul>
+        <p style="font-size:0.8em; margin-top:15px; text-align:center;">
+            Utiliza la barra de búsqueda de arriba para encontrar ítems específicos.
+        </p>
+      </div>
 
-      <div style="margin-top:15px; text-align:center;">
+      <div style="margin-top:20px; text-align:center;">
         <button id="btnVolverAlPanelDesdeGestion" class="secondary">↩️ Volver al Panel de Inicio</button>
       </div>
     </div>
@@ -224,23 +248,23 @@
     <div id="dobleControlStep" class="section hidden">
       <h2>Paso 2: Cargar Lista de Ítems para Doble Control</h2>
       <p style="font-size:0.9em; color: #555;">
-        Puede escanear el UPC del artículo físico (si su Lista Maestra contiene UPCs) o ingresar el código interno.
-        Solo se considerarán códigos internos **numéricos de más de 5 dígitos**.
+        Puede escanear el UPC del artículo físico (si su Lista Maestra contiene UPCs) o ingresar el ID del Ítem.
+        Solo se considerarán IDs de Ítem **numéricos de más de 5 dígitos**.
       </p>
       <div class="input-group">
-        <label for="verifyTextarea">Pegar códigos internos a verificar (uno por línea o separados por espacio/tabulador):</label>
+        <label for="verifyTextarea">Pegar IDs de Ítem a verificar (uno por línea o separados por espacio/tabulador):</label>
         <textarea id="verifyTextarea" rows="5" inputmode="numeric"></textarea>
       </div>
        <div class="input-group">
-        <label>Subir archivo con códigos internos a verificar:</label>
-        <p style="font-size:0.85em; color:#666;">Se tomarán los códigos de la columna especificada. Solo se considerarán códigos numéricos de más de 5 dígitos.</p>
+        <label>Subir archivo con IDs de Ítem a verificar:</label>
+        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Solo se considerarán IDs numéricos de más de 5 dígitos.</p>
         <div class="input-columns">
             <div><label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label><input type="file" id="verifyFileTxtCsv" accept=".txt,.csv"></div>
             <div><label for="verifyFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label><input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
         </div>
         <div class="file-options">
             <div class="input-columns">
-                <div><label for="verifyCodigoCol">Col. Código (ej: 1):</label><input type="number" id="verifyCodigoCol" value="1" min="1"></div>
+                <div><label for="verifyCodigoCol">Col. ID Ítem (ej: 1):</label><input type="number" id="verifyCodigoCol" value="1" min="1"></div>
                  <div><label for="verifyCsvDelimiter">Delimitador CSV:</label><input type="text" id="verifyCsvDelimiter" value=","></div>
             </div>
              <label><input type="checkbox" id="verifyHasHeader" checked> El archivo tiene encabezados</label>
@@ -249,10 +273,10 @@
       <div class="input-group">
         <button id="startScanVerifyBtn">📷 Escanear UPC de Artículo</button>
         <div id="scannerContainerVerify" class="hidden"><div id="readerVerify"></div></div>
-        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">Códigos internos válidos identificados (desde UPC escaneado o ingresado):</label>
-        <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los códigos internos válidos aparecerán aquí..." readonly></textarea>
+        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">IDs de Ítem válidos identificados (desde UPC escaneado o ingresado):</label>
+        <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los IDs de Ítem válidos aparecerán aquí..." readonly></textarea>
       </div>
-      <div id="verifyPreview" class="preview-area">Aún no se han cargado ítems a verificar.</div>
+      <div id="verifyPreview" class="preview-area">Aún no se han cargado Ítems a verificar.</div>
       <hr style="margin: 20px 0;">
       <button id="btnVolverAlPanelDesdeDobleControl" class="secondary">&larr; Volver al Panel de Inicio</button>
       <button id="btnCompare">Verificar y Mostrar Ítems Concordantes &rarr;</button>
@@ -262,7 +286,7 @@
       <h2>Resultados: Ítems Concordantes</h2>
       <div id="resultsSummary" class="results-summary">
         <p>Total Ítems en Lista Maestra: <strong id="totalFoco">0</strong></p>
-        <p>Total Ítems en Lista de Verificación (códigos internos válidos): <strong id="totalVerify">0</strong></p>
+        <p>Total Ítems en Lista de Verificación (válidos): <strong id="totalVerify">0</strong></p>
         <p>Ítems Concordantes Verificados: <strong id="totalMatches">0</strong></p>
       </div>
       <h3>Detalle de Ítems Concordantes (Clic para ver más)</h3>
@@ -281,14 +305,19 @@
     <div class="modal-content">
       <span class="close-modal" onclick="closeItemDetailModal()">&times;</span>
       <h3 id="modalItemCodigo"></h3>
+      <div id="modalItemImageContainer">
+        <img id="modalItemImage" src="#" alt="Imagen del Ítem" style="display:none;">
+        <p id="modalImageError" style="display:none; color:red;">Imagen no disponible.</p>
+      </div>
       <p><strong>Descripción:</strong> <span id="modalItemDescripcion"></span></p>
       <p><strong>UPC:</strong> <span id="modalItemUPC"></span></p>
       <p><strong>Marca:</strong> <span id="modalItemBrand"></span></p>
+      <p><strong>URL Imagen:</strong> <span id="modalItemUrl"></span></p>
     </div>
   </div>
 
   <footer>
-    Sistema de Doble Control de Ítems v2.7.2 - Desarrollado por fgalaz - Chile, 2025
+    Sistema de Doble Control de Ítems v2.8.2 - Desarrollado por fgalaz - Chile, 2025
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -297,20 +326,30 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // ----- URL DE LA LISTA MAESTRA EN GITHUB -----
-    const URL_LISTA_MAESTRA_GITHUB = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv';
-
+    // ----- URL DE LA LISTA MAESTRA EN REPOSITORIO -----
+    const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv';
 
     // ----- ESTADO DE LA APLICACIÓN -----
-    let listaFoco = new Map();
+    let listaFoco = new Map(); 
     let upcToCodigoMap = new Map();
-    let listaVerificar = new Set(); // Contendrá solo códigos internos válidos (numéricos > 5 dígitos)
+    let listaVerificar = new Set(); 
     let coincidencias = new Map();
-    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.7.2'; // Version bump
+    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.8.2'; // Bump versión para storage si la estructura cambia
     let listaFocoCacheadaLocalmente = new Map();
 
-    // ----- SELECTORES DOM (sin cambios) -----
+    // ----- SELECTORES DOM (incluyendo los nuevos spans para estadísticas) -----
     const panelInicioDiv = document.getElementById('panelInicio');
+    // ... (otros selectores de la v2.8.1 se mantienen)
+    const modalItemImage = document.getElementById('modalItemImage');
+    const modalImageError = document.getElementById('modalImageError');
+    const modalItemUrl = document.getElementById('modalItemUrl');
+    // Spans para estadísticas
+    const statTotalItems = document.getElementById('statTotalItems');
+    const statNoImageUrl = document.getElementById('statNoImageUrl');
+    const statNoUpc = document.getElementById('statNoUpc');
+    const statNoDescription = document.getElementById('statNoDescription');
+    const statNoBrand = document.getElementById('statNoBrand');
+    // El resto de los selectores son iguales a v2.8.1
     const gestionMaestraStepDiv = document.getElementById('gestionMaestraStep');
     const dobleControlStepDiv = document.getElementById('dobleControlStep');
     const resultadosStepDiv = document.getElementById('resultadosStep');
@@ -326,7 +365,7 @@
     const btnBorrarMaestraStorage = document.getElementById('btnBorrarMaestraStorage');
     const searchFocoInput = document.getElementById('searchFocoInput');
     const focoSearchResultsDiv = document.getElementById('focoSearchResults');
-    const focoPreview = document.getElementById('focoPreview');
+    const focoPreview = document.getElementById('focoPreview'); // Este div ahora contendrá las estadísticas
     const btnVolverAlPanelDesdeGestion = document.getElementById('btnVolverAlPanelDesdeGestion');
     const verifyTextarea = document.getElementById('verifyTextarea');
     const verifyFileTxtCsv = document.getElementById('verifyFileTxtCsv'), verifyFileExcel = document.getElementById('verifyFileExcel');
@@ -346,8 +385,9 @@
     const resumenNuevosUl = document.querySelector('#resumenNuevos ul');
     const resumenEliminadosUl = document.querySelector('#resumenEliminados ul');
     const resumenModificadosUl = document.querySelector('#resumenModificados ul');
-    const btnConfirmarCambiosGitHub = document.getElementById('btnConfirmarCambiosGitHub');
-    const btnRechazarCambiosGitHub = document.getElementById('btnRechazarCambiosGitHub');
+    const btnConfirmarCambiosRepositorio = document.getElementById('btnConfirmarCambiosRepositorio');
+    const btnRechazarCambiosRepositorio = document.getElementById('btnRechazarCambiosRepositorio');
+
 
     let html5QrCodeVerifier = null;
     let scannerVerifierActive = false;
@@ -357,320 +397,134 @@
       checkInitialState();
       navigateToView('panelInicio');
       itemDetailModal.addEventListener('click', function(event) {
-        if (event.target === itemDetailModal) {
-          closeItemDetailModal();
-        }
+        if (event.target === itemDetailModal) { closeItemDetailModal(); }
       });
+      modalItemImage.onerror = function() {
+          this.style.display = 'none';
+          modalImageError.style.display = 'block';
+          modalImageError.textContent = 'Error al cargar imagen o URL no válida.';
+      };
+       modalItemImage.onload = function() {
+          this.style.display = 'block';
+          modalImageError.style.display = 'none';
+      };
     });
 
-    // ----- Lógica de Carga y Sincronización con GitHub (parsearMaestraCSV y relacionados sin cambios desde v2.7.1) -----
-    function cleanText(text) {
-        return text ? String(text).trim() : '';
-    }
-    function parsearMaestraCSV(csvText) {
-        const items = [];
-        const lineas = csvText.trim().split(/\r\n|\n/);
-        const cabeceraPresente = true;
-        const indiceInicio = cabeceraPresente ? 1 : 0;
-        for (let i = indiceInicio; i < lineas.length; i++) {
-            const linea = lineas[i].trim();
-            if (!linea) continue;
-            const partes = linea.split(',');
-            if (partes.length >= 1 && partes[0]) {
-                let itemData = { codigo: cleanText(partes[0]), upc: '', descripcion: '', brand: '' };
-                if (partes.length === 3) { // Codigo,description,brand
-                    itemData.descripcion = cleanText(partes[1]);
-                    itemData.brand = cleanText(partes[2]);
-                } else if (partes.length >= 4) { // Codigo,UPC,description,brand
-                    itemData.upc = cleanText(partes[1]);
-                    itemData.descripcion = cleanText(partes[2]);
-                    itemData.brand = cleanText(partes[3]);
-                } else if (partes.length === 2) { // Codigo,description
-                    itemData.descripcion = cleanText(partes[1]);
-                }
-                items.push(itemData);
-            }
-        }
-        return items;
-    }
-    function rebuildUpcToCodigoMap() {
-        upcToCodigoMap.clear();
+    // ----- Lógica de Carga y Sincronización con Repositorio (sin cambios funcionales desde v2.8.1) -----
+    function cleanText(text) { return text ? String(text).trim() : ''; }
+    function parsearMaestraCSV(csvText) { /* ... igual que v2.8.1 ... */ const items = []; const lineas = csvText.trim().split(/\r\n|\n/); const cabeceraPresente = true; const indiceInicio = cabeceraPresente ? 1 : 0; for (let i = indiceInicio; i < lineas.length; i++) { const linea = lineas[i].trim(); if (!linea) continue; const partes = linea.split(','); if (partes.length >= 1 && partes[0]) { let itemData = { codigo: cleanText(partes[0]), upc: '', descripcion: '', brand: '', url: '' }; if (partes.length >= 2) itemData.upc = cleanText(partes[1]); if (partes.length >= 3) itemData.descripcion = cleanText(partes[2]); if (partes.length >= 4) itemData.brand = cleanText(partes[3]); if (partes.length >= 5) itemData.url = cleanText(partes[4]); items.push(itemData); } } return items;}
+    function rebuildUpcToCodigoMap() { /* ... igual que v2.8.1 ... */ upcToCodigoMap.clear(); listaFoco.forEach(item => { if (item.upc && item.upc.trim() !== '') { upcToCodigoMap.set(item.upc.trim(), item.codigo); } }); }
+    async function cargarMaestraDesdeRepositorio() { /* ... igual que v2.8.1 ... */ if (!URL_LISTA_MAESTRA_REPOSITORIO || URL_LISTA_MAESTRA_REPOSITORIO === 'PON_AQUI_LA_URL_RAW_DE_TU_MAESTRA.CSV_EN_REPOSITORIO') { console.warn('URL_LISTA_MAESTRA_REPOSITORIO no configurada.'); return null; } try { const response = await fetch(URL_LISTA_MAESTRA_REPOSITORIO + '?t=' + new Date().getTime()); if (!response.ok) { console.error('Error al cargar Maestra desde Repositorio:', response.status); return null; } const csvText = await response.text(); const itemsArray = parsearMaestraCSV(csvText); const nuevaListaMap = new Map(); itemsArray.forEach(item => { const idItemLimpio = cleanCode(item.codigo); if (idItemLimpio) { nuevaListaMap.set(idItemLimpio, { codigo: idItemLimpio, upc: item.upc, descripcion: item.descripcion, brand: item.brand, url: item.url }); } }); return nuevaListaMap; } catch (error) { console.error('Excepción al cargar Maestra desde Repositorio:', error); return null; } }
+    function compararListas(listaLocalMap, listaRemotaMap) { /* ... igual que v2.8.1 ... */ const nuevos = [], eliminados = [], modificados = []; listaRemotaMap.forEach((itemRemoto, codigo) => { if (!listaLocalMap.has(codigo)) { nuevos.push(itemRemoto); } else { const itemLocal = listaLocalMap.get(codigo); let changedFields = {}; const localDesc = itemLocal.descripcion||'', remoteDesc = itemRemoto.descripcion||''; const localUpc = itemLocal.upc||'', remoteUpc = itemRemoto.upc||''; const localBrand = itemLocal.brand||'', remoteBrand = itemRemoto.brand||''; const localUrl = itemLocal.url||'', remoteUrl = itemRemoto.url||''; if (localDesc !== remoteDesc) changedFields.descripcion = { old: localDesc, new: remoteDesc}; if (localUpc !== remoteUpc) changedFields.upc = { old: localUpc, new: remoteUpc}; if (localBrand !== remoteBrand) changedFields.brand = { old: localBrand, new: remoteBrand}; if (localUrl !== remoteUrl) changedFields.url = { old: localUrl, new: remoteUrl}; if (Object.keys(changedFields).length > 0) { modificados.push({ ...itemRemoto, changedFields }); } } }); listaLocalMap.forEach((itemLocal, codigo) => { if (!listaRemotaMap.has(codigo)) { eliminados.push(itemLocal); } }); return { nuevos, eliminados, modificados }; }
+    function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraRepositorioMap) { /* ... igual que v2.8.1 ... */ const popularListaResumen = (ul, items, fmt) => { ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>'; }; const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion||'N/A'}, U:${itm.upc||'N/A'}, B:${itm.brand||'N/A'}, ImgURL:${itm.url||'N/A'}</span></li>`; popularListaResumen(resumenNuevosUl, nuevos, itemFormatter); popularListaResumen(resumenEliminadosUl, eliminados, itemFormatter); popularListaResumen(resumenModificadosUl, modificados, itm => { let chgs = ''; if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old||'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new||'N/A'}</span>`; if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old||'N/A'}</s> &rarr; ${itm.changedFields.upc.new||'N/A'}</span>`; if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old||'N/A'}</s> &rarr; ${itm.changedFields.brand.new||'N/A'}</span>`; if(itm.changedFields.url) chgs += `<span class="field-change">URL Img: <s>${itm.changedFields.url.old||'N/A'}</s> &rarr; ${itm.changedFields.url.new||'N/A'}</span>`; return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`; }); btnConfirmarCambiosRepositorio.onclick = () => { listaFoco = new Map(maestraRepositorioMap); rebuildUpcToCodigoMap(); saveListaFocoToStorage(); updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) desde el repositorio y guardada localmente.`; panelInicioInfo.className = 'panel-inicio-info'; navigateToView('panelInicio'); }; btnRechazarCambiosRepositorio.onclick = () => { rebuildUpcToCodigoMap(); updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Se mantiene la Maestra local (${listaFoco.size} ítems).`; panelInicioInfo.className = 'panel-inicio-info info'; navigateToView('panelInicio'); }; navigateToView('confirmacionCambiosStep'); }
+    async function checkInitialState() { /* ... igual que v2.8.1 ... */ loadListaFocoFromStorage(false); listaFocoCacheadaLocalmente = new Map(listaFoco); panelInicioInfo.innerHTML = '🔄 Sincronizando Maestra TMR desde el repositorio...'; panelInicioInfo.className = 'panel-inicio-info info'; btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true; const maestraDesdeRepositorio = await cargarMaestraDesdeRepositorio(); btnIniciarDobleControlDesdePanel.disabled = false; btnGestionMaestraDesdePanel.disabled = false; if (maestraDesdeRepositorio) { const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeRepositorio); let localIsIdentical = true; if (listaFocoCacheadaLocalmente.size !== maestraDesdeRepositorio.size) { localIsIdentical = false; } else { for (const [key, remoteItem] of maestraDesdeRepositorio.entries()) { const localItem = listaFocoCacheadaLocalmente.get(key); if (!localItem || (localItem.descripcion || '') !== (remoteItem.descripcion || '') || (localItem.upc || '') !== (remoteItem.upc || '') || (localItem.brand || '') !== (remoteItem.brand || '') || (localItem.url || '') !== (remoteItem.url || '') ) { localIsIdentical = false; break; } } } if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && localIsIdentical) { panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems).`; } else if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && !localIsIdentical) { listaFoco = new Map(maestraDesdeRepositorio); rebuildUpcToCodigoMap(); saveListaFocoToStorage(false); panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) con cambios menores y guardada.`; } else { panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Maestra TMR del repositorio. Revisa y confirma.`; panelInicioInfo.className = 'panel-inicio-info warning'; mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio); return; } panelInicioInfo.className = 'panel-inicio-info'; updateFocoPreviewAndSearch(); navigateToView('panelInicio'); } else { if (listaFoco.size > 0) { panelInicioInfo.innerHTML = `⚠️ Error al cargar desde el repositorio. Usando Maestra local (${listaFoco.size} ítems).`; panelInicioInfo.className = 'panel-inicio-info warning'; } else { panelInicioInfo.innerHTML = `❌ Error al cargar desde el repositorio y no hay Maestra local.`; panelInicioInfo.className = 'panel-inicio-info error'; btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true; } updateFocoPreviewAndSearch(); navigateToView('panelInicio'); } }
+    
+    // ----- NAVEGACIÓN DE VISTAS -----
+    function navigateToView(viewName) { [panelInicioDiv, gestionMaestraStepDiv, dobleControlStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv, itemDetailModal].forEach(div => div.classList.add('hidden')); if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none'; if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden'); else if (viewName === 'gestionMaestraStep') { gestionMaestraStepDiv.classList.remove('hidden'); updateFocoPreviewAndSearch(); } else if (viewName === 'dobleControlStep') dobleControlStepDiv.classList.remove('hidden'); else if (viewName === 'resultadosStep') resultadosStepDiv.classList.remove('hidden'); else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden');}
+    
+    // ----- UTILIDADES -----
+    function cleanCode(code) { if (typeof code !== 'string' && typeof code !== 'number') return ''; return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); }
+    function resetFileInput(el) { if(el) el.value = null; }
+    function getDelimiterRegex(d) { if (d.toLowerCase()==='<tab>') return /\t/; return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
+
+    // ----- GESTIÓN LISTA MAESTRA (BÚSQUEDA Y ESTADÍSTICAS) -----
+    function updateFocoPreviewAndSearch(itemsToShow = null) { // itemsToShow es para los resultados de búsqueda
+        // Calcular y mostrar estadísticas
+        let countNoUrl = 0;
+        let countNoUpc = 0;
+        let countNoDescription = 0;
+        let countNoBrand = 0;
+
         listaFoco.forEach(item => {
-            if (item.upc && item.upc.trim() !== '') {
-                upcToCodigoMap.set(item.upc.trim(), item.codigo);
-            }
+            if (!item.url || item.url.trim() === '') countNoUrl++;
+            if (!item.upc || item.upc.trim() === '') countNoUpc++;
+            if (!item.descripcion || item.descripcion.trim() === '') countNoDescription++;
+            if (!item.brand || item.brand.trim() === '') countNoBrand++;
         });
-    }
-    async function cargarMaestraDesdeGitHub() {
-        if (!URL_LISTA_MAESTRA_GITHUB || URL_LISTA_MAESTRA_GITHUB === 'PON_AQUI_LA_URL_RAW_DE_TU_MAESTRA.CSV_EN_GITHUB') {
-            console.warn('URL_LISTA_MAESTRA_GITHUB no configurada correctamente.');
-            return null;
-        }
-        try {
-            const response = await fetch(URL_LISTA_MAESTRA_GITHUB + '?t=' + new Date().getTime());
-            if (!response.ok) { console.error('Error al cargar la Lista Maestra desde GitHub:', response.status, response.statusText); return null; }
-            const csvText = await response.text();
-            const itemsArray = parsearMaestraCSV(csvText);
-            const nuevaListaMap = new Map();
-            itemsArray.forEach(item => {
-                const codigoLimpio = cleanCode(item.codigo);
-                if (codigoLimpio) {
-                    nuevaListaMap.set(codigoLimpio, { codigo: codigoLimpio, upc: item.upc, descripcion: item.descripcion, brand: item.brand });
+
+        statTotalItems.textContent = listaFoco.size;
+        statNoImageUrl.textContent = countNoUrl;
+        statNoUpc.textContent = countNoUpc;
+        statNoDescription.textContent = countNoDescription;
+        statNoBrand.textContent = countNoBrand;
+
+        // Lógica para mostrar resultados de búsqueda (itemsToShow)
+        const searchTerm = searchFocoInput.value.toLowerCase().trim();
+        if (itemsToShow) { // Si se pasaron items (resultado de una búsqueda)
+            focoSearchResultsDiv.innerHTML = ''; // Limpiar resultados anteriores
+             if (itemsToShow.length > 0) {
+                itemsToShow.slice(0, 30).forEach(item => { // Mostrar hasta 30 resultados de búsqueda
+                    const p = document.createElement('div'); p.className = 'search-result-item';
+                    p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc||'N/A'}, M: ${item.brand||'N/A'}, Img: ${item.url ? 'Sí':'No'})</span> <span class="desc">${item.descripcion||'(S/D)'}</span>`;
+                    p.addEventListener('click', () => openItemDetailModal(item.codigo));
+                    focoSearchResultsDiv.appendChild(p);
+                });
+                if (itemsToShow.length > 30) {
+                    focoSearchResultsDiv.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length - 30} más. Refine su búsqueda.</p>`;
                 }
-            });
-            return nuevaListaMap;
-        } catch (error) { console.error('Excepción al cargar/procesar la Lista Maestra desde GitHub:', error); return null; }
-    }
-    function compararListas(listaLocalMap, listaRemotaMap) {
-        const nuevos = [], eliminados = [], modificados = [];
-        listaRemotaMap.forEach((itemRemoto, codigo) => {
-            if (!listaLocalMap.has(codigo)) { nuevos.push(itemRemoto); }
-            else {
-                const itemLocal = listaLocalMap.get(codigo); let changedFields = {};
-                const localDesc = itemLocal.descripcion || '', remoteDesc = itemRemoto.descripcion || '';
-                const localUpc = itemLocal.upc || '', remoteUpc = itemRemoto.upc || '';
-                const localBrand = itemLocal.brand || '', remoteBrand = itemRemoto.brand || '';
-                if (localDesc !== remoteDesc) changedFields.descripcion = { old: localDesc, new: remoteDesc};
-                if (localUpc !== remoteUpc) changedFields.upc = { old: localUpc, new: remoteUpc};
-                if (localBrand !== remoteBrand) changedFields.brand = { old: localBrand, new: remoteBrand};
-                if (Object.keys(changedFields).length > 0) { modificados.push({ ...itemRemoto, changedFields }); }
+            } else if (searchTerm !== '') { 
+                focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">No se encontraron ítems que coincidan con la búsqueda.</p>'; 
+            } else { 
+                focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; 
             }
-        });
-        listaLocalMap.forEach((itemLocal, codigo) => { if (!listaRemotaMap.has(codigo)) { eliminados.push(itemLocal); } });
-        return { nuevos, eliminados, modificados };
-    }
-    function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraGitHubMap) {
-        const popularListaResumen = (ul, items, fmt) => { ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>'; };
-        popularListaResumen(resumenNuevosUl, nuevos, itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion||'N/A'}, U:${itm.upc||'N/A'}, B:${itm.brand||'N/A'}</span></li>`);
-        popularListaResumen(resumenEliminadosUl, eliminados, itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion||'N/A'}, U:${itm.upc||'N/A'}, B:${itm.brand||'N/A'}</span></li>`);
-        popularListaResumen(resumenModificadosUl, modificados, itm => {
-            let chgs = '';
-            if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old||'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new||'N/A'}</span>`;
-            if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old||'N/A'}</s> &rarr; ${itm.changedFields.upc.new||'N/A'}</span>`;
-            if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old||'N/A'}</s> &rarr; ${itm.changedFields.brand.new||'N/A'}</span>`;
-            return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`;
-        });
-        btnConfirmarCambiosGitHub.onclick = () => {
-            listaFoco = new Map(maestraGitHubMap); rebuildUpcToCodigoMap(); saveListaFocoToStorage();
-            updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `✅ Lista Maestra actualizada desde GitHub (${listaFoco.size} ítems) y guardada localmente.`;
-            panelInicioInfo.className = 'panel-inicio-info'; navigateToView('panelInicio');
-        };
-        btnRechazarCambiosGitHub.onclick = () => {
-            rebuildUpcToCodigoMap(); updateFocoPreviewAndSearch();
-            panelInicioInfo.innerHTML = `ℹ️ Cambios de GitHub ignorados. Se mantiene la Lista Maestra local (${listaFoco.size} ítems).`;
-            panelInicioInfo.className = 'panel-inicio-info info'; navigateToView('panelInicio');
-        };
-        navigateToView('confirmacionCambiosStep');
-    }
-    async function checkInitialState() {
-        loadListaFocoFromStorage(false); listaFocoCacheadaLocalmente = new Map(listaFoco);
-        panelInicioInfo.innerHTML = '🔄 Sincronizando Lista Maestra desde GitHub...'; panelInicioInfo.className = 'panel-inicio-info info';
-        btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true;
-        const maestraDesdeGitHub = await cargarMaestraDesdeGitHub();
-        btnIniciarDobleControlDesdePanel.disabled = false; btnGestionMaestraDesdePanel.disabled = false;
-        if (maestraDesdeGitHub) {
-            const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeGitHub);
-            let localIsIdentical = true;
-            if (listaFocoCacheadaLocalmente.size !== maestraDesdeGitHub.size) { localIsIdentical = false; }
-            else {
-                for (const [key, remoteItem] of maestraDesdeGitHub.entries()) {
-                    const localItem = listaFocoCacheadaLocalmente.get(key);
-                    if (!localItem || (localItem.descripcion || '') !== (remoteItem.descripcion || '') || (localItem.upc || '') !== (remoteItem.upc || '') || (localItem.brand || '') !== (remoteItem.brand || '')) {
-                        localIsIdentical = false; break;
-                    }
-                }
-            }
-            if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && localIsIdentical) {
-                 panelInicioInfo.innerHTML = `✅ Lista Maestra desde GitHub (${listaFoco.size} ítems) está actualizada y cargada.`;
-            } else if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && !localIsIdentical) {
-                listaFoco = new Map(maestraDesdeGitHub); rebuildUpcToCodigoMap(); saveListaFocoToStorage(false);
-                panelInicioInfo.innerHTML = `✅ Lista Maestra desde GitHub (${listaFoco.size} ítems) actualizada (cambios menores) y cargada.`;
-            } else {
-                panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Lista Maestra de GitHub. Revisa y confirma.`;
-                panelInicioInfo.className = 'panel-inicio-info warning';
-                mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeGitHub); return;
-            }
-            panelInicioInfo.className = 'panel-inicio-info'; updateFocoPreviewAndSearch(); navigateToView('panelInicio');
-        } else {
-            if (listaFoco.size > 0) {
-                panelInicioInfo.innerHTML = `⚠️ Error al cargar desde GitHub. Usando Lista Maestra local (${listaFoco.size} ítems).`;
-                panelInicioInfo.className = 'panel-inicio-info warning';
-            } else {
-                panelInicioInfo.innerHTML = `❌ Error al cargar desde GitHub y no hay Lista Maestra local. No se puede iniciar doble control.`;
-                panelInicioInfo.className = 'panel-inicio-info error';
-                btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true;
-            }
-            updateFocoPreviewAndSearch(); navigateToView('panelInicio');
+        } else if (searchTerm === '' && !itemsToShow) { // Si no hay término de búsqueda y no se pasaron items explícitamente
+             focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>';
         }
+        // Si itemsToShow es null pero hay un searchTerm, la búsqueda se realiza en el event listener de searchFocoInput.
     }
 
-    // ----- NAVEGACIÓN DE VISTAS (sin cambios) -----
-    function navigateToView(viewName) { /* ... igual que v2.7.1 ... */ [panelInicioDiv, gestionMaestraStepDiv, dobleControlStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv, itemDetailModal].forEach(div => div.classList.add('hidden')); if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none'; if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden'); else if (viewName === 'gestionMaestraStep') { gestionMaestraStepDiv.classList.remove('hidden'); updateFocoPreviewAndSearch(); } else if (viewName === 'dobleControlStep') dobleControlStepDiv.classList.remove('hidden'); else if (viewName === 'resultadosStep') resultadosStepDiv.classList.remove('hidden'); else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden');}
-
-    // ----- UTILIDADES (sin cambios) -----
-    function cleanCode(code) { /* ... igual que v2.7.1 ... */ if (typeof code !== 'string' && typeof code !== 'number') return ''; return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); }
-    function resetFileInput(el) { /* ... igual que v2.7.1 ... */ if(el) el.value = null; }
-    function getDelimiterRegex(d) { /* ... igual que v2.7.1 ... */ if (d.toLowerCase()==='<tab>') return /\t/; return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
-
-    // ----- GESTIÓN LISTA FOCO (BÚSQUEDA Y VISTA PREVIA) (sin cambios) -----
-    function updateFocoPreviewAndSearch(itemsToShow = null) { /* ... igual que v2.7.1 ... */ const itemsForGeneralPreview = Array.from(listaFoco.values()); focoPreview.innerHTML = `<strong>Lista Maestra Actual (${listaFoco.size} ítems):</strong> ${listaFoco.size > 0 ? 'Primeros 5 mostrados abajo.' : 'Vacía.'}<br>`; itemsForGeneralPreview.slice(0, 5).forEach(item => { const p = document.createElement('div'); p.className = 'preview-item'; p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand">(UPC: ${item.upc || 'N/A'}, Marca: ${item.brand || 'N/A'})</span> <span class="desc">${item.descripcion || '(Sin descripción)'}</span>`; focoPreview.appendChild(p); }); const searchTerm = searchFocoInput.value.toLowerCase().trim(); if (itemsToShow) { focoSearchResultsDiv.innerHTML = ''; if (itemsToShow.length > 0) { itemsToShow.slice(0, 20).forEach(item => { const p = document.createElement('div'); p.className = 'search-result-item'; p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand">(UPC: ${item.upc || 'N/A'}, Marca: ${item.brand || 'N/A'})</span> <span class="desc">${item.descripcion || '(Sin descripción)'}</span>`; p.addEventListener('click', () => openItemDetailModal(item.codigo)); focoSearchResultsDiv.appendChild(p); }); if (itemsToShow.length > 20) focoSearchResultsDiv.innerHTML += `<p>... y ${itemsToShow.length - 20} más.</p>`; } else if (searchTerm !== '') { focoSearchResultsDiv.innerHTML = 'No se encontraron ítems con ese término de búsqueda.'; } else { focoSearchResultsDiv.innerHTML = 'Ingrese un término para buscar...'; } } else if (searchTerm === '') { focoSearchResultsDiv.innerHTML = 'Ingrese un término para buscar...'; } }
-    function saveListaFocoToStorage(showAlert = true) { /* ... igual que v2.7.1 ... */ if (listaFoco.size === 0 && showAlert) { if (!confirm("La Lista Maestra está vacía. ¿Desea guardar una lista vacía?")) { return false; } } try { localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values()))); if (showAlert) alert(`Lista Maestra con ${listaFoco.size} ítems guardada en sesión local.`); return true; } catch (e) { if (showAlert) alert("Error al guardar la Lista Maestra en sesión local: " + e.message); return false; } }
-    function loadListaFocoFromStorage(showAlerts = true) { /* ... igual que v2.7.1 ... */ const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); if (data) { try { const itemsArray = JSON.parse(data); itemsArray.forEach(item => { const cleanedInternalCode = cleanCode(item.codigo); if (cleanedInternalCode) { listaFoco.set(cleanedInternalCode, { codigo: cleanedInternalCode, upc: item.upc || '', descripcion: item.descripcion || '', brand: item.brand || '' }); } }); if (showAlerts) alert(`Lista Maestra local con ${listaFoco.size} ítems cargada.`); } catch (e) { if (showAlerts) alert("Error al cargar Lista Maestra local: datos corruptos. Se borrará."); localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); } } else { if (showAlerts) alert("No hay Lista Maestra guardada localmente."); } rebuildUpcToCodigoMap(); }
-    searchFocoInput.addEventListener('input', () => { /* ... igual que v2.7.1 ... */ const searchTerm = searchFocoInput.value.toLowerCase().trim(); if (!searchTerm) { focoSearchResultsDiv.innerHTML = 'Ingrese un término para buscar...'; updateFocoPreviewAndSearch(); return; } const results = Array.from(listaFoco.values()).filter(item => item.codigo.toLowerCase().includes(searchTerm) || (item.upc && item.upc.toLowerCase().includes(searchTerm)) || (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) || (item.brand && item.brand.toLowerCase().includes(searchTerm)) ); updateFocoPreviewAndSearch(results); });
+    function saveListaFocoToStorage(showAlert = true) { /* ... igual que v2.8.1 ... */ if (listaFoco.size === 0 && showAlert && !confirm("La Maestra está vacía. ¿Guardar vacía?")) return false; try { localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values()))); if (showAlert) alert(`Maestra con ${listaFoco.size} ítems guardada localmente.`); return true; } catch (e) { if (showAlert) alert("Error al guardar Maestra local: " + e.message); return false; } }
+    function loadListaFocoFromStorage(showAlerts = true) { /* ... igual que v2.8.1 ... */ const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); if (data) { try { const itemsArray = JSON.parse(data); itemsArray.forEach(item => { const idItemLimpio = cleanCode(item.codigo); if (idItemLimpio) { listaFoco.set(idItemLimpio, { codigo: idItemLimpio, upc: item.upc||'', descripcion: item.descripcion||'', brand: item.brand||'', url: item.url||'' }); } }); if (showAlerts) alert(`Maestra local con ${listaFoco.size} ítems cargada.`); } catch (e) { if (showAlerts) alert("Error al cargar Maestra local: datos corruptos. Se borrará."); localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); } } else { if (showAlerts) alert("No hay Maestra guardada localmente."); } rebuildUpcToCodigoMap(); }
+    
+    searchFocoInput.addEventListener('input', () => {
+        const searchTerm = searchFocoInput.value.toLowerCase().trim();
+        if (!searchTerm) {
+            focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>';
+            // No llamamos a updateFocoPreviewAndSearch sin argumentos aquí, 
+            // ya que las estadísticas se actualizan cuando cambia listaFoco o al entrar a la vista.
+            return;
+        }
+        const results = Array.from(listaFoco.values()).filter(item =>
+            item.codigo.toLowerCase().includes(searchTerm) ||
+            (item.upc && item.upc.toLowerCase().includes(searchTerm)) ||
+            (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) ||
+            (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+            (item.url && item.url.toLowerCase().includes(searchTerm))
+        );
+        updateFocoPreviewAndSearch(results); // Pasamos los resultados para que se muestren
+    });
     btnVolverAlPanelDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
-
-    // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) Y MANEJO LISTA A VERIFICAR -----
-
-    /**
-     * Valida y agrega un código a la lista de verificación.
-     * El código debe ser puramente numérico y tener más de 5 dígitos.
-     * @param {string} codeString El código a validar.
-     * @returns {string|null|false} El código si fue añadido, null si ya existía y era válido, false si era inválido.
-     */
-    function addValidCodeToVerifyList(codeString) {
-        const trimmedCode = String(codeString).trim();
-        // Verifica que sea puramente numérico y tenga más de 5 dígitos
-        if (/^[0-9]+$/.test(trimmedCode) && trimmedCode.length > 5) {
-            if (!listaVerificar.has(trimmedCode)) {
-                listaVerificar.add(trimmedCode);
-                return trimmedCode; // Código válido y añadido
-            }
-            return null; // Código válido pero ya existente
-        }
-        return false; // Código inválido
-    }
-
-    function handleFileUpload(file, isExcel) {
-        if (!file) return;
-        verifyPreview.innerHTML = `Procesando "${file.name}"...`;
-        const codigoCol = parseInt(verifyCodigoColInput.value) - 1;
-        const delimiter = verifyCsvDelimiterInput.value;
-        const hasHeader = verifyHasHeaderCheckbox.checked;
-        const targetFileElement = isExcel ? verifyFileExcel : verifyFileTxtCsv;
-
-        if (codigoCol < 0) { alert("Columna Código debe ser >= 1."); verifyPreview.textContent = "Error: Config. columna."; resetFileInput(targetFileElement); return; }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target.result; 
-            let itemsFromFile = [];
-            try {
-                if (isExcel) itemsFromFile = processExcelDataForVerify(content, codigoCol, hasHeader);
-                else itemsFromFile = processTextCsvDataForVerify(content, codigoCol, hasHeader, delimiter);
-                
-                // No limpiar listaVerificar aquí si queremos acumular de múltiples fuentes antes de comparar.
-                // Si se quiere reemplazar, se llamaría a listaVerificar.clear() antes del bucle.
-                // Por ahora, la limpiaremos al inicio de la carga del archivo para que cada archivo sea una nueva lista.
-                listaVerificar.clear(); 
-                scannedCodesVerifyTextarea.value = ''; // También limpiar el log de escaneos si se carga un archivo nuevo
-
-                let addedCount = 0;
-                let omittedCount = 0;
-                itemsFromFile.forEach(codeFromFile => {
-                    const result = addValidCodeToVerifyList(codeFromFile);
-                    if (result !== false && result !== null) { // Si fue añadido (no inválido, no duplicado)
-                        addedCount++;
-                    } else if (result === false) {
-                        omittedCount++;
-                    }
-                });
-                if (omittedCount > 0) {
-                    alert(`${omittedCount} código(s) del archivo fueron omitidos por no ser numéricos de más de 5 dígitos.`);
-                }
-                updateVerifyPreview();
-
-            } catch (error) { alert(`Error procesando ${file.name}: ${error.message}`); verifyPreview.textContent = `Error al cargar ${file.name}.`; }
-            resetFileInput(targetFileElement);
-        };
-        reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); verifyPreview.textContent = `Error al leer ${file.name}.`; resetFileInput(targetFileElement); };
-        if (isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file);
-    }
-
-    function processTextCsvDataForVerify(content, codigoColIdx, hasHeader, delimiter = ',') { /* ... igual que v2.7.1 ... */ const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const codigo = parts[codigoColIdx] ? String(parts[codigoColIdx]).trim() : null; if (codigo) items.push(codigo); }); return items; }
-    function processExcelDataForVerify(arrayBuffer, codigoColIdx, hasHeader) { /* ... igual que v2.7.1 ... */ const items = []; const data = new Uint8Array(arrayBuffer); const workbook = XLSX.read(data, {type:"array"}); const firstSheetName = workbook.SheetNames[0]; if (!firstSheetName) throw new Error("Excel sin hojas."); const worksheet = workbook.Sheets[firstSheetName]; const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: true, defval:null }); const dataRows = hasHeader ? jsonData.slice(1) : jsonData; dataRows.forEach(row => { if (!row) return; const codigo = (row[codigoColIdx] !== null && row[codigoColIdx] !== undefined) ? String(row[codigoColIdx]).trim() : null; if (codigo) items.push(codigo); }); return items; }
-
+    // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) Y MANEJO LISTA A VERIFICAR (sin cambios funcionales desde v2.8.1) -----
+    function addValidCodeToVerifyList(idItem) { /* ... igual que v2.8.1 ... */ const trimmedIdItem = String(idItem).trim(); if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) { if (!listaVerificar.has(trimmedIdItem)) { listaVerificar.add(trimmedIdItem); return trimmedIdItem; } return null; } return false; }
+    function handleFileUpload(file, isExcel) { /* ... igual que v2.8.1 ... */ if (!file) return; verifyPreview.innerHTML = `Procesando "${file.name}"...`; const idItemCol = parseInt(verifyCodigoColInput.value) - 1; const delimiter = verifyCsvDelimiterInput.value; const hasHeader = verifyHasHeaderCheckbox.checked; const targetFileElement = isExcel ? verifyFileExcel : verifyFileTxtCsv; if (idItemCol < 0) { alert("Col. ID Ítem debe ser >= 1."); verifyPreview.textContent = "Error."; resetFileInput(targetFileElement); return; } const reader = new FileReader(); reader.onload = (e) => { const content = e.target.result; let itemsFromFile = []; try { if (isExcel) itemsFromFile = processExcelDataForVerify(content, idItemCol, hasHeader); else itemsFromFile = processTextCsvDataForVerify(content, idItemCol, hasHeader, delimiter); listaVerificar.clear(); scannedCodesVerifyTextarea.value = ''; let addedCount = 0, omittedCount = 0; itemsFromFile.forEach(idItemFromFile => { const result = addValidCodeToVerifyList(idItemFromFile); if (result !== false && result !== null) { addedCount++; } else if (result === false) { omittedCount++; } }); if (omittedCount > 0) alert(`${omittedCount} ID(s) de Ítem del archivo fueron omitidos (no numéricos > 5 dígitos).`); updateVerifyPreview(); } catch (error) { alert(`Error procesando ${file.name}: ${error.message}`); verifyPreview.textContent = `Error.`; } resetFileInput(targetFileElement); }; reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); verifyPreview.textContent = `Error.`; resetFileInput(targetFileElement); }; if (isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file); }
+    function processTextCsvDataForVerify(content, colIdx, hasHeader, delimiter = ',') { /* ... igual que v2.8.1 ... */ const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const val = parts[colIdx] ? String(parts[colIdx]).trim() : null; if (val) items.push(val); }); return items; }
+    function processExcelDataForVerify(arrayBuffer, colIdx, hasHeader) { /* ... igual que v2.8.1 ... */ const items = []; const data = new Uint8Array(arrayBuffer); const workbook = XLSX.read(data, {type:"array"}); const firstSheetName = workbook.SheetNames[0]; if (!firstSheetName) throw new Error("Excel sin hojas."); const worksheet = workbook.Sheets[firstSheetName]; const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: true, defval:null }); const dataRows = hasHeader ? jsonData.slice(1) : jsonData; dataRows.forEach(row => { if (!row) return; const val = (row[colIdx] !== null && row[colIdx] !== undefined) ? String(row[colIdx]).trim() : null; if (val) items.push(val); }); return items; }
     verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], false));
     verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], true));
-
-    function updateVerifyPreview() { verifyPreview.textContent = `Lista de Códigos Internos Válidos a Verificar: ${listaVerificar.size} ítems. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 5 ? '...' : ''}` : 'Vacía.'}`; }
-    
-    function collectVerifyDataFromInputs() {
-        // Limpiar listaVerificar y el textarea de escaneos antes de procesar el textarea principal
-        // para evitar duplicados si el usuario edita y vuelve a procesar.
-        // El flujo es: Panel Inicio -> Doble Control (aquí se limpia) -> Usuario ingresa datos -> Botón Cotejar
-        // Cuando se presiona "Cotejar", se recolectan los datos del textarea.
-        // Si el usuario vuelve y edita, la listaVerificar se reconstruye desde cero con el contenido actual del textarea.
-        listaVerificar.clear(); 
-        // No limpiar scannedCodesVerifyTextarea aquí, ya que este se acumula con los escaneos.
-        // Solo se limpian los códigos de listaVerificar provenientes del textarea.
-        // Los códigos de scannedCodesVerifyTextarea ya fueron añadidos a listaVerificar en onScanSuccessVerify
-
-        const textVerifyCodes = verifyTextarea.value.trim();
-        if (textVerifyCodes) {
-            textVerifyCodes.split(/\s+/).forEach(codeFromText => {
-                addValidCodeToVerifyList(codeFromText); // addValidCodeToVerifyList se encarga de no añadir duplicados
-            });
-        }
-        // Los códigos del scannedCodesVerifyTextarea ya están en listaVerificar si eran válidos.
-        // No es necesario reprocesarlos aquí, solo actualizar la vista.
-        updateVerifyPreview();
-    }
-
+    function updateVerifyPreview() { /* ... igual que v2.8.1 ... */ verifyPreview.textContent = `Lista de IDs de Ítem Válidos a Verificar: ${listaVerificar.size}. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 5 ? '...' : ''}` : 'Vacía.'}`; }
+    function collectVerifyDataFromInputs() { /* ... igual que v2.8.1 ... */ const textVerifyItems = verifyTextarea.value.trim(); if (textVerifyItems) { textVerifyItems.split(/\s+/).forEach(idItemFromText => { addValidCodeToVerifyList(idItemFromText); }); } updateVerifyPreview(); }
     btnVolverAlPanelDesdeDobleControl.addEventListener('click', () => navigateToView('panelInicio'));
-    btnCompare.addEventListener('click', () => {
-        collectVerifyDataFromInputs(); // Recolecta y filtra del textarea
-        // Los códigos de escaneo ya fueron filtrados y añadidos a listaVerificar al momento del escaneo.
-        if (listaVerificar.size === 0) { alert("Cargue o escanee ítems válidos (numéricos > 5 dígitos) para la Lista de Verificación."); return; }
-        if (listaFoco.size === 0) { alert("La Lista Maestra está vacía. Sincronice con GitHub."); navigateToView('panelInicio'); return; }
-        compareListsAndDisplayResults(); navigateToView('resultadosStep');
-    });
+    btnCompare.addEventListener('click', () => { /* ... igual que v2.8.1 ... */ collectVerifyDataFromInputs(); if (listaVerificar.size === 0) { alert("Cargue o escanee Ítems válidos para la Lista de Verificación."); return; } if (listaFoco.size === 0) { alert("La Lista Maestra está vacía. Sincronice con el repositorio."); navigateToView('panelInicio'); return; } compareListsAndDisplayResults(); navigateToView('resultadosStep'); });
+    function onScanSuccessVerify(decodedText, decodedResult){ /* ... igual que v2.8.1 ... */ const scannedUPC = cleanText(decodedText); if (scannedUPC) { if (upcToCodigoMap.size === 0 && listaFoco.size > 0) { alert("Advertencia: Su Lista Maestra no parece tener UPCs mapeados. El escaneo de UPC no encontrará Ítems."); } const idItem = upcToCodigoMap.get(scannedUPC); if (idItem) { const addedIdItem = addValidCodeToVerifyList(idItem); if (addedIdItem) { const currentScannedText = scannedCodesVerifyTextarea.value.trim(); scannedCodesVerifyTextarea.value = currentScannedText ? `${currentScannedText}\n${addedIdItem} (UPC: ${scannedUPC})` : `${addedIdItem} (UPC: ${scannedUPC})`; updateVerifyPreview(); } else if (addedIdItem === null) { alert(`El Ítem ${idItem} (UPC: ${scannedUPC}) ya está en la lista de verificación.`); } else { alert(`El ID de Ítem (${idItem}) asociado al UPC (${scannedUPC}) no cumple el formato (número > 5 dígitos) y será omitido.`); } } else { alert(`UPC escaneado (${scannedUPC}) no encontrado en la Lista Maestra o no tiene ID de Ítem asociado.`); } } }
+    startScanVerifyBtn.addEventListener('click', () => { /* ... igual que v2.8.1 ... */ if(scannerVerifierActive){if(html5QrCodeVerifier&&html5QrCodeVerifier.isScanning){html5QrCodeVerifier.stop().then(()=>{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}).catch(err=>console.error("Error deteniendo escáner:",err));}else{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}}else{if(location.protocol !=='https:'&&!['localhost','127.0.0.1'].includes(location.hostname)){alert('El escáner requiere HTTPS o localhost.');return;}scannerContainerVerify.classList.remove('hidden');startScanVerifyBtn.textContent='🛑 Detener Escáner';if(!html5QrCodeVerifier)html5QrCodeVerifier=new Html5Qrcode("readerVerify",{verbose:false});const config={fps:10,qrbox:{width:250,height:100},rememberLastUsedCamera:true,supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA]};html5QrCodeVerifier.start({facingMode:"environment"},config,onScanSuccessVerify,(error)=>{/*ignorar*/}).then(()=>scannerVerifierActive=true).catch(err=>{alert(`Error al iniciar escáner: ${err.message||err}`);scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';scannerVerifierActive=false;});}});
 
-    function onScanSuccessVerify(decodedText, decodedResult){
-        const scannedUPC = cleanText(decodedText);
-        if (scannedUPC) {
-            if (upcToCodigoMap.size === 0 && listaFoco.size > 0) { // Solo advertir si hay lista foco pero sin UPCs
-                alert("Advertencia: Su Lista Maestra actual no parece contener UPCs mapeados. El escaneo de UPC no encontrará coincidencias de códigos internos.");
-                // No retornamos, permitimos que intente por si acaso, pero el usuario está advertido.
-            }
-            const internalCode = upcToCodigoMap.get(scannedUPC);
+    // ----- COMPARACIÓN Y RESULTADOS (openItemDetailModal es de v2.8.1) -----
+    function compareListsAndDisplayResults(){ /* ... igual que v2.8.1 ... */ coincidencias.clear(); listaVerificar.forEach(idItemToVerify => { if(listaFoco.has(idItemToVerify)) { coincidencias.set(idItemToVerify, listaFoco.get(idItemToVerify)); } }); displayFinalResults(); }
+    function displayFinalResults(){ /* ... igual que v2.8.1 ... */ totalFocoSpan.textContent=listaFoco.size; totalVerifySpan.textContent=listaVerificar.size; totalMatchesSpan.textContent=coincidencias.size; outputResultsDiv.innerHTML=''; outputResultsDiv.className='list'; if(coincidencias.size===0){ outputResultsDiv.innerHTML='<p>No se encontraron Ítems concordantes.</p>'; }else{ coincidencias.forEach(item => { const cD = document.createElement("div"); cD.className="barcode-item-container"; cD.setAttribute('data-iditem', item.codigo); cD.addEventListener('click', () => openItemDetailModal(item.codigo)); const cP = document.createElement("p"); cP.className="barcode-item-code"; cP.textContent = item.codigo; cD.appendChild(cP); if(item.descripcion){ const dP=document.createElement("p"); dP.className="barcode-item-desc"; dP.textContent = item.descripcion; cD.appendChild(dP); } const upcBrandP = document.createElement("p"); upcBrandP.style.fontSize = "0.8em"; upcBrandP.style.textAlign = "center"; upcBrandP.textContent = `UPC: ${item.upc||'N/A'} | Marca: ${item.brand||'N/A'} | Img: ${item.url ? 'Sí' : 'No'}`; cD.appendChild(upcBrandP); const sD = document.createElement("div"); sD.className="barcode-item-svg"; const svg = document.createElementNS("http://www.w3.org/2000/svg","svg"); try{ JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); sD.appendChild(svg); } catch(e) { sD.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; } cD.appendChild(sD); outputResultsDiv.appendChild(cD); }); } }
+    function openItemDetailModal(idItem) { /* ... igual que v2.8.1 ... */ const item = listaFoco.get(idItem) || coincidencias.get(idItem); if (item) { modalItemCodigo.textContent = "ID Ítem: " + item.codigo; modalItemDescripcion.textContent = item.descripcion || 'No disponible'; modalItemUPC.textContent = item.upc || 'No disponible'; modalItemBrand.textContent = item.brand || 'No disponible'; modalItemUrl.textContent = item.url || 'No disponible'; const imageUrl = item.url ? item.url.trim() : ''; if (imageUrl) { modalItemImage.src = imageUrl; modalItemImage.alt = "Imagen de " + (item.descripcion || item.codigo); } else { modalItemImage.style.display = 'none'; modalItemImage.src = '#'; modalImageError.textContent = 'URL de imagen no especificada.'; modalImageError.style.display = 'block'; } itemDetailModal.classList.remove('hidden'); itemDetailModal.style.display = 'flex'; } }
+    function closeItemDetailModal() { /* ... igual que v2.8.1 ... */ itemDetailModal.classList.add('hidden'); itemDetailModal.style.display = 'none'; modalItemImage.src="#"; modalItemImage.style.display = 'none'; modalImageError.style.display = 'none'; }
+    layoutToggleResultsBtn.addEventListener('click',()=>{ /* ... igual que v2.8.1 ... */ outputResultsDiv.classList.toggle('grid');outputResultsDiv.classList.toggle('list');});
+    downloadCsvResultsBtn.addEventListener('click',()=>{ /* ... igual que v2.8.1 ... */ if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;} let cC="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; coincidencias.forEach(item=>{ const desc = `"${(item.descripcion||'').replace(/"/g,'""')}"`; const upcVal = `"${(item.upc||'').replace(/"/g,'""')}"`; const brandVal = `"${(item.brand||'').replace(/"/g,'""')}"`; const urlVal = `"${(item.url||'').replace(/"/g,'""')}"`; cC+=`${item.codigo},${upcVal},${desc},${brandVal},${urlVal}\n`; }); const b=new Blob([cC],{type:'text/csv;charset=utf-8;'}); const l=document.createElement("a");const u=URL.createObjectURL(b); l.setAttribute("href",u); l.setAttribute("download",`concordancias_v2.8.2_${new Date().toISOString().slice(0,10)}.csv`); document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);});
+    downloadPdfResultsBtn.addEventListener('click',async()=>{ /* ... igual que v2.8.1 ... */ if(coincidencias.size===0){alert("No hay Ítems concordantes para PDF.");return;} downloadPdfResultsBtn.textContent='Generando PDF...'; downloadPdfResultsBtn.disabled=true; const pC=document.createElement("div");pC.style.display="grid";pC.style.gridTemplateColumns="repeat(3, 1fr)";pC.style.gap="10px";pC.style.padding="10mm"; outputResultsDiv.querySelectorAll(".barcode-item-container").forEach(iEl=>{ const idItem = iEl.getAttribute('data-iditem'); const itemData = coincidencias.get(idItem); const cI=document.createElement('div'); cI.style.border="1px solid #ccc"; cI.style.padding="5px"; cI.style.pageBreakInside="avoid";cI.style.textAlign="center"; const codeP = document.createElement('p'); codeP.textContent = `ID Ítem: ${itemData.codigo}`; codeP.style.fontWeight="bold"; const descP = document.createElement('p'); descP.textContent = `Desc: ${itemData.descripcion || 'N/A'}`; const upcP = document.createElement('p'); upcP.textContent = `UPC: ${itemData.upc || 'N/A'}`; const brandP = document.createElement('p'); brandP.textContent = `Marca: ${itemData.brand || 'N/A'}`; const urlP = document.createElement('p'); urlP.textContent = `ImgURL: ${itemData.url || 'N/A'}`; cI.appendChild(codeP); cI.appendChild(descP); cI.appendChild(upcP); cI.appendChild(brandP); cI.appendChild(urlP); const svgOriginal = iEl.querySelector(".barcode-item-svg svg"); if (svgOriginal) { const svgClone = svgOriginal.cloneNode(true); const sD = document.createElement("div"); sD.style.marginTop="5px"; sD.appendChild(svgClone); cI.appendChild(sD); } pC.appendChild(cI); }); if(pC.children.length===0){alert("No hay elementos válidos para PDF.");downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;return;} const opt={margin:10,filename:`concordancias_v2.8.2_${new Date().toISOString().slice(0,10)}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}; try{await html2pdf().from(pC).set(opt).save();}catch(error){console.error("Error PDF:", error); alert("Error al generar PDF.");} finally{downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;} });
 
-            if (internalCode) { // internalCode viene de listaFoco, ya "limpio" estructuralmente
-                const addedCode = addValidCodeToVerifyList(internalCode); // Aplica el filtro numérico y de longitud
-                
-                if (addedCode) { // Código válido y recién añadido a listaVerificar
-                    const currentScannedText = scannedCodesVerifyTextarea.value.trim();
-                    scannedCodesVerifyTextarea.value = currentScannedText ? `${currentScannedText}\n${addedCode} (UPC: ${scannedUPC})` : `${addedCode} (UPC: ${scannedUPC})`;
-                    updateVerifyPreview();
-                } else if (addedCode === null) { // Código válido pero ya estaba en listaVerificar
-                    alert(`El código interno ${internalCode} (UPC: ${scannedUPC}) ya está en la lista de verificación.`);
-                } else { // Código inválido (false)
-                    alert(`El código interno (${internalCode}) asociado al UPC (${scannedUPC}) no cumple el formato (número > 5 dígitos) y será omitido.`);
-                }
-            } else {
-                alert(`UPC escaneado (${scannedUPC}) no encontrado en la Lista Maestra o no tiene código interno asociado.`);
-            }
-        }
-    }
-    startScanVerifyBtn.addEventListener('click', () => { /* ... igual que v2.7.1 ... */ if(scannerVerifierActive){if(html5QrCodeVerifier&&html5QrCodeVerifier.isScanning){html5QrCodeVerifier.stop().then(()=>{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}).catch(err=>console.error("Error deteniendo escáner:",err));}else{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}}else{if(location.protocol !=='https:'&&!['localhost','127.0.0.1'].includes(location.hostname)){alert('El escáner requiere HTTPS o localhost.');return;}scannerContainerVerify.classList.remove('hidden');startScanVerifyBtn.textContent='🛑 Detener Escáner';if(!html5QrCodeVerifier)html5QrCodeVerifier=new Html5Qrcode("readerVerify",{verbose:false});const config={fps:10,qrbox:{width:250,height:100},rememberLastUsedCamera:true,supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA]};html5QrCodeVerifier.start({facingMode:"environment"},config,onScanSuccessVerify,(error)=>{/*ignorar*/}).then(()=>scannerVerifierActive=true).catch(err=>{alert(`Error al iniciar escáner: ${err.message||err}`);scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';scannerVerifierActive=false;});}});
-
-
-    // ----- COMPARACIÓN Y RESULTADOS (sin cambios) -----
-    function compareListsAndDisplayResults(){ /* ... igual que v2.7.1 ... */ coincidencias.clear(); listaVerificar.forEach(internalCodeToVerify => { if(listaFoco.has(internalCodeToVerify)) { coincidencias.set(internalCodeToVerify, listaFoco.get(internalCodeToVerify)); } }); displayFinalResults(); }
-    function displayFinalResults(){ /* ... igual que v2.7.1 ... */ totalFocoSpan.textContent=listaFoco.size; totalVerifySpan.textContent=listaVerificar.size; totalMatchesSpan.textContent=coincidencias.size; outputResultsDiv.innerHTML=''; outputResultsDiv.className='list'; if(coincidencias.size===0){ outputResultsDiv.innerHTML='<p>No se encontraron ítems concordantes.</p>'; }else{ coincidencias.forEach(item => { const cD = document.createElement("div"); cD.className="barcode-item-container"; cD.setAttribute('data-codigo', item.codigo); cD.addEventListener('click', () => openItemDetailModal(item.codigo)); const cP = document.createElement("p"); cP.className="barcode-item-code"; cP.textContent = item.codigo; cD.appendChild(cP); if(item.descripcion){ const dP = document.createElement("p"); dP.className="barcode-item-desc"; dP.textContent = item.descripcion; cD.appendChild(dP); } const upcBrandP = document.createElement("p"); upcBrandP.style.fontSize = "0.8em"; upcBrandP.style.textAlign = "center"; upcBrandP.textContent = `UPC: ${item.upc || 'N/A'} | Marca: ${item.brand || 'N/A'}`; cD.appendChild(upcBrandP); const sD = document.createElement("div"); sD.className="barcode-item-svg"; const svg = document.createElementNS("http://www.w3.org/2000/svg","svg"); try{ JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); sD.appendChild(svg); } catch(e) { sD.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; } cD.appendChild(sD); outputResultsDiv.appendChild(cD); }); } }
-    function openItemDetailModal(codigo) { /* ... igual que v2.7.1 ... */ const item = listaFoco.get(codigo) || coincidencias.get(codigo); if (item) { modalItemCodigo.textContent = item.codigo; modalItemDescripcion.textContent = item.descripcion || 'No disponible'; modalItemUPC.textContent = item.upc || 'No disponible'; modalItemBrand.textContent = item.brand || 'No disponible'; itemDetailModal.classList.remove('hidden'); itemDetailModal.style.display = 'flex'; } }
-    function closeItemDetailModal() { /* ... igual que v2.7.1 ... */ itemDetailModal.classList.add('hidden'); itemDetailModal.style.display = 'none'; }
-    layoutToggleResultsBtn.addEventListener('click',()=>{ /* ... igual que v2.7.1 ... */ outputResultsDiv.classList.toggle('grid');outputResultsDiv.classList.toggle('list');});
-    downloadCsvResultsBtn.addEventListener('click',()=>{ /* ... igual que v2.7.1 ... */ if(coincidencias.size===0){alert("No hay ítems concordantes.");return;} let cC="CodigoInterno,UPC,Descripcion,Marca\n"; coincidencias.forEach(item=>{ const desc = `"${(item.descripcion||'').replace(/"/g,'""')}"`; const upcVal = `"${(item.upc||'').replace(/"/g,'""')}"`; const brandVal = `"${(item.brand||'').replace(/"/g,'""')}"`; cC+=`${item.codigo},${upcVal},${desc},${brandVal}\n`; }); const b=new Blob([cC],{type:'text/csv;charset=utf-8;'}); const l=document.createElement("a");const u=URL.createObjectURL(b); l.setAttribute("href",u); l.setAttribute("download",`concordancias_v2.7.2_${new Date().toISOString().slice(0,10)}.csv`); document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);});
-    downloadPdfResultsBtn.addEventListener('click',async()=>{ /* ... igual que v2.7.1 ... */ if(coincidencias.size===0){alert("No hay ítems concordantes para PDF.");return;} downloadPdfResultsBtn.textContent='Generando PDF...'; downloadPdfResultsBtn.disabled=true; const pC=document.createElement("div");pC.style.display="grid";pC.style.gridTemplateColumns="repeat(3, 1fr)";pC.style.gap="10px";pC.style.padding="10mm"; outputResultsDiv.querySelectorAll(".barcode-item-container").forEach(iEl=>{ const codigo = iEl.getAttribute('data-codigo'); const itemData = coincidencias.get(codigo); const cI=document.createElement('div'); cI.style.border="1px solid #ccc"; cI.style.padding="5px"; cI.style.pageBreakInside="avoid";cI.style.textAlign="center"; const codeP = document.createElement('p'); codeP.textContent = `Código: ${itemData.codigo}`; codeP.style.fontWeight="bold"; const descP = document.createElement('p'); descP.textContent = `Desc: ${itemData.descripcion || 'N/A'}`; const upcP = document.createElement('p'); upcP.textContent = `UPC: ${itemData.upc || 'N/A'}`; const brandP = document.createElement('p'); brandP.textContent = `Marca: ${itemData.brand || 'N/A'}`; cI.appendChild(codeP); cI.appendChild(descP); cI.appendChild(upcP); cI.appendChild(brandP); const svgOriginal = iEl.querySelector(".barcode-item-svg svg"); if (svgOriginal) { const svgClone = svgOriginal.cloneNode(true); const sD = document.createElement("div"); sD.style.marginTop="5px"; sD.appendChild(svgClone); cI.appendChild(sD); } pC.appendChild(cI); }); if(pC.children.length===0){alert("No hay elementos válidos para PDF.");downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;return;} const opt={margin:10,filename:`concordancias_v2.7.2_${new Date().toISOString().slice(0,10)}.pdf`,image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}; try{await html2pdf().from(pC).set(opt).save();}catch(error){console.error("Error PDF:", error); alert("Error al generar PDF.");} finally{downloadPdfResultsBtn.textContent='📄 Descargar PDF';downloadPdfResultsBtn.disabled=false;} });
-
-    // ----- BOTONES PANEL INICIO (sin cambios) -----
-    btnIniciarDobleControlDesdePanel.addEventListener('click', () => { /* ... igual que v2.7.1 ... */ if (listaFoco.size === 0) { alert("No hay Lista Maestra cargada. Sincronice con GitHub primero."); return; } listaVerificar.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); navigateToView('dobleControlStep'); });
+    // ----- BOTONES PANEL INICIO (sin cambios funcionales desde v2.8.1) -----
+    btnIniciarDobleControlDesdePanel.addEventListener('click', () => { if (listaFoco.size === 0) { alert("No hay Lista Maestra cargada. Sincronice con el repositorio."); return; } listaVerificar.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); navigateToView('dobleControlStep'); });
     btnGestionMaestraDesdePanel.addEventListener('click', () => navigateToView('gestionMaestraStep'));
-    btnBorrarMaestraStorage.addEventListener('click', () => { /* ... igual que v2.7.1 ... */ if (confirm("¿Está seguro de que desea borrar la Lista Maestra guardada localmente? \nSe intentará resincronizar con GitHub.")) { localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); listaFocoCacheadaLocalmente.clear(); upcToCodigoMap.clear(); alert("Lista Maestra local borrada. Se intentará resincronizar con GitHub."); checkInitialState(); } });
+    btnBorrarMaestraStorage.addEventListener('click', () => { if (confirm("¿Seguro que desea borrar la Maestra guardada localmente? \nSe intentará resincronizar con el repositorio.")) { localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); listaFocoCacheadaLocalmente.clear(); upcToCodigoMap.clear(); alert("Maestra local borrada. Se resincronizará con el repositorio."); checkInitialState(); } });
 
-    // ----- NUEVA VERIFICACIÓN (sin cambios) -----
-    btnNewVerification.addEventListener('click', () => { /* ... igual que v2.7.1 ... */ listaVerificar.clear(); coincidencias.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); outputResultsDiv.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>'; totalVerifySpan.textContent = '0'; totalMatchesSpan.textContent = '0'; if(scannerVerifierActive && html5QrCodeVerifier && html5QrCodeVerifier.isScanning) { html5QrCodeVerifier.stop().catch(err => console.error("Error deteniendo escáner:", err)); scannerVerifierActive = false; scannerContainerVerify.classList.add('hidden'); startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo'; } navigateToView('panelInicio'); });
+    // ----- NUEVA VERIFICACIÓN (sin cambios funcionales desde v2.8.1) -----
+    btnNewVerification.addEventListener('click', () => { listaVerificar.clear(); coincidencias.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); outputResultsDiv.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>'; totalVerifySpan.textContent = '0'; totalMatchesSpan.textContent = '0'; if(scannerVerifierActive && html5QrCodeVerifier && html5QrCodeVerifier.isScanning) { html5QrCodeVerifier.stop().catch(err => console.error("Error deteniendo escáner:", err)); scannerVerifierActive = false; scannerContainerVerify.classList.add('hidden'); startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo'; } navigateToView('panelInicio'); });
 
   </script>
 </body>
