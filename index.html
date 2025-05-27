@@ -3,21 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Doble Control de Ítems v2.8.9 (XLSX Estilo Reporte)</title>
+  <title>Sistema de Doble Control de Ítems v2.8.9 (XLSX Estilo PDF)</title>
   <style>
-    /* Estilos Generales para el Reporte */
+    /* ... (Estilos CSS de la v2.8.8 se mantienen) ... */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 20mm; /* Margen predefinido para reportes (20mm alrededor) */
-      padding-top: 15mm; /* Espacio adicional en la parte superior para el título */
+      margin: 0;
+      padding: 0;
       background-color: #f4f7f6;
       color: #333;
       line-height: 1.6;
     }
     .container {
-      max-width: 95%; /* Ajustar al ancho de la página con márgenes */
-      margin: 0 auto;
-      padding: 10mm;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 15px;
       background-color: #fff;
       box-shadow: 0 0 15px rgba(0,0,0,0.1);
       border-radius: 8px;
@@ -25,29 +25,24 @@
     h1, h2, h3 {
       color: #2c3e50;
       text-align: center;
-      page-break-after: avoid; /* Evita cortes después de los títulos */
     }
-    h1 { margin-bottom: 5mm; font-size: 24pt;} /* Ajustar tamaño de fuente en puntos para impresión */
-    h2 { margin-top: 0; margin-bottom: 3mm; border-bottom: 1px solid #eee; padding-bottom: 2mm; font-size: 18pt;}
-    h3 { margin-bottom: 2mm; font-size: 14pt; text-align: left;}
+    h1 { margin-bottom: 30px; font-size: 1.8em;}
+    h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.5em;}
+    h3 { margin-bottom: 15px; font-size: 1.2em; text-align: left;}
 
     .section {
       border: 1px solid #e0e0e0;
-      padding: 10mm;
-      margin-bottom: 10mm;
+      padding: 20px;
+      margin-bottom: 25px;
       border-radius: 8px;
       background-color: #fdfdfd;
-      page-break-inside: avoid; /* Evita que las secciones se corten */
-    }
-    #panelInicio {
-        page-break-before: auto; /* Evita un salto de página al inicio */
     }
     .hidden { display: none !important; }
     .panel-inicio-info {
-        font-size: 11pt;
+        font-size: 1.1em;
         color: #27ae60; /* Verde para mensaje positivo */
-        margin-bottom: 10mm;
-        padding: 5mm;
+        margin-bottom: 20px;
+        padding: 15px;
         background-color: #e8f8f0;
         border-left: 5px solid #27ae60;
         border-radius: 4px;
@@ -56,44 +51,44 @@
     .panel-inicio-info.error { color: #c0392b; background-color: #fdedec; border-left-color: #c0392b;}
     .panel-inicio-info.info { color: #2980b9; background-color: #eaf2f8; border-left-color: #2980b9;}
 
-    .panel-inicio-actions button { margin-top: 5mm; width: 100%; box-sizing: border-box; padding: 8px;}
+    .panel-inicio-actions button { margin-top: 10px; width: 100%; box-sizing: border-box; padding: 12px;}
 
 
-    .input-group { margin-bottom: 5mm; }
+    .input-group { margin-bottom: 20px; }
     .input-group label, .file-options label {
       display: block;
-      margin-bottom: 3mm;
+      margin-bottom: 8px;
       font-weight: bold;
       color: #555;
-      font-size: 10pt;
+      font-size: 0.95em;
     }
     textarea, input[type="file"], select, input[type="text"], input[type="search"], input[type="number"] {
       width: 100%;
-      padding: 3mm;
-      margin-bottom: 3mm;
+      padding: 10px;
+      margin-bottom: 10px;
       border: 1px solid #ccc;
       border-radius: 4px;
       box-sizing: border-box;
-      font-size: 10pt;
+      font-size: 1rem;
     }
-    textarea { min-height: 50px; }
-    .file-options { border: 1px solid #ddd; padding: 5mm; margin-top: -3mm; margin-bottom:5mm; border-radius: 0 0 4px 4px; background-color: #f9f9f9;}
-    .input-columns { display: flex; gap: 5mm; align-items: flex-end; }
+    textarea { min-height: 100px; }
+    .file-options { border: 1px solid #ddd; padding: 15px; margin-top: -10px; margin-bottom:15px; border-radius: 0 0 4px 4px; background-color: #f9f9f9;}
+    .input-columns { display: flex; gap: 15px; align-items: flex-end; }
     .input-columns > div { flex: 1; }
-    .input-columns input[type="checkbox"] { width: auto; margin-right: 2mm; vertical-align: middle;}
+    .input-columns input[type="checkbox"] { width: auto; margin-right: 5px; vertical-align: middle;}
 
 
     button {
       background-color: #3498db; /* Azul principal */
       color: white;
-      padding: 3mm 5mm;
+      padding: 10px 18px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 11pt;
+      font-size: 1rem;
       transition: background-color 0.3s ease;
-      margin-right: 3mm;
-      margin-top: 2mm;
+      margin-right: 8px;
+      margin-top: 5px;
     }
     button:hover { background-color: #2980b9; /* Azul más oscuro */ }
     button.secondary { background-color: #95a5a6; /* Gris secundario */ }
@@ -105,59 +100,59 @@
     .preview-area, .search-results-area {
       background-color: #ecf0f1;
       border: 1px dashed #bdc3c7;
-      padding: 3mm;
-      min-height: 30px;
-      margin-top:3mm;
-      font-size: 9pt;
+      padding: 12px;
+      min-height: 60px;
+      margin-top:10px;
+      font-size: 0.9em;
       border-radius: 4px;
       word-break: break-word;
     }
-    #focoPreview {
-        max-height: none;
+    #focoPreview { 
+        max-height: none; 
     }
     #focoPreview ul { list-style-type: none; padding-left: 0; }
-    #focoPreview li { margin-bottom: 1mm; font-size: 10pt; }
+    #focoPreview li { margin-bottom: 5px; font-size: 0.95em; }
     #focoPreview strong { color: #34495e; }
 
 
-    .search-results-area { max-height: 100px; overflow-y: auto; }
+    .search-results-area { max-height: 200px; overflow-y: auto; }
     .preview-item, .search-result-item {
-        padding: 1mm 1mm;
+        padding: 6px 3px;
         border-bottom: 1px solid #dde;
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: center; 
     }
     .preview-item:last-child, .search-result-item:last-child { border-bottom: none; }
-    .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; flex-shrink: 0; margin-right: 3mm;}
-    .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 3mm; font-style: italic; text-align: right; flex-grow: 1; }
-    .preview-item .upc-brand-url, .search-result-item .upc-brand-url { font-size: 8pt; color: #555; margin-left: 3mm; }
+    .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; flex-shrink: 0; margin-right: 10px;}
+    .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 10px; font-style: italic; text-align: right; flex-grow: 1; }
+    .preview-item .upc-brand-url, .search-result-item .upc-brand-url { font-size: 0.85em; color: #555; margin-left: 10px; }
 
 
     .results-summary {
-      margin-bottom: 10mm;
+      margin-bottom: 25px;
       background-color: #eaf5ff;
-      padding: 5mm;
+      padding: 18px;
       border-radius: 6px;
       border: 1px solid #c1d9ed;
     }
-    .results-summary p { margin: 2mm 0; font-size: 11pt; }
+    .results-summary p { margin: 8px 0; font-size: 1.05em; }
     .results-summary strong { color: #2980b9; }
-
-    #confirmacionCambiosStep .preview-area { max-height: 60px; margin-bottom: 3mm; background-color: #fff; overflow-y: auto;}
-    #confirmacionCambiosStep h3 { font-size: 11pt; margin-bottom:2mm; border-bottom: 1px solid #eee; padding-bottom: 2mm;}
-    #confirmacionCambiosStep li { font-size: 9pt; padding: 1mm 0; border-bottom: 1px dotted #eee; }
+    
+    #confirmacionCambiosStep .preview-area { max-height: 120px; margin-bottom: 10px; background-color: #fff; overflow-y: auto;}
+    #confirmacionCambiosStep h3 { font-size: 1.1em; margin-bottom:5px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    #confirmacionCambiosStep li { font-size: 0.9em; padding: 3px 0; border-bottom: 1px dotted #eee; }
     #confirmacionCambiosStep li:last-child { border-bottom: none; }
-    #confirmacionCambiosStep li s { color: #e74c3c; }
-    #confirmacionCambiosStep li .field-change { display: block; margin-left: 5mm; font-size: 9pt;}
+    #confirmacionCambiosStep li s { color: #e74c3c; } 
+    #confirmacionCambiosStep li .field-change { display: block; margin-left: 15px; font-size: 0.9em;}
 
 
-    #outputResults.list .barcode-item-container { margin: 3mm 0; background: #fff; padding:3mm; border:1px solid #e0e0e0; border-radius:5px; cursor: pointer; page-break-inside: avoid; }
-    #outputResults.grid .barcode-item-container { background: #fff; padding:3mm; border:1px solid #e0e0e0; border-radius:5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer; page-break-inside: avoid; }
-    #outputResults.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 5mm; }
-
-    .barcode-item-code { font-weight: bold; text-align: center; margin-bottom: 1mm; font-size: 10pt; color: #333; }
-    .barcode-item-desc { text-align: center; margin-bottom: 2mm; font-size: 9pt; color: #555; font-style: italic; }
+    #outputResults.list .barcode-item-container { margin: 10px 0; background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; cursor: pointer;}
+    #outputResults.grid .barcode-item-container { background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer;}
+    #outputResults.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+    
+    .barcode-item-code { font-weight: bold; text-align: center; margin-bottom: 4px; font-size: 1em; color: #333; }
+    .barcode-item-desc { text-align: center; margin-bottom: 6px; font-size: 0.9em; color: #555; font-style: italic; }
     .barcode-item-svg svg { max-width: 100%; height: auto; display: block; margin: 0 auto;}
 
     #itemDetailModal {
@@ -166,30 +161,112 @@
       align-items: center; justify-content: center;
     }
     #itemDetailModal .modal-content {
-      background-color: #fefefe; margin: auto; padding: 15px; border: 1px solid #888;
-      width: 90%; max-width: 800px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      text-align: center;
+      background-color: #fefefe; margin: auto; padding: 25px; border: 1px solid #888;
+      width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-align: center; 
       position: relative;
     }
     #itemDetailModal .modal-content h3 { margin-top: 0; color: #3498db; }
-    #itemDetailModal .modal-content p { margin: 5px 0; font-size: 11pt; text-align: left;}
+    #itemDetailModal .modal-content p { margin: 8px 0; font-size: 1.1em; text-align: left;}
     #itemDetailModal .modal-content strong { color: #555;}
-    #itemDetailModal #modalItemImageContainer { margin-top: 5mm; margin-bottom: 5mm; min-height: 50px; }
-    #itemDetailModal #modalItemImage { max-width: 100%; max-height: 400px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain; }
+    #itemDetailModal #modalItemImageContainer { margin-top: 15px; margin-bottom: 15px; min-height: 50px; }
+    #itemDetailModal #modalItemImage { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain; }
     #itemDetailModal .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; top: 10px; right: 20px; }
     #itemDetailModal .close-modal:hover, #itemDetailModal .close-modal:focus { color: black; text-decoration: none; }
 
-    #scannerContainerVerify { max-width: 400px; margin: 5mm auto; border: 1px solid #ccc; padding: 2mm; border-radius: 4px;}
+    #scannerContainerVerify { max-width: 400px; margin: 15px auto; border: 1px solid #ccc; padding: 5px; border-radius: 4px;}
     #readerVerify { width: 100%; }
 
     footer {
       text-align: center;
-      margin-top: 10mm;
-      padding: 5mm;
-      font-size: 9pt;
+      margin-top: 30px;
+      padding: 20px;
+      font-size: 0.9em;
       color: #777;
       border-top: 1px solid #eee;
     }
+
+    /* Estilos para la exportación a PDF */
+    .pdf-export-container {
+        padding: 10mm; /* Espacio interno para el contenido del PDF, si es necesario */
+    }
+    .pdf-export-container h1 { /* Título principal del documento en el PDF */
+        text-align: center;
+        font-size: 1.6em;
+        margin-bottom: 10mm; 
+        color: #2c3e50;
+    }
+    .pdf-export-container #resultadosStep h2, 
+    .pdf-export-container .results-section-title { /* Título de la sección de resultados */
+        text-align: center;
+        font-size: 1.4em;
+        margin-top: 0; 
+        margin-bottom: 8mm;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 5mm;
+        color: #2c3e50;
+    }
+    .pdf-export-container .results-summary {
+        margin-bottom: 8mm;
+        border: 1px solid #c1d9ed; /* Mantiene el borde original */
+        background-color: #eaf5ff; /* Mantiene el fondo original */
+        padding: 15px;
+        border-radius: 6px;
+    }
+    .pdf-export-container .results-summary p {
+        font-size: 1em; /* Ajusta si es necesario para PDF */
+    }
+    .pdf-export-container .detail-items-title { /* Para el H3 "Detalle de Ítems..." */
+        text-align: center;
+        font-size: 1.2em;
+        margin-top: 5mm;
+        margin-bottom: 5mm;
+        color: #2c3e50;
+    }
+
+    .pdf-export-container .barcode-item-container {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important; /* Propiedad más nueva */
+        padding: 10px; /* Aumenta padding para mejor visualización en PDF */
+        margin-bottom: 7mm; /* Espacio entre ítems en PDF */
+        border: 1px solid #ddd; /* Borde más sutil para PDF */
+        border-radius: 4px;
+        background-color: #fff; /* Fondo blanco explícito */
+    }
+    .pdf-export-container .barcode-item-code {
+        font-size: 1em; /* Tamaño de fuente para código en PDF */
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    .pdf-export-container .barcode-item-desc {
+        font-size: 0.9em; /* Tamaño de fuente para descripción en PDF */
+        text-align: center;
+        margin-bottom: 6px;
+        font-style: italic;
+    }
+    .pdf-export-container .barcode-item-svg svg {
+        max-width: 80%; /* Limita el ancho del código de barras */
+        height: 45px; /* Altura fija para consistencia */
+        display: block;
+        margin: 5px auto; /* Centra el SVG */
+    }
+     /* Ocultar botones en el clon del contenido para PDF */
+    .pdf-export-container button {
+        display: none !important;
+    }
+
+    /* Estilos para @media print, si html2pdf usa modo 'css' y los recoge */
+    @media print {
+      .barcode-item-container {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .no-print-pdf {
+        display: none !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -204,14 +281,14 @@
       <div class="panel-inicio-actions">
         <button id="btnIniciarDobleControlDesdePanel" disabled>➡️ Iniciar Doble Control</button>
         <button id="btnGestionMaestraDesdePanel" class="secondary" disabled>🔎 Ver Lista Maestra y Buscar</button>
-        <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 10mm;">🗑️ Borrar Maestra Local y Resincronizar</button>
+        <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 20px;">🗑️ Borrar Maestra Local y Resincronizar</button>
       </div>
     </div>
 
     <div id="confirmacionCambiosStep" class="section hidden">
       <h2>Confirmar Cambios de Lista Maestra (desde Repositorio)</h2>
       <p>Se han detectado los siguientes cambios respecto a tu lista local guardada:</p>
-      <div style="display: grid; grid-template-columns: 1fr; gap: 5mm; margin-bottom: 5mm;">
+      <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
           <div id="resumenNuevos"><h3>Nuevos Ítems:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
           <div id="resumenEliminados"><h3>Ítems Eliminados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
           <div id="resumenModificados"><h3>Ítems Modificados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
@@ -229,8 +306,8 @@
         <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción, marca o URL de imagen):</label>
         <input type="text" id="searchFocoInput" placeholder="Ingrese término de búsqueda...">
       </div>
-      <div id="focoSearchResults" class="search-results-area" style="margin-bottom: 5mm;">Resultados de la búsqueda aparecerán aquí...</div>
-
+      <div id="focoSearchResults" class="search-results-area" style="margin-bottom: 20px;">Resultados de la búsqueda aparecerán aquí...</div>
+      
       <div id="focoPreview" class="preview-area">
         <h3>Estadísticas de la Lista Maestra</h3>
         <ul id="masterListStats">
@@ -240,19 +317,19 @@
             <li>Ítems sin Descripción: <strong id="statNoDescription">0</strong></li>
             <li>Ítems sin Marca: <strong id="statNoBrand">0</strong></li>
         </ul>
-        <p style="font-size:9pt; margin-top:5mm; text-align:center;">
+        <p style="font-size:0.8em; margin-top:15px; text-align:center;">
             Utiliza la barra de búsqueda de arriba para encontrar ítems específicos.
         </p>
       </div>
 
-      <div style="margin-top:5mm; text-align:center;">
+      <div style="margin-top:20px; text-align:center;">
         <button id="btnVolverAlPanelDesdeGestion" class="secondary">↩️ Volver al Panel de Inicio</button>
       </div>
     </div>
 
     <div id="dobleControlStep" class="section hidden">
       <h2>Paso 2: Cargar Lista de Ítems para Doble Control</h2>
-      <p style="font-size:9pt; color: #555;">
+      <p style="font-size:0.9em; color: #555;">
         Puede escanear el UPC del artículo físico (si su Lista Maestra contiene UPCs) o ingresar el ID del Ítem.
         Solo se considerarán IDs de Ítem **numéricos de más de 5 dígitos**.
       </p>
@@ -262,10 +339,10 @@
       </div>
        <div class="input-group">
         <label>Subir archivo con IDs de Ítem a verificar:</label>
-        <p style="font-size:8pt; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Solo se considerarán IDs numéricos de más de 5 dígitos.</p>
+        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Solo se considerarán IDs numéricos de más de 5 dígitos.</p>
         <div class="input-columns">
-            <div><label for="verifyFileTxtCsv" style="font-size:8pt;">Texto (.txt, .csv):</label><input type="file" id="verifyFileTxtCsv" accept=".txt,.csv"></div>
-            <div><label for="verifyFileExcel" style="font-size:8pt;">Excel (.xlsx, .xls):</label><input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
+            <div><label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label><input type="file" id="verifyFileTxtCsv" accept=".txt,.csv"></div>
+            <div><label for="verifyFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label><input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
         </div>
         <div class="file-options">
             <div class="input-columns">
@@ -278,11 +355,11 @@
       <div class="input-group">
         <button id="startScanVerifyBtn">📷 Escanear UPC de Artículo</button>
         <div id="scannerContainerVerify" class="hidden"><div id="readerVerify"></div></div>
-        <label for="scannedCodesVerifyTextarea" style="margin-top:3mm;">IDs de Ítem válidos identificados (desde UPC escaneado o ingresado):</label>
+        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">IDs de Ítem válidos identificados (desde UPC escaneado o ingresado):</label>
         <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los IDs de Ítem válidos aparecerán aquí..." readonly></textarea>
       </div>
       <div id="verifyPreview" class="preview-area">Aún no se han cargado Ítems a verificar.</div>
-      <hr style="margin: 5mm 0;">
+      <hr style="margin: 20px 0;">
       <button id="btnVolverAlPanelDesdeDobleControl" class="secondary">&larr; Volver al Panel de Inicio</button>
       <button id="btnCompare">Verificar y Mostrar Ítems Concordantes &rarr;</button>
     </div>
@@ -299,7 +376,8 @@
           <button id="layoutToggleResultsBtn">📊 Cambiar Vista</button>
           <button id="downloadXlsxResultsBtn" class="secondary">📊 Descargar XLSX</button>
           <button id="downloadCsvResultsBtn" class="secondary">💾 Descargar CSV de Concordancias</button>
-          <button id="generatePdfReportBtn" class="secondary">📄 Generar Reporte PDF</button> </div>
+          <button id="downloadPdfResultsBtn">📄 Generar PDF</button> {/* */}
+      </div>
       <div id="outputResults" class="list"><p>No se han encontrado coincidencias o no se ha realizado la verificación.</p></div>
       <hr style="margin: 20px 0;">
       <button id="btnNewVerification">✨ Iniciar Nuevo Doble Control</button>
@@ -334,14 +412,14 @@
     const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv';
 
     // ----- ESTADO DE LA APLICACIÓN -----
-    let listaFoco = new Map();
+    let listaFoco = new Map(); 
     let upcToCodigoMap = new Map();
-    let listaVerificar = new Set();
+    let listaVerificar = new Set(); 
     let coincidencias = new Map();
     const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.8.9';
     let listaFocoCacheadaLocalmente = new Map();
 
-    // ----- SELECTORES DOM (igual que v2.8.8) -----
+    // ----- SELECTORES DOM (ACTUALIZADO) -----
     const panelInicioDiv = document.getElementById('panelInicio');
     const modalItemImage = document.getElementById('modalItemImage');
     const modalImageError = document.getElementById('modalImageError');
@@ -365,7 +443,7 @@
     const btnBorrarMaestraStorage = document.getElementById('btnBorrarMaestraStorage');
     const searchFocoInput = document.getElementById('searchFocoInput');
     const focoSearchResultsDiv = document.getElementById('focoSearchResults');
-    const focoPreview = document.getElementById('focoPreview');
+    const focoPreview = document.getElementById('focoPreview'); 
     const btnVolverAlPanelDesdeGestion = document.getElementById('btnVolverAlPanelDesdeGestion');
     const verifyTextarea = document.getElementById('verifyTextarea');
     const verifyFileTxtCsv = document.getElementById('verifyFileTxtCsv'), verifyFileExcel = document.getElementById('verifyFileExcel');
@@ -380,9 +458,9 @@
     const totalFocoSpan = document.getElementById('totalFoco'), totalVerifySpan = document.getElementById('totalVerify'), totalMatchesSpan = document.getElementById('totalMatches');
     const outputResultsDiv = document.getElementById('outputResults');
     const layoutToggleResultsBtn = document.getElementById('layoutToggleResultsBtn');
-    const downloadXlsxResultsBtn = document.getElementById('downloadXlsxResultsBtn');
+    const downloadXlsxResultsBtn = document.getElementById('downloadXlsxResultsBtn'); 
     const downloadCsvResultsBtn = document.getElementById('downloadCsvResultsBtn');
-    const btnNewVerification = document.getElementById('btnNewVerification');
+    const downloadPdfResultsBtn = document.getElementById('downloadPdfResultsBtn'); // const btnNewVerification = document.getElementById('btnNewVerification');
     const resumenNuevosUl = document.querySelector('#resumenNuevos ul');
     const resumenEliminadosUl = document.querySelector('#resumenEliminados ul');
     const resumenModificadosUl = document.querySelector('#resumenModificados ul');
@@ -390,7 +468,6 @@
     const btnRechazarCambiosRepositorio = document.getElementById('btnRechazarCambiosRepositorio');
     let html5QrCodeVerifier = null;
     let scannerVerifierActive = false;
-    const generatePdfReportBtn = document.getElementById('generatePdfReportBtn'); // Nuevo selector para el botón de PDF
 
     // ----- INICIALIZACIÓN -----
     document.addEventListener('DOMContentLoaded', () => { checkInitialState(); navigateToView('panelInicio'); itemDetailModal.addEventListener('click', function(event) { if (event.target === itemDetailModal) { closeItemDetailModal(); } }); modalItemImage.onerror = function() { this.style.display = 'none'; modalImageError.style.display = 'block'; modalImageError.textContent = 'Error al cargar imagen o URL no válida.'; }; modalItemImage.onload = function() { this.style.display = 'block'; modalImageError.style.display = 'none'; }; });
@@ -403,23 +480,23 @@
     function compararListas(listaLocalMap, listaRemotaMap) { const nuevos = [], eliminados = [], modificados = []; listaRemotaMap.forEach((itemRemoto, codigo) => { if (!listaLocalMap.has(codigo)) { nuevos.push(itemRemoto); } else { const itemLocal = listaLocalMap.get(codigo); let changedFields = {}; const localDesc = itemLocal.descripcion||'', remoteDesc = itemRemoto.descripcion||''; const localUpc = itemLocal.upc||'', remoteUpc = itemRemoto.upc||''; const localBrand = itemLocal.brand||'', remoteBrand = itemRemoto.brand||''; const localUrl = itemLocal.url||'', remoteUrl = itemRemoto.url||''; if (localDesc !== remoteDesc) changedFields.descripcion = { old: localDesc, new: remoteDesc}; if (localUpc !== remoteUpc) changedFields.upc = { old: localUpc, new: remoteUpc}; if (localBrand !== remoteBrand) changedFields.brand = { old: localBrand, new: remoteBrand}; if (localUrl !== remoteUrl) changedFields.url = { old: localUrl, new: remoteUrl}; if (Object.keys(changedFields).length > 0) { modificados.push({ ...itemRemoto, changedFields }); } } }); listaLocalMap.forEach((itemLocal, codigo) => { if (!listaRemotaMap.has(codigo)) { eliminados.push(itemLocal); } }); return { nuevos, eliminados, modificados }; }
     function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraRepositorioMap) { const popularListaResumen = (ul, items, fmt) => { ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>'; }; const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion||'N/A'}, U:${itm.upc||'N/A'}, B:${itm.brand||'N/A'}, ImgURL:${itm.url||'N/A'}</span></li>`; popularListaResumen(resumenNuevosUl, nuevos, itemFormatter); popularListaResumen(resumenEliminadosUl, eliminados, itemFormatter); popularListaResumen(resumenModificadosUl, modificados, itm => { let chgs = ''; if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old||'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new||'N/A'}</span>`; if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old||'N/A'}</s> &rarr; ${itm.changedFields.upc.new||'N/A'}</span>`; if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old||'N/A'}</s> &rarr; ${itm.changedFields.brand.new||'N/A'}</span>`; if(itm.changedFields.url) chgs += `<span class="field-change">URL Img: <s>${itm.changedFields.url.old||'N/A'}</s> &rarr; ${itm.changedFields.url.new||'N/A'}</span>`; return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`; }); btnConfirmarCambiosRepositorio.onclick = () => { listaFoco = new Map(maestraRepositorioMap); rebuildUpcToCodigoMap(); saveListaFocoToStorage(); updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) desde el repositorio y guardada localmente.`; panelInicioInfo.className = 'panel-inicio-info'; navigateToView('panelInicio'); }; btnRechazarCambiosRepositorio.onclick = () => { rebuildUpcToCodigoMap(); updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Se mantiene la Maestra local (${listaFoco.size} ítems).`; panelInicioInfo.className = 'panel-inicio-info info'; navigateToView('panelInicio'); }; navigateToView('confirmacionCambiosStep'); }
     async function checkInitialState() { loadListaFocoFromStorage(false); listaFocoCacheadaLocalmente = new Map(listaFoco); panelInicioInfo.innerHTML = '🔄 Sincronizando Maestra TMR desde el repositorio...'; panelInicioInfo.className = 'panel-inicio-info info'; btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true; const maestraDesdeRepositorio = await cargarMaestraDesdeRepositorio(); btnIniciarDobleControlDesdePanel.disabled = false; btnGestionMaestraDesdePanel.disabled = false; if (maestraDesdeRepositorio) { const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeRepositorio); let localIsIdentical = true; if (listaFocoCacheadaLocalmente.size !== maestraDesdeRepositorio.size) { localIsIdentical = false; } else { for (const [key, remoteItem] of maestraDesdeRepositorio.entries()) { const localItem = listaFocoCacheadaLocalmente.get(key); if (!localItem || (localItem.descripcion || '') !== (remoteItem.descripcion || '') || (localItem.upc || '') !== (remoteItem.upc || '') || (localItem.brand || '') !== (remoteItem.brand || '') || (localItem.url || '') !== (remoteItem.url || '') ) { localIsIdentical = false; break; } } } if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && localIsIdentical) { panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems).`; } else if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && !localIsIdentical) { listaFoco = new Map(maestraDesdeRepositorio); rebuildUpcToCodigoMap(); saveListaFocoToStorage(false); panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) con cambios menores y guardada.`; } else { panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Maestra TMR del repositorio. Revisa y confirma.`; panelInicioInfo.className = 'panel-inicio-info warning'; mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio); return; } panelInicioInfo.className = 'panel-inicio-info'; updateFocoPreviewAndSearch(); navigateToView('panelInicio'); } else { if (listaFoco.size > 0) { panelInicioInfo.innerHTML = `⚠️ Error al cargar desde el repositorio. Usando Maestra local (${listaFoco.size} ítems).`; panelInicioInfo.className = 'panel-inicio-info warning'; } else { panelInicioInfo.innerHTML = `❌ Error al cargar desde el repositorio y no hay Maestra local.`; panelInicioInfo.className = 'panel-inicio-info error'; btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true; } updateFocoPreviewAndSearch(); navigateToView('panelInicio'); } }
-
+    
     // ----- NAVEGACIÓN DE VISTAS -----
     function navigateToView(viewName) { [panelInicioDiv, gestionMaestraStepDiv, dobleControlStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv, itemDetailModal].forEach(div => div.classList.add('hidden')); if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none'; if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden'); else if (viewName === 'gestionMaestraStep') { gestionMaestraStepDiv.classList.remove('hidden'); updateFocoPreviewAndSearch(); } else if (viewName === 'dobleControlStep') dobleControlStepDiv.classList.remove('hidden'); else if (viewName === 'resultadosStep') resultadosStepDiv.classList.remove('hidden'); else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden');}
-
+    
     // ----- UTILIDADES -----
     function cleanCode(code) { if (typeof code !== 'string' && typeof code !== 'number') return ''; return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); }
     function resetFileInput(el) { if(el) el.value = null; }
     function getDelimiterRegex(d) { if (d.toLowerCase()==='<tab>') return /\t/; return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
 
-    // ----- GESTIÓN LISTA MAESTRA (BÚSQUEDA Y ESTADÍSTICAS) (sin cambios funcionales desde v2.8.8) -----
+    // ----- GESTIÓN LISTA MAESTRA (BÚSQUEDA Y ESTADÍSTICAS) -----
     function updateFocoPreviewAndSearch(itemsToShow = null) { let countNoUrl = 0; let countNoUpc = 0; let countNoDescription = 0; let countNoBrand = 0; listaFoco.forEach(item => { if (!item.url || item.url.trim() === '') countNoUrl++; if (!item.upc || item.upc.trim() === '') countNoUpc++; if (!item.descripcion || item.descripcion.trim() === '') countNoDescription++; if (!item.brand || item.brand.trim() === '') countNoBrand++; }); statTotalItems.textContent = listaFoco.size; statNoImageUrl.textContent = countNoUrl; statNoUpc.textContent = countNoUpc; statNoDescription.textContent = countNoDescription; statNoBrand.textContent = countNoBrand; const searchTerm = searchFocoInput.value.toLowerCase().trim(); if (itemsToShow) { focoSearchResultsDiv.innerHTML = ''; if (itemsToShow.length > 0) { itemsToShow.slice(0, 30).forEach(item => { const p = document.createElement('div'); p.className = 'search-result-item'; p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc||'N/A'}, M: ${item.brand||'N/A'}, Img: ${item.url ? 'Sí':'No'})</span> <span class="desc">${item.descripcion||'(S/D)'}</span>`; p.addEventListener('click', () => openItemDetailModal(item.codigo)); focoSearchResultsDiv.appendChild(p); }); if (itemsToShow.length > 30) { focoSearchResultsDiv.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length - 30} más. Refine su búsqueda.</p>`; } } else if (searchTerm !== '') { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">No se encontraron ítems que coincidan con la búsqueda.</p>'; } else { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; } } else if (searchTerm === '' && !itemsToShow) { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; } }
     function saveListaFocoToStorage(showAlert = true) { if (listaFoco.size === 0 && showAlert && !confirm("La Maestra está vacía. ¿Guardar vacía?")) return false; try { localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values()))); if (showAlert) alert(`Maestra con ${listaFoco.size} ítems guardada localmente.`); return true; } catch (e) { if (showAlert) alert("Error al guardar Maestra local: " + e.message); return false; } }
     function loadListaFocoFromStorage(showAlerts = true) { const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); if (data) { try { const itemsArray = JSON.parse(data); itemsArray.forEach(item => { const idItemLimpio = cleanCode(item.codigo); if (idItemLimpio) { listaFoco.set(idItemLimpio, { codigo: idItemLimpio, upc: item.upc||'', descripcion: item.descripcion||'', brand: item.brand||'', url: item.url||'' }); } }); if (showAlerts) alert(`Maestra local con ${listaFoco.size} ítems cargada.`); } catch (e) { if (showAlerts) alert("Error al cargar Maestra local: datos corruptos. Se borrará."); localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); } } else { if (showAlerts) alert("No hay Maestra guardada localmente."); } rebuildUpcToCodigoMap(); }
     searchFocoInput.addEventListener('input', () => { const searchTerm = searchFocoInput.value.toLowerCase().trim(); if (!searchTerm) { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; return; } const results = Array.from(listaFoco.values()).filter(item => item.codigo.toLowerCase().includes(searchTerm) || (item.upc && item.upc.toLowerCase().includes(searchTerm)) || (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) || (item.brand && item.brand.toLowerCase().includes(searchTerm)) || (item.url && item.url.toLowerCase().includes(searchTerm)) ); updateFocoPreviewAndSearch(results); });
     btnVolverAlPanelDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
-    // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) Y MANEJO LISTA A VERIFICAR (onScanSuccessVerify es de v2.8.8) -----
+    // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) Y MANEJO LISTA A VERIFICAR -----
     function addValidCodeToVerifyList(idItem) { const trimmedIdItem = String(idItem).trim(); if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) { if (!listaVerificar.has(trimmedIdItem)) { listaVerificar.add(trimmedIdItem); return trimmedIdItem; } return null; } return false; }
     function handleFileUpload(file, isExcel) { if (!file) return; verifyPreview.innerHTML = `Procesando "${file.name}"...`; const idItemCol = parseInt(verifyCodigoColInput.value) - 1; const delimiter = verifyCsvDelimiterInput.value; const hasHeader = verifyHasHeaderCheckbox.checked; const targetFileElement = isExcel ? verifyFileExcel : verifyFileTxtCsv; if (idItemCol < 0) { alert("Col. ID Ítem debe ser >= 1."); verifyPreview.textContent = "Error."; resetFileInput(targetFileElement); return; } const reader = new FileReader(); reader.onload = (e) => { const content = e.target.result; let itemsFromFile = []; try { if (isExcel) itemsFromFile = processExcelDataForVerify(content, idItemCol, hasHeader); else itemsFromFile = processTextCsvDataForVerify(content, idItemCol, hasHeader, delimiter); listaVerificar.clear(); scannedCodesVerifyTextarea.value = ''; let addedCount = 0, omittedCount = 0; itemsFromFile.forEach(idItemFromFile => { const result = addValidCodeToVerifyList(idItemFromFile); if (result !== false && result !== null) { addedCount++; } else if (result === false) { omittedCount++; } }); if (omittedCount > 0) alert(`${omittedCount} ID(s) de Ítem del archivo fueron omitidos (no numéricos > 5 dígitos).`); updateVerifyPreview(); } catch (error) { alert(`Error procesando ${file.name}: ${error.message}`); verifyPreview.textContent = `Error.`; } resetFileInput(targetFileElement); }; reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); verifyPreview.textContent = `Error.`; resetFileInput(targetFileElement); }; if (isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file); }
     function processTextCsvDataForVerify(content, colIdx, hasHeader, delimiter = ',') { const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const val = parts[colIdx] ? String(parts[colIdx]).trim() : null; if (val) items.push(val); }); return items; }
@@ -440,7 +517,7 @@
     function closeItemDetailModal() { itemDetailModal.classList.add('hidden'); itemDetailModal.style.display = 'none'; modalItemImage.src="#"; modalItemImage.style.display = 'none'; modalImageError.style.display = 'none'; }
     layoutToggleResultsBtn.addEventListener('click',()=>{ outputResultsDiv.classList.toggle('grid');outputResultsDiv.classList.toggle('list');});
     downloadCsvResultsBtn.addEventListener('click',()=>{ if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;} let cC="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; coincidencias.forEach(item=>{ const desc = `"${(item.descripcion||'').replace(/"/g,'""')}"`; const upcVal = `"${(item.upc||'').replace(/"/g,'""')}"`; const brandVal = `"${(item.brand||'').replace(/"/g,'""')}"`; const urlVal = `"${(item.url||'').replace(/"/g,'""')}"`; cC+=`${item.codigo},${upcVal},${desc},${brandVal},${urlVal}\n`; }); const b=new Blob([cC],{type:'text/csv;charset=utf-8;'}); const l=document.createElement("a");const u=URL.createObjectURL(b); l.setAttribute("href",u); l.setAttribute("download",`concordancias_v2.8.9_${new Date().toISOString().slice(0,10)}.csv`); document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);});
-
+    
     downloadXlsxResultsBtn.addEventListener('click', async () => {
         if (coincidencias.size === 0) {
             alert("No hay Ítems concordantes para generar el archivo XLSX.");
@@ -451,74 +528,41 @@
 
         try {
             const dataForSheet = [];
-            const numCols = 4; // Definimos un número de columnas para usar en merges
+            const numCols = 4; 
 
-            // Fila 1: Título
             dataForSheet.push(["Control TMR 2025"].concat(Array(numCols - 1).fill(null)));
-
-            // Fila 2: Fecha
             const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
             dataForSheet.push(["Fecha de Generación:", currentDateFormatted].concat(Array(numCols - 2).fill(null)));
-
-            // Fila 3: Vacía para espaciado
             dataForSheet.push(Array(numCols).fill(null));
 
-            // Filas de Datos - Estilo PDF
             Array.from(coincidencias.values()).forEach(item => {
                 dataForSheet.push(["ID Ítem:", item.codigo, null, null]);
                 dataForSheet.push(["Descripción:", item.descripcion || '', null, null]);
                 dataForSheet.push(["Marca:", item.brand || '', null, null]);
                 dataForSheet.push(["Revisado:", "☐ " + "_".repeat(30) + " (Firma/Obs)", null, null]);
                 dataForSheet.push(["Diferencias Encontradas:", "_".repeat(45), null, null]);
-                dataForSheet.push([null, "_".repeat(45), null, null]); // Segunda línea para diferencias
-                dataForSheet.push(Array(numCols).fill(null)); // Separador
+                dataForSheet.push([null, "_".repeat(45), null, null]); 
+                dataForSheet.push(Array(numCols).fill(null)); 
             });
 
             const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-
-            // Ancho de Columnas (A, B, C, D)
-            ws['!cols'] = [
-                { wch: 25 }, // Columna A: Etiquetas
-                { wch: 60 }, // Columna B: Valores y líneas
-                { wch: 10 }, // Columna C: Espacio
-                { wch: 10 }  // Columna D: Espacio
-            ];
-
-            // Unir celdas
-            const merges = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } }, // Título
-                { s: { r: 1, c: 1 }, e: { r: 1, c: numCols - 1 } }  // Valor de la Fecha
-            ];
-
-            // Aplicar merges para las líneas de Revisado y Diferencias para que se extiendan visualmente
-            let currentRow = 3; // Empezamos después del encabezado del documento
+            ws['!cols'] = [ { wch: 25 }, { wch: 60 }, { wch: 10 }, { wch: 10 } ];
+            const merges = [ { s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } }, { s: { r: 1, c: 1 }, e: { r: 1, c: numCols - 1 } } ];
+            let currentRow = 3; 
             Array.from(coincidencias.values()).forEach(() => {
-                // Revisado (etiqueta en A, línea en B que puede querer extenderse)
-                merges.push({ s: { r: currentRow + 3, c: 1 }, e: { r: currentRow + 3, c: numCols -1 } });
-                // Diferencias línea 1
-                merges.push({ s: { r: currentRow + 4, c: 1 }, e: { r: currentRow + 4, c: numCols -1 } });
-                // Diferencias línea 2
-                merges.push({ s: { r: currentRow + 5, c: 1 }, e: { r: currentRow + 5, c: numCols -1 } });
-                currentRow += 7; // 6 filas por item + 1 separador
+                merges.push({ s: { r: currentRow + 3, c: 1 }, e: { r: currentRow + 3, c: numCols -1 } }); 
+                merges.push({ s: { r: currentRow + 4, c: 1 }, e: { r: currentRow + 4, c: numCols -1 } }); 
+                merges.push({ s: { r: currentRow + 5, c: 1 }, e: { r: currentRow + 5, c: numCols -1 } }); 
+                currentRow += 7; 
             });
             ws['!merges'] = merges;
-
-            // Estilos básicos (la comunidad SheetJS tiene limitaciones aquí)
-            // Celda del título (A1) - intentar poner en negrita y más grande (mejor hacerlo en Excel)
-            if(ws['A1']) {
-                ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } };
-            }
-             if(ws['A2']) { // Etiqueta Fecha
-                ws['A2'].s = { font: { bold: true } };
-            }
-
+            if(ws['A1']) { ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
+            if(ws['A2']) { ws['A2'].s = { font: { bold: true } }; }
 
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Control TMR");
-
             const fileName = `Control_TMR_Formato_Detallado_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.xlsx`;
             XLSX.writeFile(wb, fileName);
-
         } catch (error) {
             console.error("Error generando XLSX:", error);
             alert("Error al generar archivo XLSX: " + error.message);
@@ -528,28 +572,105 @@
         }
     });
 
-    // ----- BOTONES PANEL INICIO -----
+    // ----- NUEVA FUNCIÓN PARA GENERAR PDF -----
+    function generatePdfReport() {
+        const resultsStepContentOriginal = document.getElementById('resultadosStep');
+        if (coincidencias.size === 0) {
+            alert("No hay Ítems concordantes para generar el PDF.");
+            return;
+        }
+
+        const originalButtonText = downloadPdfResultsBtn.textContent;
+        downloadPdfResultsBtn.textContent = 'Generando PDF...';
+        downloadPdfResultsBtn.disabled = true;
+
+        // 1. Crear el contenedor principal para el contenido del PDF
+        const pdfExportContainer = document.createElement('div');
+        pdfExportContainer.className = 'pdf-export-container'; // Aplicar clase para estilos PDF
+
+        // 2. Añadir el título principal del documento
+        const mainDocTitleText = document.querySelector('.container > h1').innerText;
+        const mainPdfTitle = document.createElement('h1');
+        mainPdfTitle.innerText = mainDocTitleText;
+        pdfExportContainer.appendChild(mainPdfTitle);
+
+        // 3. Clonar y añadir título de la sección de resultados
+        const resultsTitleOriginal = resultsStepContentOriginal.querySelector('h2');
+        if (resultsTitleOriginal) {
+            const resultsTitleClone = resultsTitleOriginal.cloneNode(true);
+            resultsTitleClone.classList.add('results-section-title'); // Para estilizar si es necesario
+            pdfExportContainer.appendChild(resultsTitleClone);
+        }
+
+        // 4. Clonar y añadir el resumen de resultados
+        const resultsSummaryOriginal = resultsStepContentOriginal.querySelector('#resultsSummary');
+        if (resultsSummaryOriginal) {
+            const resultsSummaryClone = resultsSummaryOriginal.cloneNode(true);
+            pdfExportContainer.appendChild(resultsSummaryClone);
+        }
+        
+        // 5. Clonar y añadir el H3 "Detalle de Ítems Concordantes"
+        const detailH3Original = Array.from(resultsStepContentOriginal.querySelectorAll('h3')).find(h3 => h3.textContent.includes('Detalle de Ítems Concordantes'));
+        if (detailH3Original) {
+            const detailH3Clone = detailH3Original.cloneNode(true);
+            detailH3Clone.classList.add('detail-items-title'); // Para estilizar si es necesario
+            pdfExportContainer.appendChild(detailH3Clone);
+        }
+
+        // 6. Clonar y añadir los ítems (outputResults)
+        const outputResultsOriginal = resultsStepContentOriginal.querySelector('#outputResults');
+        if (outputResultsOriginal) {
+            const outputResultsClone = outputResultsOriginal.cloneNode(true);
+            // Los estilos CSS aplicados a .pdf-export-container .barcode-item-container se encargarán
+            // de page-break-inside y otros aspectos visuales.
+            pdfExportContainer.appendChild(outputResultsClone);
+        }
+
+        const opt = {
+            margin: [25, 15, 15, 15], // Arriba (25mm para título), Derecha, Abajo, Izquierda
+            filename: `Reporte_Resultados_Doble_Control_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: {
+                scale: 2, // Mejor calidad
+                logging: false,
+                useCORS: true, // Por si hay imágenes externas (JsBarcode SVGs son inline)
+                // scrollY: -window.scrollY // Experimental, si hay problemas con el scroll
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: {
+                mode: ['css', 'avoid-all'], // Respetar CSS 'page-break-inside' y evitar en general
+                avoid: '.barcode-item-container' // Clase específica para evitar quiebres
+            }
+        };
+        
+        // Para que html2canvas aplique correctamente los estilos, el elemento
+        // debe estar en el DOM, aunque sea oculto.
+        pdfExportContainer.style.position = 'absolute';
+        pdfExportContainer.style.left = '-9999px'; // Mover fuera de la pantalla
+        pdfExportContainer.style.width = '210mm'; // Ancho A4 para ayudar con el layout
+        document.body.appendChild(pdfExportContainer);
+
+        html2pdf().from(pdfExportContainer).set(opt).save().then(() => {
+            downloadPdfResultsBtn.textContent = originalButtonText;
+            downloadPdfResultsBtn.disabled = false;
+            document.body.removeChild(pdfExportContainer); // Limpiar el contenedor temporal
+        }).catch(err => {
+            console.error("Error generando PDF:", err);
+            alert("Error al generar PDF: " + err.message);
+            downloadPdfResultsBtn.textContent = originalButtonText;
+            downloadPdfResultsBtn.disabled = false;
+            if (document.body.contains(pdfExportContainer)) {
+                document.body.removeChild(pdfExportContainer); // Limpiar también en caso de error
+            }
+        });
+    }
+    downloadPdfResultsBtn.addEventListener('click', generatePdfReport); // // ----- BOTONES PANEL INICIO -----
     btnIniciarDobleControlDesdePanel.addEventListener('click', () => { if (listaFoco.size === 0) { alert("No hay Lista Maestra cargada. Sincronice con el repositorio."); return; } listaVerificar.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); navigateToView('dobleControlStep'); });
     btnGestionMaestraDesdePanel.addEventListener('click', () => navigateToView('gestionMaestraStep'));
     btnBorrarMaestraStorage.addEventListener('click', () => { if (confirm("¿Seguro que desea borrar la Maestra guardada localmente? \nSe intentará resincronizar con el repositorio.")) { localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); listaFocoCacheadaLocalmente.clear(); upcToCodigoMap.clear(); alert("Maestra local borrada. Se resincronizará con el repositorio."); checkInitialState(); } });
 
     // ----- NUEVA VERIFICACIÓN -----
     btnNewVerification.addEventListener('click', () => { listaVerificar.clear(); coincidencias.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); outputResultsDiv.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>'; totalVerifySpan.textContent = '0'; totalMatchesSpan.textContent = '0'; if(scannerVerifierActive && html5QrCodeVerifier && html5QrCodeVerifier.isScanning) { html5QrCodeVerifier.stop().catch(err => console.error("Error deteniendo escáner:", err)); scannerVerifierActive = false; scannerContainerVerify.classList.add('hidden'); startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo'; } navigateToView('panelInicio'); });
-
-    // ----- GENERAR REPORTE PDF -----
-    generatePdfReportBtn.addEventListener('click', () => {
-        const element = document.getElementById('resultadosStep'); // O el contenedor que quieras incluir en el PDF
-        const opt = {
-          margin:       10,
-          filename:     `reporte_control_ítems_${new Date().toISOString().slice(0,10)}.pdf`,
-          image:        { type: 'jpeg', quality: 0.98 },
-          html2canvas:  { scale: 2 },
-          jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-
-        // New Promise-based usage:
-        html2pdf().from(element).set(opt).save();
-    });
 
   </script>
 </body>
