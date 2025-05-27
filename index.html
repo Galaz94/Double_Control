@@ -5,269 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Doble Control de Ítems v2.8.9 (Formato Carta PDF)</title>
   <style>
-    /* Estilos CSS Generales (de la v2.8.8 y mejoras) */
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f4f7f6;
-      color: #333;
-      line-height: 1.6;
-    }
-    .container {
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 15px;
-      background-color: #fff;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    h1, h2, h3 {
-      color: #2c3e50;
-      text-align: center;
-    }
-    h1 { margin-bottom: 30px; font-size: 1.8em;}
-    h2 { margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 1.5em;}
-    h3 { margin-bottom: 15px; font-size: 1.2em; text-align: left;}
-
-    .section {
-      border: 1px solid #e0e0e0;
-      padding: 20px;
-      margin-bottom: 25px;
-      border-radius: 8px;
-      background-color: #fdfdfd;
-    }
-    .hidden { display: none !important; }
-    .panel-inicio-info {
-        font-size: 1.1em;
-        color: #27ae60;
-        margin-bottom: 20px;
-        padding: 15px;
-        background-color: #e8f8f0;
-        border-left: 5px solid #27ae60;
-        border-radius: 4px;
-    }
-    .panel-inicio-info.warning { color: #f39c12; background-color: #fef9e7; border-left-color: #f39c12;}
-    .panel-inicio-info.error { color: #c0392b; background-color: #fdedec; border-left-color: #c0392b;}
-    .panel-inicio-info.info { color: #2980b9; background-color: #eaf2f8; border-left-color: #2980b9;}
-    .panel-inicio-actions button { margin-top: 10px; width: 100%; box-sizing: border-box; padding: 12px;}
-
-    .input-group { margin-bottom: 20px; }
-    .input-group label, .file-options label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: bold;
-      color: #555;
-      font-size: 0.95em;
-    }
-    textarea, input[type="file"], select, input[type="text"], input[type="search"], input[type="number"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      box-sizing: border-box;
-      font-size: 1rem;
-    }
-    textarea { min-height: 100px; }
-    .file-options { border: 1px solid #ddd; padding: 15px; margin-top: -10px; margin-bottom:15px; border-radius: 0 0 4px 4px; background-color: #f9f9f9;}
-    .input-columns { display: flex; gap: 15px; align-items: flex-end; }
-    .input-columns > div { flex: 1; }
-    .input-columns input[type="checkbox"] { width: auto; margin-right: 5px; vertical-align: middle;}
-
-    button {
-      background-color: #3498db;
-      color: white;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
-      margin-right: 8px;
-      margin-top: 5px;
-    }
-    button:hover { background-color: #2980b9; }
-    button.secondary { background-color: #95a5a6; }
-    button.secondary:hover { background-color: #7f8c8d; }
-    button.danger { background-color: #e74c3c; }
-    button.danger:hover { background-color: #c0392b; }
-    button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
-
-    .preview-area, .search-results-area {
-      background-color: #ecf0f1;
-      border: 1px dashed #bdc3c7;
-      padding: 12px;
-      min-height: 60px;
-      margin-top:10px;
-      font-size: 0.9em;
-      border-radius: 4px;
-      word-break: break-word;
-    }
-    #focoPreview ul { list-style-type: none; padding-left: 0; }
-    #focoPreview li { margin-bottom: 5px; font-size: 0.95em; }
-    #focoPreview strong { color: #34495e; }
-
-    .search-results-area { max-height: 200px; overflow-y: auto; }
-    .preview-item, .search-result-item {
-        padding: 6px 3px;
-        border-bottom: 1px solid #dde;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .preview-item:last-child, .search-result-item:last-child { border-bottom: none; }
-    .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; flex-shrink: 0; margin-right: 10px;}
-    .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 10px; font-style: italic; text-align: right; flex-grow: 1; }
-    .preview-item .upc-brand-url, .search-result-item .upc-brand-url { font-size: 0.85em; color: #555; margin-left: 10px; }
-
-    .results-summary {
-      margin-bottom: 25px;
-      background-color: #eaf5ff;
-      padding: 18px;
-      border-radius: 6px;
-      border: 1px solid #c1d9ed;
-    }
-    .results-summary p { margin: 8px 0; font-size: 1.05em; }
-    .results-summary strong { color: #2980b9; }
-
-    #confirmacionCambiosStep .preview-area { max-height: 120px; margin-bottom: 10px; background-color: #fff; overflow-y: auto;}
-    #confirmacionCambiosStep h3 { font-size: 1.1em; margin-bottom:5px; border-bottom: 1px solid #eee; padding-bottom: 5px;}
-    #confirmacionCambiosStep li { font-size: 0.9em; padding: 3px 0; border-bottom: 1px dotted #eee; }
-    #confirmacionCambiosStep li:last-child { border-bottom: none; }
-    #confirmacionCambiosStep li s { color: #e74c3c; }
-    #confirmacionCambiosStep li .field-change { display: block; margin-left: 15px; font-size: 0.9em;}
-
-    #outputResults.list .barcode-item-container { margin: 10px 0; background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; cursor: pointer;}
-    #outputResults.grid .barcode-item-container { background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer;}
-    #outputResults.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
-
-    .barcode-item-code { font-weight: bold; text-align: center; margin-bottom: 4px; font-size: 1em; color: #333; }
-    .barcode-item-desc { text-align: center; margin-bottom: 6px; font-size: 0.9em; color: #555; font-style: italic; }
-    .barcode-item-svg svg { max-width: 100%; height: auto; display: block; margin: 0 auto;}
-
-    #itemDetailModal {
-      position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-      overflow: auto; background-color: rgba(0,0,0,0.5); display: none;
-      align-items: center; justify-content: center;
-    }
-    #itemDetailModal .modal-content {
-      background-color: #fefefe; margin: auto; padding: 25px; border: 1px solid #888;
-      width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      text-align: center;
-      position: relative;
-    }
-    #itemDetailModal .modal-content h3 { margin-top: 0; color: #3498db; }
-    #itemDetailModal .modal-content p { margin: 8px 0; font-size: 1.1em; text-align: left;}
-    #itemDetailModal .modal-content strong { color: #555;}
-    #itemDetailModal #modalItemImageContainer { margin-top: 15px; margin-bottom: 15px; min-height: 50px; }
-    #itemDetailModal #modalItemImage { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain; }
-    #itemDetailModal .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; top: 10px; right: 20px; }
-    #itemDetailModal .close-modal:hover, #itemDetailModal .close-modal:focus { color: black; text-decoration: none; }
-
-    #scannerContainerVerify { max-width: 400px; margin: 15px auto; border: 1px solid #ccc; padding: 5px; border-radius: 4px;}
-    #readerVerify { width: 100%; }
-
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      padding: 20px;
-      font-size: 0.9em;
-      color: #777;
-      border-top: 1px solid #eee;
-    }
-
-    /* Estilos para la exportación a PDF (Formato Ficha Detallada / Carta) */
-    .pdf-export-container {
-        font-family: Arial, sans-serif;
-        color: #333;
-    }
-    .pdf-export-container .main-document-title { /* H1 general del sistema */
-        text-align: center;
-        font-size: 18pt;
-        font-weight: bold;
-        margin-bottom: 8mm;
-    }
-    .pdf-export-container .report-title { /* Título del reporte "Reporte de Verificación..." */
-        text-align: center;
-        font-size: 16pt;
-        font-weight: bold;
-        margin-bottom: 3mm;
-    }
-    .pdf-export-container .report-date { /* "Fecha de Generación: ..." */
-        text-align: center;
-        font-size: 10pt;
-        margin-bottom: 10mm;
-    }
-
-    .pdf-item-ficha {
-        border: 1px solid #b0b0b0;
-        padding: 5mm;
-        margin-bottom: 7mm;
-        border-radius: 3px;
-        background-color: #fff;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-    .pdf-item-ficha .pdf-item-header {
-        text-align: center;
-        margin-bottom: 3mm;
-    }
-    .pdf-item-ficha .pdf-item-code {
-        font-size: 12pt;
-        font-weight: bold;
-    }
-    .pdf-item-ficha .pdf-item-field {
-        margin-bottom: 2mm;
-        font-size: 10pt;
-        line-height: 1.3;
-    }
-    .pdf-item-ficha .pdf-item-label {
-        font-weight: bold;
-        display: inline-block;
-        width: 80px;
-    }
-    .pdf-item-ficha .pdf-item-value {
-        display: inline-block;
-        word-break: break-word;
-    }
-    .pdf-item-ficha .revisado-field,
-    .pdf-item-ficha .diferencias-field {
-        margin-top: 5mm;
-        border-top: 1px solid #ccc;
-        padding-top: 3mm;
-    }
-    .pdf-item-barcode-container {
-        text-align: center;
-        margin-top: 5mm;
-        margin-bottom: 3mm;
-    }
-    .pdf-item-barcode-svg svg {
-        max-width: 90%;
-        height: auto;
-    }
-
-    .pdf-export-container button { /* Ocultar botones dentro del contenido para PDF */
-        display: none !important;
-    }
-
-    /* Estilos para @media print, si html2pdf usa modo 'css' y los recoge */
-    @media print {
-      .barcode-item-container, .pdf-item-ficha { /* Aplicar a ambos por si acaso */
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-      }
-      .no-print-pdf { /* Clase genérica para ocultar en impresión/PDF */
-        display: none !important;
-      }
-    }
+    /* Estilos CSS Generales */
+    body { font-family: Arial, sans-serif; }
+    .pdf-container { width: 100%; }
+    .pdf-header { text-align: center; margin-bottom: 10px; }
+    .pdf-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+    .pdf-date { font-size: 10px; margin-bottom: 10px; }
+    .pdf-summary { font-size: 12px; margin-bottom: 15px; }
+    .pdf-item { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; page-break-inside: avoid; }
+    .pdf-item-label { font-weight: bold; display: block; margin-bottom: 5px; }
+    .pdf-barcode-container { text-align: center; margin-bottom: 10px; }
+    .pdf-barcode-svg { max-width: 80%; height: auto; }
+    .pdf-item-info { font-size: 12px; margin-bottom: 8px; }
+    .pdf-manual-input { margin-top: 15px; font-size: 12px; }
+    .pdf-manual-input label { font-weight: bold; display: block; margin-bottom: 5px; }
+    .pdf-manual-input textarea { width: 100%; height: 50px; box-sizing: border-box; border: 1px solid #ddd; }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Sistema de Doble Control de Ítems v2.8.9</h1>
 
-    <div id="panelInicio" class="section">
+    <div id="panelInicio" class="section hidden">
       <h2>Panel de Inicio</h2>
       <div id="panelInicioInfo" class="panel-inicio-info info">
         Cargando información de Lista Maestra desde el repositorio...
@@ -1200,59 +959,46 @@
         downloadPdfResultsBtn.textContent = 'Generando PDF...';
         downloadPdfResultsBtn.disabled = true;
 
-        const pdfExportContainer = document.createElement('div');
-        pdfExportContainer.className = 'pdf-export-container';
+        const pdfContainer = document.createElement('div');
+        pdfContainer.className = 'pdf-container';
 
-        const mainDocTitleText = document.querySelector('.container > h1').innerText;
-        const mainPdfDocTitle = document.createElement('h1');
-        mainPdfDocTitle.className = 'main-document-title';
-        mainPdfDocTitle.innerText = mainDocTitleText;
-        pdfExportContainer.appendChild(mainPdfDocTitle);
-
-        const reportTitleElement = document.createElement('h2');
-        reportTitleElement.className = 'report-title';
-        reportTitleElement.innerText = "Reporte de Verificación de Ítems";
-        pdfExportContainer.appendChild(reportTitleElement);
-
-        const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
-        const reportDateElement = document.createElement('p');
-        reportDateElement.className = 'report-date';
-        reportDateElement.innerText = `Fecha de Generación: ${currentDateFormatted}`;
-        pdfExportContainer.appendChild(reportDateElement);
+        const header = document.createElement('div');
+        header.className = 'pdf-header';
+        const title = document.createElement('div');
+        title.className = 'pdf-title';
+        title.textContent = 'Control Items Foco';
+        header.appendChild(title);
+        const currentDate = new Date().toLocaleDateString('es-CL');
+        const date = document.createElement('div');
+        date.className = 'pdf-date';
+        date.textContent = `Fecha: ${currentDate}`;
+        header.appendChild(date);
+        const summary = document.createElement('div');
+        summary.className = 'pdf-summary';
+        summary.textContent = `Total Items Revisados: ${listaVerificar.size}, TMRs Encontrados: ${coincidencias.size}`;
+        header.appendChild(summary);
+        pdfContainer.appendChild(header);
 
         coincidencias.forEach(item => {
-            const fichaDiv = document.createElement('div');
-            fichaDiv.className = 'pdf-item-ficha';
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'pdf-item';
 
-            const headerDiv = document.createElement('div');
-            headerDiv.className = 'pdf-item-header';
-            const codeSpan = document.createElement('span');
-            codeSpan.className = 'pdf-item-code';
-            codeSpan.textContent = item.codigo || 'N/A';
-            headerDiv.appendChild(codeSpan);
-            fichaDiv.appendChild(headerDiv);
-
-            const descriptionDiv = document.createElement('div');
-            descriptionDiv.className = 'pdf-item-field';
-            descriptionDiv.innerHTML = `<span class="pdf-item-label">Descripción:</span><span class="pdf-item-value">${item.descripcion || 'N/A'}</span>`;
-            fichaDiv.appendChild(descriptionDiv);
-
-            const brandDiv = document.createElement('div');
-            brandDiv.className = 'pdf-item-field';
-            brandDiv.innerHTML = `<span class="pdf-item-label">Marca:</span><span class="pdf-item-value">${item.brand || 'N/A'}</span>`;
-            fichaDiv.appendChild(brandDiv);
+            const itemLabel = document.createElement('div');
+            itemLabel.className = 'pdf-item-label';
+            itemLabel.textContent = 'Ítem:';
+            itemDiv.appendChild(itemLabel);
 
             const barcodeContainer = document.createElement('div');
-            barcodeContainer.className = 'pdf-item-barcode-container';
+            barcodeContainer.className = 'pdf-barcode-container';
             const svgBarcode = document.createElementNS("http://www.w3.org/2000/svg","svg");
-            svgBarcode.classList.add('pdf-item-barcode-svg');
+            svgBarcode.classList.add('pdf-barcode-svg');
             try {
                 JsBarcode(svgBarcode, item.codigo, {
                     format:"CODE128",
                     width: 1.5,
-                    height: 60,
+                    height: 50,
                     displayValue: true,
-                    fontSize: 12,
+                    fontSize: 10,
                     margin: 5
                 });
                 barcodeContainer.appendChild(svgBarcode);
@@ -1260,52 +1006,41 @@
                 console.error("Error JsBarcode para PDF:", e, "para item:", item.codigo);
                 barcodeContainer.innerHTML = `<p style="color:red;font-size:0.8em; text-align:center;">Error BC</p>`;
             }
-            fichaDiv.appendChild(barcodeContainer);
+            itemDiv.appendChild(barcodeContainer);
 
-            const revisadoDiv = document.createElement('div');
-            revisadoDiv.className = 'pdf-item-field revisado-field';
-            revisadoDiv.innerHTML = `<span class="pdf-item-label">Revisado:</span><span class="pdf-item-value">_________________________ (Firma/Obs)</span>`;
-            fichaDiv.appendChild(revisadoDiv);
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'pdf-item-info';
+            infoDiv.innerHTML = `<span class="pdf-item-label">Descripción:</span>${item.descripcion || 'N/A'}<br>`;
+            infoDiv.innerHTML += `<span class="pdf-item-label">Marca:</span>${item.brand || 'N/A'}`;
+            itemDiv.appendChild(infoDiv);
 
-            const diferenciasDiv = document.createElement('div');
-            diferenciasDiv.className = 'pdf-item-field diferencias-field';
-            diferenciasDiv.innerHTML = `<span class="pdf-item-label">Diferencias:</span><span class="pdf-item-value">_________________________________________</span>`;
-            fichaDiv.appendChild(diferenciasDiv);
-            const diferenciasDiv2 = document.createElement('div');
-            diferenciasDiv2.className = 'pdf-item-field';
-            diferenciasDiv2.innerHTML = `<span class="pdf-item-label">&nbsp;</span><span class="pdf-item-value">_________________________________________</span>`;
-            fichaDiv.appendChild(diferenciasDiv2);
+            const manualInput = document.createElement('div');
+            manualInput.className = 'pdf-manual-input';
+            manualInput.innerHTML = `<label for="cantidadControl_${item.codigo}">Cantidad de Control:</label><div></div>`;
+            manualInput.innerHTML += `<label for="diferencias_${item.codigo}">Diferencias:</label><textarea id="diferencias_${item.codigo}"></textarea>`;
+            itemDiv.appendChild(manualInput);
 
-            pdfExportContainer.appendChild(fichaDiv);
+            pdfContainer.appendChild(itemDiv);
         });
 
         const opt = {
             margin: [10, 10, 10, 10],
-            filename: `Reporte_Control_TMR_Detallado_${new Date().toISOString().slice(0,10)}.pdf`,
+            filename: `Control_Items_Foco_${currentDate.replace(/\//g, '-')}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
-                scale: 2,
-                logging: false,
-                useCORS: true
-            },
-            jsPDF: {
-                unit: 'mm',
-                format: 'letter',
-                orientation: 'portrait'
-            },
-            pagebreak: { mode: 'avoid', before: '.pdf-item-ficha' }
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
+            pagebreak: { mode: 'avoid', before: '.pdf-item' }
         };
 
-        // Para producción, el bloque de depuración debe estar comentado.
-        pdfExportContainer.style.position = 'absolute';
-        pdfExportContainer.style.left = '-9999px';
-        document.body.appendChild(pdfExportContainer);
+        pdfContainer.style.position = 'absolute';
+        pdfContainer.style.left = '-9999px';
+        document.body.appendChild(pdfContainer);
 
-        html2pdf().from(pdfExportContainer).set(opt).save().finally(() => {
+        html2pdf().from(pdfContainer).set(opt).save().finally(() => {
             downloadPdfResultsBtn.textContent = originalButtonText;
             downloadPdfResultsBtn.disabled = false;
-            if (document.body.contains(pdfExportContainer)) {
-                document.body.removeChild(pdfExportContainer);
+            if (document.body.contains(pdfContainer)) {
+                document.body.removeChild(pdfContainer);
             }
         });
     }
