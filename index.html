@@ -241,6 +241,21 @@
         visibility: hidden; 
     }
 
+    .pdf-item-barcode-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 5mm; /* Espacio desde los otros campos */
+        margin-bottom: 3mm; /* Espacio antes de los campos de revisión */
+    }
+
+    .pdf-item-barcode-svg svg {
+        max-width: 90%; /* Para que no ocupe todo el ancho de la ficha */
+        height: 25mm;   /* Altura fija para el código de barras */
+        display: block;
+        margin: 0 auto; /* Centrar el SVG */
+    }
+
     .pdf-export-container button { /* Ocultar botones dentro del contenido para PDF */
         display: none !important;
     }
@@ -1144,6 +1159,7 @@
                 dataForSheet.push(["ID Ítem:", item.codigo, null, null]);
                 dataForSheet.push(["Descripción:", item.descripcion || '', null, null]);
                 dataForSheet.push(["Marca:", item.brand || '', null, null]);
+                // Barcode image will be added manually or via script in Excel if needed, here we just reserve space or add a note
                 dataForSheet.push(["Revisado:", "☐ " + "_".repeat(30) + " (Firma/Obs)", null, null]);
                 dataForSheet.push(["Diferencias Encontradas:", "_".repeat(45), null, null]);
                 dataForSheet.push([null, "_".repeat(45), null, null]); 
@@ -1163,7 +1179,7 @@
                 merges.push({ s: { r: currentRow + 3, c: 1 }, e: { r: currentRow + 3, c: numCols -1 } }); // Revisado line
                 merges.push({ s: { r: currentRow + 4, c: 1 }, e: { r: currentRow + 4, c: numCols -1 } }); // Diferencias line 1
                 merges.push({ s: { r: currentRow + 5, c: 1 }, e: { r: currentRow + 5, c: numCols -1 } }); // Diferencias line 2
-                currentRow += 7; // 6 rows per item + 1 separator
+                currentRow += 7; // 6 rows per item data + 1 separator
             });
             ws['!merges'] = merges;
             
@@ -1193,18 +1209,15 @@
         downloadPdfResultsBtn.textContent = 'Generando PDF...';
         downloadPdfResultsBtn.disabled = true;
 
-        // 1. Crear el contenedor principal para el contenido del PDF
         const pdfExportContainer = document.createElement('div');
         pdfExportContainer.className = 'pdf-export-container';
 
-        // 2. Añadir el título principal del documento (H1 original)
         const mainDocTitleText = document.querySelector('.container > h1').innerText;
         const mainPdfDocTitle = document.createElement('h1');
         mainPdfDocTitle.className = 'main-document-title';
         mainPdfDocTitle.innerText = mainDocTitleText;
         pdfExportContainer.appendChild(mainPdfDocTitle);
 
-        // 3. Añadir título del reporte y fecha
         const reportTitleElement = document.createElement('h2'); 
         reportTitleElement.className = 'report-title';
         reportTitleElement.innerText = "Reporte de Verificación de Ítems"; 
@@ -1216,7 +1229,6 @@
         reportDateElement.innerText = `Fecha de Generación: ${currentDateFormatted}`;
         pdfExportContainer.appendChild(reportDateElement);
 
-        // 4. Generar las fichas de ítems
         coincidencias.forEach(item => {
             const fichaDiv = document.createElement('div');
             fichaDiv.className = 'pdf-item-ficha';
@@ -1226,14 +1238,49 @@
             fieldHTML += `<div class="pdf-item-field"><span class="pdf-item-label">Descripción:</span><span class="pdf-item-value">${item.descripcion || 'N/A'}</span></div>`;
             fieldHTML += `<div class="pdf-item-field"><span class="pdf-item-label">Marca:</span><span class="pdf-item-value">${item.brand || 'N/A'}</span></div>`;
             
+            // Contenedor para el código de barras SVG
+            const barcodeContainer = document.createElement('div');
+            barcodeContainer.className = 'pdf-item-barcode-container';
+            const svgBarcode = document.createElementNS("http://www.w3.org/2000/svg","svg");
+            svgBarcode.classList.add('pdf-item-barcode-svg'); // Para aplicar estilos específicos si es necesario
+            try {
+                JsBarcode(svgBarcode, item.codigo, {
+                    format:"CODE128",
+                    width: 1.5, // Ancho de las barras
+                    height: 60, // Altura del código de barras en px (se ajustará por CSS si es necesario)
+                    displayValue: true, // Mostrar el valor del código debajo
+                    fontSize: 12, // Tamaño de fuente del valor
+                    margin: 5
+                });
+                barcodeContainer.appendChild(svgBarcode);
+            } catch(e) {
+                console.error("Error JsBarcode para PDF:", e, "para item:", item.codigo);
+                barcodeContainer.innerHTML = `<p style="color:red;font-size:0.8em; text-align:center;">Error BC</p>`;
+            }
+            
+            // Ensamblar HTML de la ficha
+            fichaDiv.innerHTML = fieldHTML; // Añadir campos de texto primero
+            fichaDiv.appendChild(barcodeContainer); // Añadir el código de barras después de los campos de texto
+
+            // Añadir campos de Revisado y Diferencias DESPUÉS del código de barras
             let revisadoLine = " ".repeat(40); 
             let diferenciasLine = " ".repeat(55);
+            
+            const revisadoDiv = document.createElement('div');
+            revisadoDiv.className = 'pdf-item-field revisado-field';
+            revisadoDiv.innerHTML = `<span class="pdf-item-label">Revisado:</span><span class="pdf-item-value">☐ ${revisadoLine} (Firma/Obs)</span>`;
+            fichaDiv.appendChild(revisadoDiv);
 
-            fieldHTML += `<div class="pdf-item-field revisado-field"><span class="pdf-item-label">Revisado:</span><span class="pdf-item-value">☐ ${revisadoLine} (Firma/Obs)</span></div>`;
-            fieldHTML += `<div class="pdf-item-field diferencias-field"><span class="pdf-item-label">Diferencias:</span><span class="pdf-item-value">${diferenciasLine}</span></div>`;
-            fieldHTML += `<div class="pdf-item-field diferencias-field-extra"><span class="pdf-item-label">&nbsp;</span><span class="pdf-item-value">${diferenciasLine}</span></div>`;
+            const diferenciasDiv1 = document.createElement('div');
+            diferenciasDiv1.className = 'pdf-item-field diferencias-field';
+            diferenciasDiv1.innerHTML = `<span class="pdf-item-label">Diferencias:</span><span class="pdf-item-value">${diferenciasLine}</span>`;
+            fichaDiv.appendChild(diferenciasDiv1);
 
-            fichaDiv.innerHTML = fieldHTML;
+            const diferenciasDiv2 = document.createElement('div');
+            diferenciasDiv2.className = 'pdf-item-field diferencias-field-extra';
+            diferenciasDiv2.innerHTML = `<span class="pdf-item-label">&nbsp;</span><span class="pdf-item-value">${diferenciasLine}</span>`;
+            fichaDiv.appendChild(diferenciasDiv2);
+
             pdfExportContainer.appendChild(fichaDiv);
         });
 
@@ -1246,7 +1293,16 @@
                 scale: 2, 
                 logging: false, 
                 useCORS: true,
-                // scrollY: 0, 
+                onclone: (document) => { // Asegurar que los SVGs se rendericen correctamente
+                    const svgs = document.querySelectorAll('.pdf-item-barcode-svg svg');
+                    svgs.forEach(svgOriginal => {
+                        // Clonar el SVG puede ayudar en algunos casos, o simplemente forzar una re-renderización
+                        // Aquí JsBarcode ya debería haber hecho su trabajo, pero verificamos
+                        const idItem = svgOriginal.parentElement.parentElement.querySelector('.pdf-item-field .pdf-item-value').textContent; // Asumiendo que el ID está en el primer campo
+                        // Esto es más para debug si los SVGs no aparecen.
+                        // En la mayoría de los casos, si JsBarcode funcionó al crear, html2canvas lo capturará.
+                    });
+                }
             },
             jsPDF: {
                 unit: 'mm',
@@ -1258,35 +1314,15 @@
                 avoid: '.pdf-item-ficha'    
             }
         };
-
-        // --- INICIO BLOQUE DE DEPURACIÓN (Descomentar para ver el contenedor antes de PDF) ---
-        /*
-        pdfExportContainer.style.position = 'fixed';
-        pdfExportContainer.style.left = '10px';
-        pdfExportContainer.style.top = '10px';
-        pdfExportContainer.style.width = 'calc(215.9mm - 36mm)'; 
-        pdfExportContainer.style.maxWidth = '95vw';
-        pdfExportContainer.style.height = '90vh';
-        pdfExportContainer.style.overflowY = 'scroll';
-        pdfExportContainer.style.backgroundColor = 'white';
-        pdfExportContainer.style.padding = '10px';
-        pdfExportContainer.style.border = '3px solid green'; 
-        pdfExportContainer.style.zIndex = '10000';
-        document.body.appendChild(pdfExportContainer);
-        console.log("Contenido HTML del pdfExportContainer (formato ficha detallado):", pdfExportContainer.innerHTML);
-        alert("DEPURACIÓN: Revisar recuadro verde (nuevo formato ficha detallado). ¿Se ve bien? Presiona OK para generar PDF.");
-        */
-        // --- FIN BLOQUE DE DEPURACIÓN ---
-
+        
         // Para producción, el bloque de depuración debe estar comentado.
-        // Añadir contenedor oculto al DOM para que html2canvas lo renderice.
         pdfExportContainer.style.position = 'absolute';
         pdfExportContainer.style.left = '-9999px';
-        pdfExportContainer.style.width = `${215.9 - 18 - 18}mm`; 
+        pdfExportContainer.style.width = `${215.9 - 18 - 18}mm`; // Ancho de la página menos márgenes
         document.body.appendChild(pdfExportContainer);
 
 
-        setTimeout(() => {
+        setTimeout(() => { // Pequeño delay para asegurar que los SVGs se rendericen si hay muchos
             html2pdf().from(pdfExportContainer).set(opt).save().then(() => {
                 // PDF generado
             }).catch(err => {
