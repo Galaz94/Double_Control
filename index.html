@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Doble Control de Ítems v2.8.9 (XLSX Estilo PDF)</title>
+  <title>Sistema de Doble Control de Ítems v2.8.9 (Formato Carta PDF)</title>
   <style>
-    /* ... (Estilos CSS de la v2.8.8 se mantienen) ... */
+    /* Estilos CSS Generales (de la v2.8.8 y mejoras) */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
@@ -40,7 +40,7 @@
     .hidden { display: none !important; }
     .panel-inicio-info {
         font-size: 1.1em;
-        color: #27ae60; /* Verde para mensaje positivo */
+        color: #27ae60; 
         margin-bottom: 20px;
         padding: 15px;
         background-color: #e8f8f0;
@@ -50,9 +50,7 @@
     .panel-inicio-info.warning { color: #f39c12; background-color: #fef9e7; border-left-color: #f39c12;}
     .panel-inicio-info.error { color: #c0392b; background-color: #fdedec; border-left-color: #c0392b;}
     .panel-inicio-info.info { color: #2980b9; background-color: #eaf2f8; border-left-color: #2980b9;}
-
     .panel-inicio-actions button { margin-top: 10px; width: 100%; box-sizing: border-box; padding: 12px;}
-
 
     .input-group { margin-bottom: 20px; }
     .input-group label, .file-options label {
@@ -77,9 +75,8 @@
     .input-columns > div { flex: 1; }
     .input-columns input[type="checkbox"] { width: auto; margin-right: 5px; vertical-align: middle;}
 
-
     button {
-      background-color: #3498db; /* Azul principal */
+      background-color: #3498db; 
       color: white;
       padding: 10px 18px;
       border: none;
@@ -90,10 +87,10 @@
       margin-right: 8px;
       margin-top: 5px;
     }
-    button:hover { background-color: #2980b9; /* Azul más oscuro */ }
-    button.secondary { background-color: #95a5a6; /* Gris secundario */ }
-    button.secondary:hover { background-color: #7f8c8d; /* Gris más oscuro */ }
-    button.danger { background-color: #e74c3c; /* Rojo peligro */ }
+    button:hover { background-color: #2980b9; }
+    button.secondary { background-color: #95a5a6; }
+    button.secondary:hover { background-color: #7f8c8d; }
+    button.danger { background-color: #e74c3c; }
     button.danger:hover { background-color: #c0392b; }
     button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
 
@@ -107,13 +104,9 @@
       border-radius: 4px;
       word-break: break-word;
     }
-    #focoPreview { 
-        max-height: none; 
-    }
     #focoPreview ul { list-style-type: none; padding-left: 0; }
     #focoPreview li { margin-bottom: 5px; font-size: 0.95em; }
     #focoPreview strong { color: #34495e; }
-
 
     .search-results-area { max-height: 200px; overflow-y: auto; }
     .preview-item, .search-result-item {
@@ -127,7 +120,6 @@
     .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; flex-shrink: 0; margin-right: 10px;}
     .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 10px; font-style: italic; text-align: right; flex-grow: 1; }
     .preview-item .upc-brand-url, .search-result-item .upc-brand-url { font-size: 0.85em; color: #555; margin-left: 10px; }
-
 
     .results-summary {
       margin-bottom: 25px;
@@ -145,7 +137,6 @@
     #confirmacionCambiosStep li:last-child { border-bottom: none; }
     #confirmacionCambiosStep li s { color: #e74c3c; } 
     #confirmacionCambiosStep li .field-change { display: block; margin-left: 15px; font-size: 0.9em;}
-
 
     #outputResults.list .barcode-item-container { margin: 10px 0; background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; cursor: pointer;}
     #outputResults.grid .barcode-item-container { background: #fff; padding:12px; border:1px solid #e0e0e0; border-radius:5px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: pointer;}
@@ -186,87 +177,84 @@
       border-top: 1px solid #eee;
     }
 
-    /* Estilos para la exportación a PDF */
+    /* Estilos para la exportación a PDF (Formato Ficha Detallada / Carta) */
     .pdf-export-container {
-        padding: 10mm; /* Espacio interno para el contenido del PDF, si es necesario */
+        font-family: Arial, sans-serif; 
+        color: #333;
     }
-    .pdf-export-container h1 { /* Título principal del documento en el PDF */
+    .pdf-export-container .main-document-title { /* H1 general del sistema */
         text-align: center;
-        font-size: 1.6em;
+        font-size: 18pt; 
+        font-weight: bold;
+        margin-bottom: 8mm; 
+    }
+    .pdf-export-container .report-title { /* Título del reporte "Reporte de Verificación..." */
+        text-align: center;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-bottom: 3mm; 
+    }
+    .pdf-export-container .report-date { /* "Fecha de Generación: ..." */
+        text-align: center;
+        font-size: 10pt;
         margin-bottom: 10mm; 
-        color: #2c3e50;
-    }
-    .pdf-export-container #resultadosStep h2, 
-    .pdf-export-container .results-section-title { /* Título de la sección de resultados */
-        text-align: center;
-        font-size: 1.4em;
-        margin-top: 0; 
-        margin-bottom: 8mm;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 5mm;
-        color: #2c3e50;
-    }
-    .pdf-export-container .results-summary {
-        margin-bottom: 8mm;
-        border: 1px solid #c1d9ed; /* Mantiene el borde original */
-        background-color: #eaf5ff; /* Mantiene el fondo original */
-        padding: 15px;
-        border-radius: 6px;
-    }
-    .pdf-export-container .results-summary p {
-        font-size: 1em; /* Ajusta si es necesario para PDF */
-    }
-    .pdf-export-container .detail-items-title { /* Para el H3 "Detalle de Ítems..." */
-        text-align: center;
-        font-size: 1.2em;
-        margin-top: 5mm;
-        margin-bottom: 5mm;
-        color: #2c3e50;
     }
 
-    .pdf-export-container .barcode-item-container {
-        page-break-inside: avoid !important;
-        break-inside: avoid !important; /* Propiedad más nueva */
-        padding: 10px; /* Aumenta padding para mejor visualización en PDF */
-        margin-bottom: 7mm; /* Espacio entre ítems en PDF */
-        border: 1px solid #ddd; /* Borde más sutil para PDF */
-        border-radius: 4px;
-        background-color: #fff; /* Fondo blanco explícito */
+    .pdf-item-ficha {
+        border: 1px solid #b0b0b0; 
+        padding: 5mm; 
+        margin-bottom: 7mm; 
+        border-radius: 3px;
+        background-color: #fff;
+        page-break-inside: avoid !important; 
+        break-inside: avoid !important; 
     }
-    .pdf-export-container .barcode-item-code {
-        font-size: 1em; /* Tamaño de fuente para código en PDF */
+    .pdf-item-ficha .pdf-item-field {
+        display: flex; 
+        margin-bottom: 3mm; 
+        font-size: 10pt; 
+        line-height: 1.4;
+        align-items: flex-start; 
+    }
+    .pdf-item-ficha .pdf-item-label {
         font-weight: bold;
-        text-align: center;
-        margin-bottom: 5px;
+        width: 95px; 
+        min-width: 95px; 
+        margin-right: 5px;
+        flex-shrink: 0; 
     }
-    .pdf-export-container .barcode-item-desc {
-        font-size: 0.9em; /* Tamaño de fuente para descripción en PDF */
-        text-align: center;
-        margin-bottom: 6px;
-        font-style: italic;
+    .pdf-item-ficha .pdf-item-value {
+        flex-grow: 1; 
+        word-break: break-word; 
     }
-    .pdf-export-container .barcode-item-svg svg {
-        max-width: 80%; /* Limita el ancho del código de barras */
-        height: 45px; /* Altura fija para consistencia */
-        display: block;
-        margin: 5px auto; /* Centra el SVG */
+    .pdf-item-ficha .revisado-field .pdf-item-value,
+    .pdf-item-ficha .diferencias-field .pdf-item-value,
+    .pdf-item-ficha .diferencias-field-extra .pdf-item-value {
+        font-family: 'Courier New', Courier, monospace; 
+        white-space: pre; 
+        letter-spacing: 0.5px; 
+        border-bottom: 0.5px solid #555; 
+        min-height: 1.2em; 
+        padding-bottom: 1px; /* Pequeño espacio para que la línea no toque el texto */
     }
-     /* Ocultar botones en el clon del contenido para PDF */
-    .pdf-export-container button {
+    .pdf-item-ficha .diferencias-field-extra .pdf-item-label {
+        visibility: hidden; 
+    }
+
+    .pdf-export-container button { /* Ocultar botones dentro del contenido para PDF */
         display: none !important;
     }
 
     /* Estilos para @media print, si html2pdf usa modo 'css' y los recoge */
     @media print {
-      .barcode-item-container {
+      .barcode-item-container, .pdf-item-ficha { /* Aplicar a ambos por si acaso */
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .no-print-pdf {
+      .no-print-pdf { /* Clase genérica para ocultar en impresión/PDF */
         display: none !important;
       }
     }
-
   </style>
 </head>
 <body>
@@ -376,7 +364,7 @@
           <button id="layoutToggleResultsBtn">📊 Cambiar Vista</button>
           <button id="downloadXlsxResultsBtn" class="secondary">📊 Descargar XLSX</button>
           <button id="downloadCsvResultsBtn" class="secondary">💾 Descargar CSV de Concordancias</button>
-          <button id="downloadPdfResultsBtn">📄 Generar PDF</button> {/* */}
+          <button id="downloadPdfResultsBtn">📄 Generar PDF</button> 
       </div>
       <div id="outputResults" class="list"><p>No se han encontrado coincidencias o no se ha realizado la verificación.</p></div>
       <hr style="margin: 20px 0;">
@@ -409,7 +397,7 @@
 
   <script>
     // ----- URL DE LA LISTA MAESTRA EN REPOSITORIO -----
-    const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv';
+    const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv'; // Reemplaza con tu URL real
 
     // ----- ESTADO DE LA APLICACIÓN -----
     let listaFoco = new Map(); 
@@ -419,7 +407,7 @@
     const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.8.9';
     let listaFocoCacheadaLocalmente = new Map();
 
-    // ----- SELECTORES DOM (ACTUALIZADO) -----
+    // ----- SELECTORES DOM -----
     const panelInicioDiv = document.getElementById('panelInicio');
     const modalItemImage = document.getElementById('modalItemImage');
     const modalImageError = document.getElementById('modalImageError');
@@ -460,7 +448,8 @@
     const layoutToggleResultsBtn = document.getElementById('layoutToggleResultsBtn');
     const downloadXlsxResultsBtn = document.getElementById('downloadXlsxResultsBtn'); 
     const downloadCsvResultsBtn = document.getElementById('downloadCsvResultsBtn');
-    const downloadPdfResultsBtn = document.getElementById('downloadPdfResultsBtn'); // const btnNewVerification = document.getElementById('btnNewVerification');
+    const downloadPdfResultsBtn = document.getElementById('downloadPdfResultsBtn');
+    const btnNewVerification = document.getElementById('btnNewVerification');
     const resumenNuevosUl = document.querySelector('#resumenNuevos ul');
     const resumenEliminadosUl = document.querySelector('#resumenEliminados ul');
     const resumenModificadosUl = document.querySelector('#resumenModificados ul');
@@ -470,53 +459,669 @@
     let scannerVerifierActive = false;
 
     // ----- INICIALIZACIÓN -----
-    document.addEventListener('DOMContentLoaded', () => { checkInitialState(); navigateToView('panelInicio'); itemDetailModal.addEventListener('click', function(event) { if (event.target === itemDetailModal) { closeItemDetailModal(); } }); modalItemImage.onerror = function() { this.style.display = 'none'; modalImageError.style.display = 'block'; modalImageError.textContent = 'Error al cargar imagen o URL no válida.'; }; modalItemImage.onload = function() { this.style.display = 'block'; modalImageError.style.display = 'none'; }; });
+    document.addEventListener('DOMContentLoaded', () => { 
+        checkInitialState(); 
+        navigateToView('panelInicio'); 
+        itemDetailModal.addEventListener('click', function(event) { 
+            if (event.target === itemDetailModal) { closeItemDetailModal(); } 
+        }); 
+        modalItemImage.onerror = function() { 
+            this.style.display = 'none'; 
+            modalImageError.style.display = 'block'; 
+            modalImageError.textContent = 'Error al cargar imagen o URL no válida.'; 
+        }; 
+        modalItemImage.onload = function() { 
+            this.style.display = 'block'; 
+            modalImageError.style.display = 'none'; 
+        }; 
+    });
 
-    // ----- Lógica de Carga y Sincronización con Repositorio (sin cambios funcionales desde v2.8.8) -----
+    // ----- Lógica de Carga y Sincronización con Repositorio -----
     function cleanText(text) { return text ? String(text).trim() : ''; }
-    function parsearMaestraCSV(csvText) { const items = []; const lineas = csvText.trim().split(/\r\n|\n/); const cabeceraPresente = true; const indiceInicio = cabeceraPresente ? 1 : 0; for (let i = indiceInicio; i < lineas.length; i++) { const linea = lineas[i].trim(); if (!linea) continue; const partes = linea.split(','); if (partes.length >= 1 && partes[0]) { let itemData = { codigo: cleanText(partes[0]), upc: '', descripcion: '', brand: '', url: '' }; if (partes.length >= 2) itemData.upc = cleanText(partes[1]); if (partes.length >= 3) itemData.descripcion = cleanText(partes[2]); if (partes.length >= 4) itemData.brand = cleanText(partes[3]); if (partes.length >= 5) itemData.url = cleanText(partes[4]); items.push(itemData); } } return items;}
-    function rebuildUpcToCodigoMap() { upcToCodigoMap.clear(); listaFoco.forEach(item => { if (item.upc && item.upc.trim() !== '') { upcToCodigoMap.set(item.upc.trim(), item.codigo); } }); }
-    async function cargarMaestraDesdeRepositorio() { if (!URL_LISTA_MAESTRA_REPOSITORIO || URL_LISTA_MAESTRA_REPOSITORIO === 'PON_AQUI_LA_URL_RAW_DE_TU_MAESTRA.CSV_EN_REPOSITORIO') { console.warn('URL_LISTA_MAESTRA_REPOSITORIO no configurada.'); return null; } try { const response = await fetch(URL_LISTA_MAESTRA_REPOSITORIO + '?t=' + new Date().getTime()); if (!response.ok) { console.error('Error al cargar Maestra desde Repositorio:', response.status); return null; } const csvText = await response.text(); const itemsArray = parsearMaestraCSV(csvText); const nuevaListaMap = new Map(); itemsArray.forEach(item => { const idItemLimpio = cleanCode(item.codigo); if (idItemLimpio) { nuevaListaMap.set(idItemLimpio, { codigo: idItemLimpio, upc: item.upc, descripcion: item.descripcion, brand: item.brand, url: item.url }); } }); return nuevaListaMap; } catch (error) { console.error('Excepción al cargar Maestra desde Repositorio:', error); return null; } }
-    function compararListas(listaLocalMap, listaRemotaMap) { const nuevos = [], eliminados = [], modificados = []; listaRemotaMap.forEach((itemRemoto, codigo) => { if (!listaLocalMap.has(codigo)) { nuevos.push(itemRemoto); } else { const itemLocal = listaLocalMap.get(codigo); let changedFields = {}; const localDesc = itemLocal.descripcion||'', remoteDesc = itemRemoto.descripcion||''; const localUpc = itemLocal.upc||'', remoteUpc = itemRemoto.upc||''; const localBrand = itemLocal.brand||'', remoteBrand = itemRemoto.brand||''; const localUrl = itemLocal.url||'', remoteUrl = itemRemoto.url||''; if (localDesc !== remoteDesc) changedFields.descripcion = { old: localDesc, new: remoteDesc}; if (localUpc !== remoteUpc) changedFields.upc = { old: localUpc, new: remoteUpc}; if (localBrand !== remoteBrand) changedFields.brand = { old: localBrand, new: remoteBrand}; if (localUrl !== remoteUrl) changedFields.url = { old: localUrl, new: remoteUrl}; if (Object.keys(changedFields).length > 0) { modificados.push({ ...itemRemoto, changedFields }); } } }); listaLocalMap.forEach((itemLocal, codigo) => { if (!listaRemotaMap.has(codigo)) { eliminados.push(itemLocal); } }); return { nuevos, eliminados, modificados }; }
-    function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraRepositorioMap) { const popularListaResumen = (ul, items, fmt) => { ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>'; }; const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion||'N/A'}, U:${itm.upc||'N/A'}, B:${itm.brand||'N/A'}, ImgURL:${itm.url||'N/A'}</span></li>`; popularListaResumen(resumenNuevosUl, nuevos, itemFormatter); popularListaResumen(resumenEliminadosUl, eliminados, itemFormatter); popularListaResumen(resumenModificadosUl, modificados, itm => { let chgs = ''; if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old||'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new||'N/A'}</span>`; if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old||'N/A'}</s> &rarr; ${itm.changedFields.upc.new||'N/A'}</span>`; if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old||'N/A'}</s> &rarr; ${itm.changedFields.brand.new||'N/A'}</span>`; if(itm.changedFields.url) chgs += `<span class="field-change">URL Img: <s>${itm.changedFields.url.old||'N/A'}</s> &rarr; ${itm.changedFields.url.new||'N/A'}</span>`; return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`; }); btnConfirmarCambiosRepositorio.onclick = () => { listaFoco = new Map(maestraRepositorioMap); rebuildUpcToCodigoMap(); saveListaFocoToStorage(); updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) desde el repositorio y guardada localmente.`; panelInicioInfo.className = 'panel-inicio-info'; navigateToView('panelInicio'); }; btnRechazarCambiosRepositorio.onclick = () => { rebuildUpcToCodigoMap(); updateFocoPreviewAndSearch(); panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Se mantiene la Maestra local (${listaFoco.size} ítems).`; panelInicioInfo.className = 'panel-inicio-info info'; navigateToView('panelInicio'); }; navigateToView('confirmacionCambiosStep'); }
-    async function checkInitialState() { loadListaFocoFromStorage(false); listaFocoCacheadaLocalmente = new Map(listaFoco); panelInicioInfo.innerHTML = '🔄 Sincronizando Maestra TMR desde el repositorio...'; panelInicioInfo.className = 'panel-inicio-info info'; btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true; const maestraDesdeRepositorio = await cargarMaestraDesdeRepositorio(); btnIniciarDobleControlDesdePanel.disabled = false; btnGestionMaestraDesdePanel.disabled = false; if (maestraDesdeRepositorio) { const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeRepositorio); let localIsIdentical = true; if (listaFocoCacheadaLocalmente.size !== maestraDesdeRepositorio.size) { localIsIdentical = false; } else { for (const [key, remoteItem] of maestraDesdeRepositorio.entries()) { const localItem = listaFocoCacheadaLocalmente.get(key); if (!localItem || (localItem.descripcion || '') !== (remoteItem.descripcion || '') || (localItem.upc || '') !== (remoteItem.upc || '') || (localItem.brand || '') !== (remoteItem.brand || '') || (localItem.url || '') !== (remoteItem.url || '') ) { localIsIdentical = false; break; } } } if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && localIsIdentical) { panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems).`; } else if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && !localIsIdentical) { listaFoco = new Map(maestraDesdeRepositorio); rebuildUpcToCodigoMap(); saveListaFocoToStorage(false); panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) con cambios menores y guardada.`; } else { panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Maestra TMR del repositorio. Revisa y confirma.`; panelInicioInfo.className = 'panel-inicio-info warning'; mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio); return; } panelInicioInfo.className = 'panel-inicio-info'; updateFocoPreviewAndSearch(); navigateToView('panelInicio'); } else { if (listaFoco.size > 0) { panelInicioInfo.innerHTML = `⚠️ Error al cargar desde el repositorio. Usando Maestra local (${listaFoco.size} ítems).`; panelInicioInfo.className = 'panel-inicio-info warning'; } else { panelInicioInfo.innerHTML = `❌ Error al cargar desde el repositorio y no hay Maestra local.`; panelInicioInfo.className = 'panel-inicio-info error'; btnIniciarDobleControlDesdePanel.disabled = true; btnGestionMaestraDesdePanel.disabled = true; } updateFocoPreviewAndSearch(); navigateToView('panelInicio'); } }
+    function parsearMaestraCSV(csvText) { 
+        const items = []; 
+        const lineas = csvText.trim().split(/\r\n|\n/); 
+        const cabeceraPresente = true; // Asumimos que siempre hay cabecera en el CSV del repo
+        const indiceInicio = cabeceraPresente ? 1 : 0; 
+        for (let i = indiceInicio; i < lineas.length; i++) { 
+            const linea = lineas[i].trim(); 
+            if (!linea) continue; 
+            const partes = linea.split(','); 
+            if (partes.length >= 1 && partes[0]) { 
+                let itemData = { 
+                    codigo: cleanText(partes[0]), 
+                    upc: '', 
+                    descripcion: '', 
+                    brand: '', 
+                    url: '' 
+                }; 
+                if (partes.length >= 2) itemData.upc = cleanText(partes[1]); 
+                if (partes.length >= 3) itemData.descripcion = cleanText(partes[2]); 
+                if (partes.length >= 4) itemData.brand = cleanText(partes[3]); 
+                if (partes.length >= 5) itemData.url = cleanText(partes[4]); 
+                items.push(itemData); 
+            } 
+        } 
+        return items;
+    }
+    function rebuildUpcToCodigoMap() { 
+        upcToCodigoMap.clear(); 
+        listaFoco.forEach(item => { 
+            if (item.upc && item.upc.trim() !== '') { 
+                upcToCodigoMap.set(item.upc.trim(), item.codigo); 
+            } 
+        }); 
+    }
+    async function cargarMaestraDesdeRepositorio() { 
+        if (!URL_LISTA_MAESTRA_REPOSITORIO || URL_LISTA_MAESTRA_REPOSITORIO === 'PON_AQUI_LA_URL_RAW_DE_TU_MAESTRA.CSV_EN_REPOSITORIO') { 
+            console.warn('URL_LISTA_MAESTRA_REPOSITORIO no configurada.'); 
+            return null; 
+        } 
+        try { 
+            const response = await fetch(URL_LISTA_MAESTRA_REPOSITORIO + '?t=' + new Date().getTime()); // Cache busting 
+            if (!response.ok) { 
+                console.error('Error al cargar Maestra desde Repositorio:', response.status); 
+                return null; 
+            } 
+            const csvText = await response.text(); 
+            const itemsArray = parsearMaestraCSV(csvText); 
+            const nuevaListaMap = new Map(); 
+            itemsArray.forEach(item => { 
+                const idItemLimpio = cleanCode(item.codigo); 
+                if (idItemLimpio) { 
+                    nuevaListaMap.set(idItemLimpio, { 
+                        codigo: idItemLimpio, 
+                        upc: item.upc, 
+                        descripcion: item.descripcion, 
+                        brand: item.brand, 
+                        url: item.url 
+                    }); 
+                } 
+            }); 
+            return nuevaListaMap; 
+        } catch (error) { 
+            console.error('Excepción al cargar Maestra desde Repositorio:', error); 
+            return null; 
+        } 
+    }
+    function compararListas(listaLocalMap, listaRemotaMap) { 
+        const nuevos = [], eliminados = [], modificados = []; 
+        listaRemotaMap.forEach((itemRemoto, codigo) => { 
+            if (!listaLocalMap.has(codigo)) { 
+                nuevos.push(itemRemoto); 
+            } else { 
+                const itemLocal = listaLocalMap.get(codigo); 
+                let changedFields = {}; 
+                const localDesc = itemLocal.descripcion||'', remoteDesc = itemRemoto.descripcion||''; 
+                const localUpc = itemLocal.upc||'', remoteUpc = itemRemoto.upc||''; 
+                const localBrand = itemLocal.brand||'', remoteBrand = itemRemoto.brand||''; 
+                const localUrl = itemLocal.url||'', remoteUrl = itemRemoto.url||''; 
+                if (localDesc !== remoteDesc) changedFields.descripcion = { old: localDesc, new: remoteDesc}; 
+                if (localUpc !== remoteUpc) changedFields.upc = { old: localUpc, new: remoteUpc}; 
+                if (localBrand !== remoteBrand) changedFields.brand = { old: localBrand, new: remoteBrand}; 
+                if (localUrl !== remoteUrl) changedFields.url = { old: localUrl, new: remoteUrl}; 
+                if (Object.keys(changedFields).length > 0) { 
+                    modificados.push({ ...itemRemoto, changedFields }); 
+                } 
+            } 
+        }); 
+        listaLocalMap.forEach((itemLocal, codigo) => { 
+            if (!listaRemotaMap.has(codigo)) { 
+                eliminados.push(itemLocal); 
+            } 
+        }); 
+        return { nuevos, eliminados, modificados }; 
+    }
+    function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraRepositorioMap) { 
+        const popularListaResumen = (ul, items, fmt) => { 
+            ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>'; 
+        }; 
+        const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion||'N/A'}, U:${itm.upc||'N/A'}, B:${itm.brand||'N/A'}, ImgURL:${itm.url||'N/A'}</span></li>`; 
+        popularListaResumen(resumenNuevosUl, nuevos, itemFormatter); 
+        popularListaResumen(resumenEliminadosUl, eliminados, itemFormatter); 
+        popularListaResumen(resumenModificadosUl, modificados, itm => { 
+            let chgs = ''; 
+            if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old||'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new||'N/A'}</span>`; 
+            if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old||'N/A'}</s> &rarr; ${itm.changedFields.upc.new||'N/A'}</span>`; 
+            if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old||'N/A'}</s> &rarr; ${itm.changedFields.brand.new||'N/A'}</span>`; 
+            if(itm.changedFields.url) chgs += `<span class="field-change">URL Img: <s>${itm.changedFields.url.old||'N/A'}</s> &rarr; ${itm.changedFields.url.new||'N/A'}</span>`; 
+            return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`; 
+        }); 
+        btnConfirmarCambiosRepositorio.onclick = () => { 
+            listaFoco = new Map(maestraRepositorioMap); 
+            rebuildUpcToCodigoMap(); 
+            saveListaFocoToStorage(); 
+            updateFocoPreviewAndSearch(); 
+            panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) desde el repositorio y guardada localmente.`; 
+            panelInicioInfo.className = 'panel-inicio-info'; 
+            navigateToView('panelInicio'); 
+        }; 
+        btnRechazarCambiosRepositorio.onclick = () => { 
+            rebuildUpcToCodigoMap(); // Ya está usando la local (listaFocoCacheadaLocalmente que se pasó a listaFoco)
+            updateFocoPreviewAndSearch(); 
+            panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Se mantiene la Maestra local (${listaFoco.size} ítems).`; 
+            panelInicioInfo.className = 'panel-inicio-info info'; 
+            navigateToView('panelInicio'); 
+        }; 
+        navigateToView('confirmacionCambiosStep'); 
+    }
+    async function checkInitialState() { 
+        loadListaFocoFromStorage(false); // Carga la guardada localmente en listaFoco
+        listaFocoCacheadaLocalmente = new Map(listaFoco); // Guarda una copia para comparar
+        panelInicioInfo.innerHTML = '🔄 Sincronizando Maestra TMR desde el repositorio...'; 
+        panelInicioInfo.className = 'panel-inicio-info info'; 
+        btnIniciarDobleControlDesdePanel.disabled = true; 
+        btnGestionMaestraDesdePanel.disabled = true; 
+        const maestraDesdeRepositorio = await cargarMaestraDesdeRepositorio(); 
+        btnIniciarDobleControlDesdePanel.disabled = false; 
+        btnGestionMaestraDesdePanel.disabled = false; 
+
+        if (maestraDesdeRepositorio) { 
+            const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeRepositorio); 
+            
+            let localIsIdenticalToRemote = true;
+            if (listaFocoCacheadaLocalmente.size !== maestraDesdeRepositorio.size) {
+                localIsIdenticalToRemote = false;
+            } else {
+                for (const [key, remoteItem] of maestraDesdeRepositorio.entries()) {
+                    const localItem = listaFocoCacheadaLocalmente.get(key);
+                    if (!localItem || 
+                        (localItem.descripcion || '') !== (remoteItem.descripcion || '') ||
+                        (localItem.upc || '') !== (remoteItem.upc || '') ||
+                        (localItem.brand || '') !== (remoteItem.brand || '') ||
+                        (localItem.url || '') !== (remoteItem.url || '') ) {
+                        localIsIdenticalToRemote = false;
+                        break;
+                    }
+                }
+            }
+
+            if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0 && localIsIdenticalToRemote) {
+                // No hay cambios y la local es idéntica (o ya fue actualizada y guardada)
+                panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;
+            } else if (nuevos.length > 0 || eliminados.length > 0 || modificados.length > 0) {
+                // Hay cambios significativos, mostrar confirmación
+                panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Maestra TMR del repositorio. Revisa y confirma.`;
+                panelInicioInfo.className = 'panel-inicio-info warning';
+                mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio);
+                return; // Esperar acción del usuario
+            } else { 
+                // No hay nuevos/eliminados/modificados detectados por la función de comparación, pero puede haber diferencias sutiles
+                // o la local ya era la del repositorio. Actualizar por si acaso si no son idénticas.
+                if (!localIsIdenticalToRemote) {
+                    listaFoco = new Map(maestraDesdeRepositorio);
+                    rebuildUpcToCodigoMap();
+                    saveListaFocoToStorage(false); // Guardar sin alerta
+                    panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) y actualizada localmente.`;
+                } else {
+                     panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems). Sin cambios relevantes.`;
+                }
+            }
+            panelInicioInfo.className = 'panel-inicio-info'; 
+            updateFocoPreviewAndSearch(); 
+            navigateToView('panelInicio'); 
+        } else { 
+            // Error al cargar del repositorio
+            if (listaFoco.size > 0) { 
+                panelInicioInfo.innerHTML = `⚠️ Error al cargar desde el repositorio. Usando Maestra local (${listaFoco.size} ítems).`; 
+                panelInicioInfo.className = 'panel-inicio-info warning'; 
+            } else { 
+                panelInicioInfo.innerHTML = `❌ Error al cargar desde el repositorio y no hay Maestra local. Funcionalidad limitada.`; 
+                panelInicioInfo.className = 'panel-inicio-info error'; 
+                btnIniciarDobleControlDesdePanel.disabled = true; 
+                btnGestionMaestraDesdePanel.disabled = true; 
+            } 
+            rebuildUpcToCodigoMap(); // Asegurar que el mapa UPC esté actualizado con la local (si existe)
+            updateFocoPreviewAndSearch(); 
+            navigateToView('panelInicio'); 
+        } 
+    }
     
     // ----- NAVEGACIÓN DE VISTAS -----
-    function navigateToView(viewName) { [panelInicioDiv, gestionMaestraStepDiv, dobleControlStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv, itemDetailModal].forEach(div => div.classList.add('hidden')); if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none'; if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden'); else if (viewName === 'gestionMaestraStep') { gestionMaestraStepDiv.classList.remove('hidden'); updateFocoPreviewAndSearch(); } else if (viewName === 'dobleControlStep') dobleControlStepDiv.classList.remove('hidden'); else if (viewName === 'resultadosStep') resultadosStepDiv.classList.remove('hidden'); else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden');}
+    function navigateToView(viewName) { 
+        [panelInicioDiv, gestionMaestraStepDiv, dobleControlStepDiv, resultadosStepDiv, confirmacionCambiosStepDiv, itemDetailModal].forEach(div => div.classList.add('hidden')); 
+        if (viewName !== 'itemDetailModal') itemDetailModal.style.display = 'none'; 
+        if (viewName === 'panelInicio') panelInicioDiv.classList.remove('hidden'); 
+        else if (viewName === 'gestionMaestraStep') { gestionMaestraStepDiv.classList.remove('hidden'); updateFocoPreviewAndSearch(); } 
+        else if (viewName === 'dobleControlStep') dobleControlStepDiv.classList.remove('hidden'); 
+        else if (viewName === 'resultadosStep') resultadosStepDiv.classList.remove('hidden'); 
+        else if (viewName === 'confirmacionCambiosStep') confirmacionCambiosStepDiv.classList.remove('hidden');
+    }
     
     // ----- UTILIDADES -----
-    function cleanCode(code) { if (typeof code !== 'string' && typeof code !== 'number') return ''; return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); }
+    function cleanCode(code) { 
+        if (typeof code !== 'string' && typeof code !== 'number') return ''; 
+        return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase(); 
+    }
     function resetFileInput(el) { if(el) el.value = null; }
-    function getDelimiterRegex(d) { if (d.toLowerCase()==='<tab>') return /\t/; return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
+    function getDelimiterRegex(d) { 
+        if (d.toLowerCase()==='<tab>') return /\t/; 
+        return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+    }
 
     // ----- GESTIÓN LISTA MAESTRA (BÚSQUEDA Y ESTADÍSTICAS) -----
-    function updateFocoPreviewAndSearch(itemsToShow = null) { let countNoUrl = 0; let countNoUpc = 0; let countNoDescription = 0; let countNoBrand = 0; listaFoco.forEach(item => { if (!item.url || item.url.trim() === '') countNoUrl++; if (!item.upc || item.upc.trim() === '') countNoUpc++; if (!item.descripcion || item.descripcion.trim() === '') countNoDescription++; if (!item.brand || item.brand.trim() === '') countNoBrand++; }); statTotalItems.textContent = listaFoco.size; statNoImageUrl.textContent = countNoUrl; statNoUpc.textContent = countNoUpc; statNoDescription.textContent = countNoDescription; statNoBrand.textContent = countNoBrand; const searchTerm = searchFocoInput.value.toLowerCase().trim(); if (itemsToShow) { focoSearchResultsDiv.innerHTML = ''; if (itemsToShow.length > 0) { itemsToShow.slice(0, 30).forEach(item => { const p = document.createElement('div'); p.className = 'search-result-item'; p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc||'N/A'}, M: ${item.brand||'N/A'}, Img: ${item.url ? 'Sí':'No'})</span> <span class="desc">${item.descripcion||'(S/D)'}</span>`; p.addEventListener('click', () => openItemDetailModal(item.codigo)); focoSearchResultsDiv.appendChild(p); }); if (itemsToShow.length > 30) { focoSearchResultsDiv.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length - 30} más. Refine su búsqueda.</p>`; } } else if (searchTerm !== '') { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">No se encontraron ítems que coincidan con la búsqueda.</p>'; } else { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; } } else if (searchTerm === '' && !itemsToShow) { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; } }
-    function saveListaFocoToStorage(showAlert = true) { if (listaFoco.size === 0 && showAlert && !confirm("La Maestra está vacía. ¿Guardar vacía?")) return false; try { localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values()))); if (showAlert) alert(`Maestra con ${listaFoco.size} ítems guardada localmente.`); return true; } catch (e) { if (showAlert) alert("Error al guardar Maestra local: " + e.message); return false; } }
-    function loadListaFocoFromStorage(showAlerts = true) { const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); if (data) { try { const itemsArray = JSON.parse(data); itemsArray.forEach(item => { const idItemLimpio = cleanCode(item.codigo); if (idItemLimpio) { listaFoco.set(idItemLimpio, { codigo: idItemLimpio, upc: item.upc||'', descripcion: item.descripcion||'', brand: item.brand||'', url: item.url||'' }); } }); if (showAlerts) alert(`Maestra local con ${listaFoco.size} ítems cargada.`); } catch (e) { if (showAlerts) alert("Error al cargar Maestra local: datos corruptos. Se borrará."); localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); } } else { if (showAlerts) alert("No hay Maestra guardada localmente."); } rebuildUpcToCodigoMap(); }
-    searchFocoInput.addEventListener('input', () => { const searchTerm = searchFocoInput.value.toLowerCase().trim(); if (!searchTerm) { focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; return; } const results = Array.from(listaFoco.values()).filter(item => item.codigo.toLowerCase().includes(searchTerm) || (item.upc && item.upc.toLowerCase().includes(searchTerm)) || (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) || (item.brand && item.brand.toLowerCase().includes(searchTerm)) || (item.url && item.url.toLowerCase().includes(searchTerm)) ); updateFocoPreviewAndSearch(results); });
+    function updateFocoPreviewAndSearch(itemsToShow = null) { 
+        let countNoUrl = 0, countNoUpc = 0, countNoDescription = 0, countNoBrand = 0; 
+        listaFoco.forEach(item => { 
+            if (!item.url || item.url.trim() === '') countNoUrl++; 
+            if (!item.upc || item.upc.trim() === '') countNoUpc++; 
+            if (!item.descripcion || item.descripcion.trim() === '') countNoDescription++; 
+            if (!item.brand || item.brand.trim() === '') countNoBrand++; 
+        }); 
+        statTotalItems.textContent = listaFoco.size; 
+        statNoImageUrl.textContent = countNoUrl; 
+        statNoUpc.textContent = countNoUpc; 
+        statNoDescription.textContent = countNoDescription; 
+        statNoBrand.textContent = countNoBrand; 
+        const searchTerm = searchFocoInput.value.toLowerCase().trim(); 
+        if (itemsToShow) { 
+            focoSearchResultsDiv.innerHTML = ''; 
+            if (itemsToShow.length > 0) { 
+                itemsToShow.slice(0, 30).forEach(item => { 
+                    const p = document.createElement('div'); 
+                    p.className = 'search-result-item'; 
+                    p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc||'N/A'}, M: ${item.brand||'N/A'}, Img: ${item.url ? 'Sí':'No'})</span> <span class="desc">${item.descripcion||'(S/D)'}</span>`; 
+                    p.addEventListener('click', () => openItemDetailModal(item.codigo)); 
+                    focoSearchResultsDiv.appendChild(p); 
+                }); 
+                if (itemsToShow.length > 30) { 
+                    focoSearchResultsDiv.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length - 30} más. Refine su búsqueda.</p>`; 
+                } 
+            } else if (searchTerm !== '') { 
+                focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">No se encontraron ítems que coincidan con la búsqueda.</p>'; 
+            } else { 
+                focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; 
+            } 
+        } else if (searchTerm === '' && !itemsToShow) { 
+            focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; 
+        } 
+    }
+    function saveListaFocoToStorage(showAlert = true) { 
+        if (listaFoco.size === 0 && showAlert && !confirm("La Maestra está vacía. ¿Guardar vacía?")) return false; 
+        try { 
+            localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values()))); 
+            if (showAlert) alert(`Maestra con ${listaFoco.size} ítems guardada localmente.`); 
+            return true; 
+        } catch (e) { 
+            if (showAlert) alert("Error al guardar Maestra local: " + e.message); 
+            return false; 
+        } 
+    }
+    function loadListaFocoFromStorage(showAlerts = true) { 
+        const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO); 
+        listaFoco.clear(); 
+        if (data) { 
+            try { 
+                const itemsArray = JSON.parse(data); 
+                itemsArray.forEach(item => { 
+                    const idItemLimpio = cleanCode(item.codigo); 
+                    if (idItemLimpio) { 
+                        listaFoco.set(idItemLimpio, { 
+                            codigo: idItemLimpio, 
+                            upc: item.upc||'', 
+                            descripcion: item.descripcion||'', 
+                            brand: item.brand||'', 
+                            url: item.url||'' 
+                        }); 
+                    } 
+                }); 
+                if (showAlerts) alert(`Maestra local con ${listaFoco.size} ítems cargada.`); 
+            } catch (e) { 
+                if (showAlerts) alert("Error al cargar Maestra local: datos corruptos. Se borrará."); 
+                localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); 
+                listaFoco.clear(); 
+            } 
+        } else { 
+            if (showAlerts) console.log("No hay Maestra guardada localmente."); // Cambiado a console.log para menos alertas
+        } 
+        // rebuildUpcToCodigoMap(); // Se llama después en checkInitialState o donde sea necesario
+    }
+    searchFocoInput.addEventListener('input', () => { 
+        const searchTerm = searchFocoInput.value.toLowerCase().trim(); 
+        if (!searchTerm) { 
+            focoSearchResultsDiv.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar en la Lista Maestra...</p>'; 
+            return; 
+        } 
+        const results = Array.from(listaFoco.values()).filter(item => 
+            item.codigo.toLowerCase().includes(searchTerm) || 
+            (item.upc && item.upc.toLowerCase().includes(searchTerm)) || 
+            (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) || 
+            (item.brand && item.brand.toLowerCase().includes(searchTerm)) || 
+            (item.url && item.url.toLowerCase().includes(searchTerm)) 
+        ); 
+        updateFocoPreviewAndSearch(results); 
+    });
     btnVolverAlPanelDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
     // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) Y MANEJO LISTA A VERIFICAR -----
-    function addValidCodeToVerifyList(idItem) { const trimmedIdItem = String(idItem).trim(); if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) { if (!listaVerificar.has(trimmedIdItem)) { listaVerificar.add(trimmedIdItem); return trimmedIdItem; } return null; } return false; }
-    function handleFileUpload(file, isExcel) { if (!file) return; verifyPreview.innerHTML = `Procesando "${file.name}"...`; const idItemCol = parseInt(verifyCodigoColInput.value) - 1; const delimiter = verifyCsvDelimiterInput.value; const hasHeader = verifyHasHeaderCheckbox.checked; const targetFileElement = isExcel ? verifyFileExcel : verifyFileTxtCsv; if (idItemCol < 0) { alert("Col. ID Ítem debe ser >= 1."); verifyPreview.textContent = "Error."; resetFileInput(targetFileElement); return; } const reader = new FileReader(); reader.onload = (e) => { const content = e.target.result; let itemsFromFile = []; try { if (isExcel) itemsFromFile = processExcelDataForVerify(content, idItemCol, hasHeader); else itemsFromFile = processTextCsvDataForVerify(content, idItemCol, hasHeader, delimiter); listaVerificar.clear(); scannedCodesVerifyTextarea.value = ''; let addedCount = 0, omittedCount = 0; itemsFromFile.forEach(idItemFromFile => { const result = addValidCodeToVerifyList(idItemFromFile); if (result !== false && result !== null) { addedCount++; } else if (result === false) { omittedCount++; } }); if (omittedCount > 0) alert(`${omittedCount} ID(s) de Ítem del archivo fueron omitidos (no numéricos > 5 dígitos).`); updateVerifyPreview(); } catch (error) { alert(`Error procesando ${file.name}: ${error.message}`); verifyPreview.textContent = `Error.`; } resetFileInput(targetFileElement); }; reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); verifyPreview.textContent = `Error.`; resetFileInput(targetFileElement); }; if (isExcel) reader.readAsArrayBuffer(file); else reader.readAsText(file); }
-    function processTextCsvDataForVerify(content, colIdx, hasHeader, delimiter = ',') { const lines = content.split(/\r\n|\n/); const dataRows = hasHeader ? lines.slice(1) : lines; const items = []; const delimRegex = getDelimiterRegex(delimiter); dataRows.forEach(line => { if (line.trim() === '') return; const parts = line.split(delimRegex); const val = parts[colIdx] ? String(parts[colIdx]).trim() : null; if (val) items.push(val); }); return items; }
-    function processExcelDataForVerify(arrayBuffer, colIdx, hasHeader) { const items = []; const data = new Uint8Array(arrayBuffer); const workbook = XLSX.read(data, {type:"array"}); const firstSheetName = workbook.SheetNames[0]; if (!firstSheetName) throw new Error("Excel sin hojas."); const worksheet = workbook.Sheets[firstSheetName]; const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: true, defval:null }); const dataRows = hasHeader ? jsonData.slice(1) : jsonData; dataRows.forEach(row => { if (!row) return; const val = (row[colIdx] !== null && row[colIdx] !== undefined) ? String(row[colIdx]).trim() : null; if (val) items.push(val); }); return items; }
+    function addValidCodeToVerifyList(idItem) { 
+        const trimmedIdItem = String(idItem).trim(); 
+        if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) { 
+            if (!listaVerificar.has(trimmedIdItem)) { 
+                listaVerificar.add(trimmedIdItem); 
+                return trimmedIdItem; 
+            } 
+            return null; // Ya existe
+        } 
+        return false; // Inválido
+    }
+    function handleFileUpload(file, isExcel) { 
+        if (!file) return; 
+        verifyPreview.innerHTML = `Procesando "${file.name}"...`; 
+        const idItemCol = parseInt(verifyCodigoColInput.value) - 1; 
+        const delimiter = verifyCsvDelimiterInput.value; 
+        const hasHeader = verifyHasHeaderCheckbox.checked; 
+        const targetFileElement = isExcel ? verifyFileExcel : verifyFileTxtCsv; 
+        if (idItemCol < 0) { 
+            alert("Col. ID Ítem debe ser >= 1."); 
+            verifyPreview.textContent = "Error."; 
+            resetFileInput(targetFileElement); 
+            return; 
+        } 
+        const reader = new FileReader(); 
+        reader.onload = (e) => { 
+            const content = e.target.result; 
+            let itemsFromFile = []; 
+            try { 
+                if (isExcel) itemsFromFile = processExcelDataForVerify(content, idItemCol, hasHeader); 
+                else itemsFromFile = processTextCsvDataForVerify(content, idItemCol, hasHeader, delimiter); 
+                
+                listaVerificar.clear(); // Limpiar antes de añadir nuevos de archivo
+                scannedCodesVerifyTextarea.value = ''; // Limpiar área de escaneo también
+                let addedCount = 0, omittedCount = 0, duplicateCount = 0; 
+                itemsFromFile.forEach(idItemFromFile => { 
+                    const result = addValidCodeToVerifyList(idItemFromFile); 
+                    if (result === null) { // Ya estaba en la lista
+                        duplicateCount++;
+                    } else if (result !== false) { // Añadido correctamente
+                        addedCount++; 
+                    } else { // Formato inválido
+                        omittedCount++; 
+                    } 
+                }); 
+                if (omittedCount > 0) alert(`${omittedCount} ID(s) de Ítem del archivo fueron omitidos (no numéricos > 5 dígitos).`); 
+                if (duplicateCount > 0) alert(`${duplicateCount} ID(s) de Ítem del archivo ya estaban en la lista (omitidos).`);
+                updateVerifyPreview(); 
+            } catch (error) { 
+                alert(`Error procesando ${file.name}: ${error.message}`); 
+                verifyPreview.textContent = `Error.`; 
+            } 
+            resetFileInput(targetFileElement); 
+        }; 
+        reader.onerror = () => { 
+            alert(`No se pudo leer ${file.name}.`); 
+            verifyPreview.textContent = `Error.`; 
+            resetFileInput(targetFileElement); 
+        }; 
+        if (isExcel) reader.readAsArrayBuffer(file); 
+        else reader.readAsText(file); 
+    }
+    function processTextCsvDataForVerify(content, colIdx, hasHeader, delimiter = ',') { 
+        const lines = content.split(/\r\n|\n/); 
+        const dataRows = hasHeader ? lines.slice(1) : lines; 
+        const items = []; 
+        const delimRegex = getDelimiterRegex(delimiter); 
+        dataRows.forEach(line => { 
+            if (line.trim() === '') return; 
+            const parts = line.split(delimRegex); 
+            const val = parts[colIdx] ? String(parts[colIdx]).trim() : null; 
+            if (val) items.push(val); 
+        }); 
+        return items; 
+    }
+    function processExcelDataForVerify(arrayBuffer, colIdx, hasHeader) { 
+        const items = []; 
+        const data = new Uint8Array(arrayBuffer); 
+        const workbook = XLSX.read(data, {type:"array"}); 
+        const firstSheetName = workbook.SheetNames[0]; 
+        if (!firstSheetName) throw new Error("Excel sin hojas."); 
+        const worksheet = workbook.Sheets[firstSheetName]; 
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, rawNumbers: false, defval:null }); // rawNumbers: false para asegurar strings
+        const dataRows = hasHeader ? jsonData.slice(1) : jsonData; 
+        dataRows.forEach(row => { 
+            if (!row) return; 
+            const val = (row[colIdx] !== null && row[colIdx] !== undefined) ? String(row[colIdx]).trim() : null; 
+            if (val) items.push(val); 
+        }); 
+        return items; 
+    }
     verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], false));
     verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], true));
-    function updateVerifyPreview() { verifyPreview.textContent = `Lista de IDs de Ítem Válidos a Verificar: ${listaVerificar.size}. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 5 ? '...' : ''}` : 'Vacía.'}`; }
-    function collectVerifyDataFromInputs() { const textVerifyItems = verifyTextarea.value.trim(); if (textVerifyItems) { textVerifyItems.split(/\s+/).forEach(idItemFromText => { addValidCodeToVerifyList(idItemFromText); }); } updateVerifyPreview(); }
+    function updateVerifyPreview() { 
+        verifyPreview.textContent = `Lista de IDs de Ítem Válidos a Verificar: ${listaVerificar.size}. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 5 ? '...' : ''}` : 'Vacía.'}`; 
+    }
+    function collectVerifyDataFromInputs() { // Se llama antes de comparar
+        const textVerifyItems = verifyTextarea.value.trim(); 
+        if (textVerifyItems) { 
+            textVerifyItems.split(/\s+/).forEach(idItemFromText => { 
+                addValidCodeToVerifyList(idItemFromText); // Añade si es válido y no existe
+            }); 
+        } 
+        updateVerifyPreview(); 
+    }
     btnVolverAlPanelDesdeDobleControl.addEventListener('click', () => navigateToView('panelInicio'));
-    btnCompare.addEventListener('click', () => { collectVerifyDataFromInputs(); if (listaVerificar.size === 0) { alert("Cargue o escanee Ítems válidos para la Lista de Verificación."); return; } if (listaFoco.size === 0) { alert("La Lista Maestra está vacía. Sincronice con el repositorio."); navigateToView('panelInicio'); return; } compareListsAndDisplayResults(); navigateToView('resultadosStep'); });
-    function onScanSuccessVerify(decodedText, decodedResult){ const scannedUPC_full = cleanText(decodedText); let internalCode = null; let matchedMasterUPCForLog = null; if (scannedUPC_full) { if (upcToCodigoMap.size === 0 && listaFoco.size > 0) { alert("Advertencia: Su Lista Maestra no parece tener UPCs mapeados. El escaneo de UPC no encontrará Ítems."); } if (upcToCodigoMap.has(scannedUPC_full)) { internalCode = upcToCodigoMap.get(scannedUPC_full); matchedMasterUPCForLog = scannedUPC_full; } else if (scannedUPC_full.length > 1) { const scannedUPC_chopped = scannedUPC_full.substring(0, scannedUPC_full.length - 1); if (upcToCodigoMap.has(scannedUPC_chopped)) { internalCode = upcToCodigoMap.get(scannedUPC_chopped); matchedMasterUPCForLog = scannedUPC_chopped; } } if (internalCode) { const addedIdItem = addValidCodeToVerifyList(internalCode); if (addedIdItem) { const currentScannedText = scannedCodesVerifyTextarea.value.trim(); let logMessage = `${addedIdItem} (Scan: ${scannedUPC_full}`; if (scannedUPC_full !== matchedMasterUPCForLog && matchedMasterUPCForLog !== null) { logMessage += ` -> Maestra: ${matchedMasterUPCForLog}`; } logMessage += `)`; scannedCodesVerifyTextarea.value = currentScannedText ? `${currentScannedText}\n${logMessage}` : logMessage; updateVerifyPreview(); } else if (addedIdItem === null) { let alertMessage = `El Ítem ${internalCode} (Scan: ${scannedUPC_full}`; if (scannedUPC_full !== matchedMasterUPCForLog && matchedMasterUPCForLog !== null) { alertMessage += ` -> Maestra: ${matchedMasterUPCForLog}`; } alertMessage += `) ya está en la lista de verificación.`; alert(alertMessage); } else { let alertMessage = `El ID de Ítem (${internalCode}) asociado al UPC (Scan: ${scannedUPC_full}`; if (scannedUPC_full !== matchedMasterUPCForLog && matchedMasterUPCForLog !== null) { alertMessage += ` -> Maestra: ${matchedMasterUPCForLog}`; } alertMessage += `) no cumple el formato (número > 5 dígitos) y será omitido.`; alert(alertMessage); } } else { alert(`UPC escaneado (${scannedUPC_full}) no encontrado en la Lista Maestra, incluso intentando sin el último dígito.`); } } else { alert("Escaneo no produjo un UPC utilizable."); } }
-    startScanVerifyBtn.addEventListener('click', () => { if(scannerVerifierActive){if(html5QrCodeVerifier&&html5QrCodeVerifier.isScanning){html5QrCodeVerifier.stop().then(()=>{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}).catch(err=>console.error("Error deteniendo escáner:",err));}else{scannerVerifierActive=false;scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';}}else{if(location.protocol !=='https:'&&!['localhost','127.0.0.1'].includes(location.hostname)){alert('El escáner requiere HTTPS o localhost.');return;}scannerContainerVerify.classList.remove('hidden');startScanVerifyBtn.textContent='🛑 Detener Escáner';if(!html5QrCodeVerifier)html5QrCodeVerifier=new Html5Qrcode("readerVerify",{verbose:false});const config={fps:10,qrbox:{width:250,height:100},rememberLastUsedCamera:true,supportedScanTypes:[Html5QrcodeScanType.SCAN_TYPE_CAMERA]};html5QrCodeVerifier.start({facingMode:"environment"},config,onScanSuccessVerify,(error)=>{/*ignorar*/}).then(()=>scannerVerifierActive=true).catch(err=>{alert(`Error al iniciar escáner: ${err.message||err}`);scannerContainerVerify.classList.add('hidden');startScanVerifyBtn.textContent='📷 Escanear UPC de Artículo';scannerVerifierActive=false;});}});
+    btnCompare.addEventListener('click', () => { 
+        collectVerifyDataFromInputs(); 
+        if (listaVerificar.size === 0) { 
+            alert("Cargue o escanee Ítems válidos para la Lista de Verificación."); 
+            return; 
+        } 
+        if (listaFoco.size === 0) { 
+            alert("La Lista Maestra está vacía. Sincronice con el repositorio."); 
+            navigateToView('panelInicio'); 
+            return; 
+        } 
+        compareListsAndDisplayResults(); 
+        navigateToView('resultadosStep'); 
+    });
+    function onScanSuccessVerify(decodedText, decodedResult){ 
+        const scannedUPC_full = cleanText(decodedText); 
+        let internalCode = null; 
+        let matchedMasterUPCForLog = null; 
+        if (scannedUPC_full) { 
+            if (upcToCodigoMap.size === 0 && listaFoco.size > 0) { 
+                // Esta alerta es útil si la maestra no tiene UPCs
+                // alert("Advertencia: Su Lista Maestra no parece tener UPCs mapeados. El escaneo de UPC no encontrará Ítems."); 
+            } 
+            if (upcToCodigoMap.has(scannedUPC_full)) { 
+                internalCode = upcToCodigoMap.get(scannedUPC_full); 
+                matchedMasterUPCForLog = scannedUPC_full; 
+            } else if (scannedUPC_full.length > 1) { 
+                const scannedUPC_chopped = scannedUPC_full.substring(0, scannedUPC_full.length - 1); 
+                if (upcToCodigoMap.has(scannedUPC_chopped)) { 
+                    internalCode = upcToCodigoMap.get(scannedUPC_chopped); 
+                    matchedMasterUPCForLog = scannedUPC_chopped; 
+                } 
+            } 
+            if (internalCode) { 
+                const addedIdItemResult = addValidCodeToVerifyList(internalCode); 
+                if (addedIdItemResult !== false && addedIdItemResult !== null) { // Fue añadido
+                    const currentScannedText = scannedCodesVerifyTextarea.value.trim(); 
+                    let logMessage = `${addedIdItemResult} (Scan: ${scannedUPC_full}`; 
+                    if (scannedUPC_full !== matchedMasterUPCForLog && matchedMasterUPCForLog !== null) { 
+                        logMessage += ` -> Maestra: ${matchedMasterUPCForLog}`; 
+                    } 
+                    logMessage += `)`; 
+                    scannedCodesVerifyTextarea.value = currentScannedText ? `${currentScannedText}\n${logMessage}` : logMessage; 
+                    updateVerifyPreview(); 
+                } else if (addedIdItemResult === null) { // Ya estaba
+                    let alertMessage = `El Ítem ${internalCode} (Scan: ${scannedUPC_full}`; 
+                    if (scannedUPC_full !== matchedMasterUPCForLog && matchedMasterUPCForLog !== null) { 
+                        alertMessage += ` -> Maestra: ${matchedMasterUPCForLog}`; 
+                    } 
+                    alertMessage += `) ya está en la lista de verificación.`; 
+                    // alert(alertMessage); // Puede ser molesto, opcional
+                    console.log(alertMessage);
+                } else { // Formato de internalCode inválido (raro si viene de la maestra)
+                    let alertMessage = `El ID de Ítem (${internalCode}) asociado al UPC (Scan: ${scannedUPC_full}`; 
+                    if (scannedUPC_full !== matchedMasterUPCForLog && matchedMasterUPCForLog !== null) { 
+                        alertMessage += ` -> Maestra: ${matchedMasterUPCForLog}`; 
+                    } 
+                    alertMessage += `) no cumple el formato y será omitido.`; 
+                    alert(alertMessage); 
+                } 
+            } else { 
+                alert(`UPC escaneado (${scannedUPC_full}) no encontrado en la Lista Maestra (incluso sin último dígito).`); 
+            } 
+        } else { 
+            alert("Escaneo no produjo un UPC utilizable."); 
+        } 
+    }
+    startScanVerifyBtn.addEventListener('click', () => { 
+        if(scannerVerifierActive){
+            if(html5QrCodeVerifier && html5QrCodeVerifier.isScanning){
+                html5QrCodeVerifier.stop().then(() => {
+                    scannerVerifierActive = false;
+                    scannerContainerVerify.classList.add('hidden');
+                    startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo';
+                }).catch(err => console.error("Error deteniendo escáner:", err));
+            } else { // Si no estaba escaneando pero el flag estaba activo, resetear.
+                scannerVerifierActive = false;
+                scannerContainerVerify.classList.add('hidden');
+                startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo';
+            }
+        } else {
+            if(location.protocol !=='https:' && !['localhost','127.0.0.1'].includes(location.hostname)){
+                alert('El escáner de códigos de barras requiere un entorno seguro (HTTPS) o ser ejecutado en localhost.');
+                return;
+            }
+            scannerContainerVerify.classList.remove('hidden');
+            startScanVerifyBtn.textContent = '🛑 Detener Escáner';
+            if(!html5QrCodeVerifier) html5QrCodeVerifier = new Html5Qrcode("readerVerify", { verbose: false });
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 100 }, 
+                rememberLastUsedCamera: true, 
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] 
+            };
+            html5QrCodeVerifier.start({ facingMode: "environment" }, config, onScanSuccessVerify, (error) => { /* ignorar errores de no detección */ })
+            .then(() => scannerVerifierActive = true)
+            .catch(err => {
+                alert(`Error al iniciar escáner: ${err.message || err}`);
+                scannerContainerVerify.classList.add('hidden');
+                startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo';
+                scannerVerifierActive = false;
+            });
+        }
+    });
 
     // ----- COMPARACIÓN Y RESULTADOS -----
-    function compareListsAndDisplayResults(){ coincidencias.clear(); listaVerificar.forEach(idItemToVerify => { if(listaFoco.has(idItemToVerify)) { coincidencias.set(idItemToVerify, listaFoco.get(idItemToVerify)); } }); displayFinalResults(); }
-    function displayFinalResults(){ totalFocoSpan.textContent=listaFoco.size; totalVerifySpan.textContent=listaVerificar.size; totalMatchesSpan.textContent=coincidencias.size; outputResultsDiv.innerHTML=''; outputResultsDiv.className='list'; if(coincidencias.size===0){ outputResultsDiv.innerHTML='<p>No se encontraron Ítems concordantes.</p>'; }else{ coincidencias.forEach(item => { const cD = document.createElement("div"); cD.className="barcode-item-container"; cD.setAttribute('data-iditem', item.codigo); cD.addEventListener('click', () => openItemDetailModal(item.codigo)); const cP = document.createElement("p"); cP.className="barcode-item-code"; cP.textContent = item.codigo; cD.appendChild(cP); if(item.descripcion){ const dP=document.createElement("p"); dP.className="barcode-item-desc"; dP.textContent = item.descripcion; cD.appendChild(dP); } const brandP = document.createElement("p"); brandP.style.fontSize = "0.8em"; brandP.style.textAlign = "center"; brandP.textContent = `Marca: ${item.brand||'N/A'}`; cD.appendChild(brandP); const sD = document.createElement("div"); sD.className="barcode-item-svg"; const svg = document.createElementNS("http://www.w3.org/2000/svg","svg"); try { JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); sD.appendChild(svg); } catch(e) { sD.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; } cD.appendChild(sD); outputResultsDiv.appendChild(cD); }); } }
-    function openItemDetailModal(idItem) { const item = listaFoco.get(idItem) || coincidencias.get(idItem); if (item) { modalItemCodigo.textContent = "ID Ítem: " + item.codigo; modalItemDescripcion.textContent = item.descripcion || 'No disponible'; modalItemUPC.textContent = item.upc || 'No disponible'; modalItemBrand.textContent = item.brand || 'No disponible'; const imageUrl = item.url ? item.url.trim() : ''; if (imageUrl) { modalItemImage.src = imageUrl; modalItemImage.alt = "Imagen de " + (item.descripcion || item.codigo); modalItemImage.style.display = 'block'; modalImageError.style.display = 'none'; } else { modalItemImage.style.display = 'none'; modalItemImage.src = '#'; modalImageError.textContent = 'URL de imagen no especificada.'; modalImageError.style.display = 'block'; } itemDetailModal.classList.remove('hidden'); itemDetailModal.style.display = 'flex'; } }
-    function closeItemDetailModal() { itemDetailModal.classList.add('hidden'); itemDetailModal.style.display = 'none'; modalItemImage.src="#"; modalItemImage.style.display = 'none'; modalImageError.style.display = 'none'; }
-    layoutToggleResultsBtn.addEventListener('click',()=>{ outputResultsDiv.classList.toggle('grid');outputResultsDiv.classList.toggle('list');});
-    downloadCsvResultsBtn.addEventListener('click',()=>{ if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;} let cC="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; coincidencias.forEach(item=>{ const desc = `"${(item.descripcion||'').replace(/"/g,'""')}"`; const upcVal = `"${(item.upc||'').replace(/"/g,'""')}"`; const brandVal = `"${(item.brand||'').replace(/"/g,'""')}"`; const urlVal = `"${(item.url||'').replace(/"/g,'""')}"`; cC+=`${item.codigo},${upcVal},${desc},${brandVal},${urlVal}\n`; }); const b=new Blob([cC],{type:'text/csv;charset=utf-8;'}); const l=document.createElement("a");const u=URL.createObjectURL(b); l.setAttribute("href",u); l.setAttribute("download",`concordancias_v2.8.9_${new Date().toISOString().slice(0,10)}.csv`); document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);});
+    function compareListsAndDisplayResults(){ 
+        coincidencias.clear(); 
+        listaVerificar.forEach(idItemToVerify => { 
+            if(listaFoco.has(idItemToVerify)) { 
+                coincidencias.set(idItemToVerify, listaFoco.get(idItemToVerify)); 
+            } 
+        }); 
+        displayFinalResults(); 
+    }
+    function displayFinalResults(){ 
+        totalFocoSpan.textContent=listaFoco.size; 
+        totalVerifySpan.textContent=listaVerificar.size; 
+        totalMatchesSpan.textContent=coincidencias.size; 
+        outputResultsDiv.innerHTML=''; 
+        outputResultsDiv.className='list'; // Por defecto a lista
+        if(coincidencias.size===0){ 
+            outputResultsDiv.innerHTML='<p>No se encontraron Ítems concordantes.</p>'; 
+        } else { 
+            coincidencias.forEach(item => { 
+                const cD = document.createElement("div"); 
+                cD.className="barcode-item-container"; 
+                cD.setAttribute('data-iditem', item.codigo); 
+                cD.addEventListener('click', () => openItemDetailModal(item.codigo)); 
+                
+                const cP = document.createElement("p"); 
+                cP.className="barcode-item-code"; 
+                cP.textContent = item.codigo; 
+                cD.appendChild(cP); 
+                
+                if(item.descripcion){ 
+                    const dP=document.createElement("p"); 
+                    dP.className="barcode-item-desc"; 
+                    dP.textContent = item.descripcion; 
+                    cD.appendChild(dP); 
+                } 
+                
+                const brandP = document.createElement("p"); 
+                brandP.style.fontSize = "0.8em"; 
+                brandP.style.textAlign = "center";
+                brandP.style.color = "#777";
+                brandP.textContent = `Marca: ${item.brand||'N/A'}`; 
+                cD.appendChild(brandP); 
+                
+                const sD = document.createElement("div"); 
+                sD.className="barcode-item-svg"; 
+                const svg = document.createElementNS("http://www.w3.org/2000/svg","svg"); 
+                try { 
+                    JsBarcode(svg, item.codigo, {
+                        format:"CODE128",
+                        width:2,
+                        height:50,
+                        displayValue:false,
+                        margin:5
+                    }); 
+                    sD.appendChild(svg); 
+                } catch(e) { 
+                    console.error("Error JsBarcode:", e, "para item:", item.codigo);
+                    sD.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; 
+                } 
+                cD.appendChild(sD); 
+                outputResultsDiv.appendChild(cD); 
+            }); 
+        } 
+    }
+    function openItemDetailModal(idItem) { 
+        const item = listaFoco.get(idItem) || coincidencias.get(idItem); 
+        if (item) { 
+            modalItemCodigo.textContent = "ID Ítem: " + item.codigo; 
+            modalItemDescripcion.textContent = item.descripcion || 'No disponible'; 
+            modalItemUPC.textContent = item.upc || 'No disponible'; 
+            modalItemBrand.textContent = item.brand || 'No disponible'; 
+            const imageUrl = item.url ? item.url.trim() : ''; 
+            if (imageUrl) { 
+                modalItemImage.src = imageUrl; 
+                modalItemImage.alt = "Imagen de " + (item.descripcion || item.codigo); 
+                modalItemImage.style.display = 'block'; 
+                modalImageError.style.display = 'none'; 
+            } else { 
+                modalItemImage.style.display = 'none'; 
+                modalItemImage.src = '#'; // Clear previous image
+                modalImageError.textContent = 'URL de imagen no especificada.'; 
+                modalImageError.style.display = 'block'; 
+            } 
+            itemDetailModal.classList.remove('hidden'); 
+            itemDetailModal.style.display = 'flex'; 
+        } 
+    }
+    function closeItemDetailModal() { 
+        itemDetailModal.classList.add('hidden'); 
+        itemDetailModal.style.display = 'none'; 
+        modalItemImage.src="#"; 
+        modalItemImage.style.display = 'none'; 
+        modalImageError.style.display = 'none'; 
+    }
+    layoutToggleResultsBtn.addEventListener('click',()=>{ 
+        outputResultsDiv.classList.toggle('grid');
+        outputResultsDiv.classList.toggle('list');
+        layoutToggleResultsBtn.textContent = outputResultsDiv.classList.contains('grid') ? '📊 Vista Lista' : '📊 Vista Cuadrícula';
+    });
+    downloadCsvResultsBtn.addEventListener('click',()=>{ 
+        if(coincidencias.size===0){alert("No hay Ítems concordantes para descargar.");return;} 
+        let cC="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; 
+        coincidencias.forEach(item=>{ 
+            const desc = `"${(item.descripcion||'').replace(/"/g,'""')}"`; 
+            const upcVal = `"${(item.upc||'').replace(/"/g,'""')}"`; 
+            const brandVal = `"${(item.brand||'').replace(/"/g,'""')}"`; 
+            const urlVal = `"${(item.url||'').replace(/"/g,'""')}"`; 
+            cC+=`${item.codigo},${upcVal},${desc},${brandVal},${urlVal}\n`; 
+        }); 
+        const b=new Blob([cC],{type:'text/csv;charset=utf-8;'}); 
+        const l=document.createElement("a");
+        const u=URL.createObjectURL(b); 
+        l.setAttribute("href",u); 
+        l.setAttribute("download",`concordancias_sdci_${new Date().toISOString().slice(0,10)}.csv`); 
+        document.body.appendChild(l);l.click();document.body.removeChild(l);URL.revokeObjectURL(u);
+    });
     
     downloadXlsxResultsBtn.addEventListener('click', async () => {
         if (coincidencias.size === 0) {
@@ -533,7 +1138,7 @@
             dataForSheet.push(["Control TMR 2025"].concat(Array(numCols - 1).fill(null)));
             const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
             dataForSheet.push(["Fecha de Generación:", currentDateFormatted].concat(Array(numCols - 2).fill(null)));
-            dataForSheet.push(Array(numCols).fill(null));
+            dataForSheet.push(Array(numCols).fill(null)); // Blank row for spacing
 
             Array.from(coincidencias.values()).forEach(item => {
                 dataForSheet.push(["ID Ítem:", item.codigo, null, null]);
@@ -542,20 +1147,26 @@
                 dataForSheet.push(["Revisado:", "☐ " + "_".repeat(30) + " (Firma/Obs)", null, null]);
                 dataForSheet.push(["Diferencias Encontradas:", "_".repeat(45), null, null]);
                 dataForSheet.push([null, "_".repeat(45), null, null]); 
-                dataForSheet.push(Array(numCols).fill(null)); 
+                dataForSheet.push(Array(numCols).fill(null)); // Separator row
             });
 
             const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-            ws['!cols'] = [ { wch: 25 }, { wch: 60 }, { wch: 10 }, { wch: 10 } ];
-            const merges = [ { s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } }, { s: { r: 1, c: 1 }, e: { r: 1, c: numCols - 1 } } ];
-            let currentRow = 3; 
+            ws['!cols'] = [ { wch: 25 }, { wch: 60 }, { wch: 10 }, { wch: 10 } ]; // Column widths
+            
+            const merges = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } }, // Title
+                { s: { r: 1, c: 1 }, e: { r: 1, c: numCols - 1 } }  // Date value
+            ];
+            
+            let currentRow = 3; // Start after header block
             Array.from(coincidencias.values()).forEach(() => {
-                merges.push({ s: { r: currentRow + 3, c: 1 }, e: { r: currentRow + 3, c: numCols -1 } }); 
-                merges.push({ s: { r: currentRow + 4, c: 1 }, e: { r: currentRow + 4, c: numCols -1 } }); 
-                merges.push({ s: { r: currentRow + 5, c: 1 }, e: { r: currentRow + 5, c: numCols -1 } }); 
-                currentRow += 7; 
+                merges.push({ s: { r: currentRow + 3, c: 1 }, e: { r: currentRow + 3, c: numCols -1 } }); // Revisado line
+                merges.push({ s: { r: currentRow + 4, c: 1 }, e: { r: currentRow + 4, c: numCols -1 } }); // Diferencias line 1
+                merges.push({ s: { r: currentRow + 5, c: 1 }, e: { r: currentRow + 5, c: numCols -1 } }); // Diferencias line 2
+                currentRow += 7; // 6 rows per item + 1 separator
             });
             ws['!merges'] = merges;
+            
             if(ws['A1']) { ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
             if(ws['A2']) { ws['A2'].s = { font: { bold: true } }; }
 
@@ -572,9 +1183,7 @@
         }
     });
 
-    // ----- NUEVA FUNCIÓN PARA GENERAR PDF -----
     function generatePdfReport() {
-        const resultsStepContentOriginal = document.getElementById('resultadosStep');
         if (coincidencias.size === 0) {
             alert("No hay Ítems concordantes para generar el PDF.");
             return;
@@ -586,91 +1195,162 @@
 
         // 1. Crear el contenedor principal para el contenido del PDF
         const pdfExportContainer = document.createElement('div');
-        pdfExportContainer.className = 'pdf-export-container'; // Aplicar clase para estilos PDF
+        pdfExportContainer.className = 'pdf-export-container';
 
-        // 2. Añadir el título principal del documento
+        // 2. Añadir el título principal del documento (H1 original)
         const mainDocTitleText = document.querySelector('.container > h1').innerText;
-        const mainPdfTitle = document.createElement('h1');
-        mainPdfTitle.innerText = mainDocTitleText;
-        pdfExportContainer.appendChild(mainPdfTitle);
+        const mainPdfDocTitle = document.createElement('h1');
+        mainPdfDocTitle.className = 'main-document-title';
+        mainPdfDocTitle.innerText = mainDocTitleText;
+        pdfExportContainer.appendChild(mainPdfDocTitle);
 
-        // 3. Clonar y añadir título de la sección de resultados
-        const resultsTitleOriginal = resultsStepContentOriginal.querySelector('h2');
-        if (resultsTitleOriginal) {
-            const resultsTitleClone = resultsTitleOriginal.cloneNode(true);
-            resultsTitleClone.classList.add('results-section-title'); // Para estilizar si es necesario
-            pdfExportContainer.appendChild(resultsTitleClone);
-        }
+        // 3. Añadir título del reporte y fecha
+        const reportTitleElement = document.createElement('h2'); 
+        reportTitleElement.className = 'report-title';
+        reportTitleElement.innerText = "Reporte de Verificación de Ítems"; 
+        pdfExportContainer.appendChild(reportTitleElement);
 
-        // 4. Clonar y añadir el resumen de resultados
-        const resultsSummaryOriginal = resultsStepContentOriginal.querySelector('#resultsSummary');
-        if (resultsSummaryOriginal) {
-            const resultsSummaryClone = resultsSummaryOriginal.cloneNode(true);
-            pdfExportContainer.appendChild(resultsSummaryClone);
-        }
-        
-        // 5. Clonar y añadir el H3 "Detalle de Ítems Concordantes"
-        const detailH3Original = Array.from(resultsStepContentOriginal.querySelectorAll('h3')).find(h3 => h3.textContent.includes('Detalle de Ítems Concordantes'));
-        if (detailH3Original) {
-            const detailH3Clone = detailH3Original.cloneNode(true);
-            detailH3Clone.classList.add('detail-items-title'); // Para estilizar si es necesario
-            pdfExportContainer.appendChild(detailH3Clone);
-        }
+        const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
+        const reportDateElement = document.createElement('p');
+        reportDateElement.className = 'report-date';
+        reportDateElement.innerText = `Fecha de Generación: ${currentDateFormatted}`;
+        pdfExportContainer.appendChild(reportDateElement);
 
-        // 6. Clonar y añadir los ítems (outputResults)
-        const outputResultsOriginal = resultsStepContentOriginal.querySelector('#outputResults');
-        if (outputResultsOriginal) {
-            const outputResultsClone = outputResultsOriginal.cloneNode(true);
-            // Los estilos CSS aplicados a .pdf-export-container .barcode-item-container se encargarán
-            // de page-break-inside y otros aspectos visuales.
-            pdfExportContainer.appendChild(outputResultsClone);
-        }
+        // 4. Generar las fichas de ítems
+        coincidencias.forEach(item => {
+            const fichaDiv = document.createElement('div');
+            fichaDiv.className = 'pdf-item-ficha';
+
+            let fieldHTML = '';
+            fieldHTML += `<div class="pdf-item-field"><span class="pdf-item-label">ID Ítem:</span><span class="pdf-item-value">${item.codigo || 'N/A'}</span></div>`;
+            fieldHTML += `<div class="pdf-item-field"><span class="pdf-item-label">Descripción:</span><span class="pdf-item-value">${item.descripcion || 'N/A'}</span></div>`;
+            fieldHTML += `<div class="pdf-item-field"><span class="pdf-item-label">Marca:</span><span class="pdf-item-value">${item.brand || 'N/A'}</span></div>`;
+            
+            let revisadoLine = " ".repeat(40); 
+            let diferenciasLine = " ".repeat(55);
+
+            fieldHTML += `<div class="pdf-item-field revisado-field"><span class="pdf-item-label">Revisado:</span><span class="pdf-item-value">☐ ${revisadoLine} (Firma/Obs)</span></div>`;
+            fieldHTML += `<div class="pdf-item-field diferencias-field"><span class="pdf-item-label">Diferencias:</span><span class="pdf-item-value">${diferenciasLine}</span></div>`;
+            fieldHTML += `<div class="pdf-item-field diferencias-field-extra"><span class="pdf-item-label">&nbsp;</span><span class="pdf-item-value">${diferenciasLine}</span></div>`;
+
+            fichaDiv.innerHTML = fieldHTML;
+            pdfExportContainer.appendChild(fichaDiv);
+        });
+
 
         const opt = {
-            margin: [25, 15, 15, 15], // Arriba (25mm para título), Derecha, Abajo, Izquierda
-            filename: `Reporte_Resultados_Doble_Control_${new Date().toISOString().slice(0,10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.95 },
+            margin: [20, 18, 20, 18], 
+            filename: `Reporte_Control_TMR_Detallado_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 }, 
             html2canvas: {
-                scale: 2, // Mejor calidad
-                logging: false,
-                useCORS: true, // Por si hay imágenes externas (JsBarcode SVGs son inline)
-                // scrollY: -window.scrollY // Experimental, si hay problemas con el scroll
+                scale: 2, 
+                logging: false, 
+                useCORS: true,
+                // scrollY: 0, 
             },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            jsPDF: {
+                unit: 'mm',
+                format: 'letter', 
+                orientation: 'portrait'
+            },
             pagebreak: {
-                mode: ['css', 'avoid-all'], // Respetar CSS 'page-break-inside' y evitar en general
-                avoid: '.barcode-item-container' // Clase específica para evitar quiebres
+                mode: ['css', 'avoid-all'], 
+                avoid: '.pdf-item-ficha'    
             }
         };
-        
-        // Para que html2canvas aplique correctamente los estilos, el elemento
-        // debe estar en el DOM, aunque sea oculto.
+
+        // --- INICIO BLOQUE DE DEPURACIÓN (Descomentar para ver el contenedor antes de PDF) ---
+        /*
+        pdfExportContainer.style.position = 'fixed';
+        pdfExportContainer.style.left = '10px';
+        pdfExportContainer.style.top = '10px';
+        pdfExportContainer.style.width = 'calc(215.9mm - 36mm)'; 
+        pdfExportContainer.style.maxWidth = '95vw';
+        pdfExportContainer.style.height = '90vh';
+        pdfExportContainer.style.overflowY = 'scroll';
+        pdfExportContainer.style.backgroundColor = 'white';
+        pdfExportContainer.style.padding = '10px';
+        pdfExportContainer.style.border = '3px solid green'; 
+        pdfExportContainer.style.zIndex = '10000';
+        document.body.appendChild(pdfExportContainer);
+        console.log("Contenido HTML del pdfExportContainer (formato ficha detallado):", pdfExportContainer.innerHTML);
+        alert("DEPURACIÓN: Revisar recuadro verde (nuevo formato ficha detallado). ¿Se ve bien? Presiona OK para generar PDF.");
+        */
+        // --- FIN BLOQUE DE DEPURACIÓN ---
+
+        // Para producción, el bloque de depuración debe estar comentado.
+        // Añadir contenedor oculto al DOM para que html2canvas lo renderice.
         pdfExportContainer.style.position = 'absolute';
-        pdfExportContainer.style.left = '-9999px'; // Mover fuera de la pantalla
-        pdfExportContainer.style.width = '210mm'; // Ancho A4 para ayudar con el layout
+        pdfExportContainer.style.left = '-9999px';
+        pdfExportContainer.style.width = `${215.9 - 18 - 18}mm`; 
         document.body.appendChild(pdfExportContainer);
 
-        html2pdf().from(pdfExportContainer).set(opt).save().then(() => {
-            downloadPdfResultsBtn.textContent = originalButtonText;
-            downloadPdfResultsBtn.disabled = false;
-            document.body.removeChild(pdfExportContainer); // Limpiar el contenedor temporal
-        }).catch(err => {
-            console.error("Error generando PDF:", err);
-            alert("Error al generar PDF: " + err.message);
-            downloadPdfResultsBtn.textContent = originalButtonText;
-            downloadPdfResultsBtn.disabled = false;
-            if (document.body.contains(pdfExportContainer)) {
-                document.body.removeChild(pdfExportContainer); // Limpiar también en caso de error
-            }
-        });
+
+        setTimeout(() => {
+            html2pdf().from(pdfExportContainer).set(opt).save().then(() => {
+                // PDF generado
+            }).catch(err => {
+                console.error("Error crítico al generar PDF con el nuevo formato:", err);
+                alert("Error al generar PDF: " + err.message + "\nPor favor, revisa la consola para más detalles.");
+            }).finally(() => {
+                downloadPdfResultsBtn.textContent = originalButtonText;
+                downloadPdfResultsBtn.disabled = false;
+                if (document.body.contains(pdfExportContainer)) {
+                    document.body.removeChild(pdfExportContainer);
+                }
+            });
+        }, 500); 
     }
-    downloadPdfResultsBtn.addEventListener('click', generatePdfReport); // // ----- BOTONES PANEL INICIO -----
-    btnIniciarDobleControlDesdePanel.addEventListener('click', () => { if (listaFoco.size === 0) { alert("No hay Lista Maestra cargada. Sincronice con el repositorio."); return; } listaVerificar.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); navigateToView('dobleControlStep'); });
+    downloadPdfResultsBtn.addEventListener('click', generatePdfReport);
+
+
+    // ----- BOTONES PANEL INICIO -----
+    btnIniciarDobleControlDesdePanel.addEventListener('click', () => { 
+        if (listaFoco.size === 0) { 
+            alert("No hay Lista Maestra cargada. Sincronice con el repositorio."); 
+            return; 
+        } 
+        listaVerificar.clear(); 
+        coincidencias.clear();
+        verifyTextarea.value = ''; 
+        scannedCodesVerifyTextarea.value = ''; 
+        resetFileInput(verifyFileTxtCsv);
+        resetFileInput(verifyFileExcel);
+        updateVerifyPreview(); 
+        navigateToView('dobleControlStep'); 
+    });
     btnGestionMaestraDesdePanel.addEventListener('click', () => navigateToView('gestionMaestraStep'));
-    btnBorrarMaestraStorage.addEventListener('click', () => { if (confirm("¿Seguro que desea borrar la Maestra guardada localmente? \nSe intentará resincronizar con el repositorio.")) { localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); listaFoco.clear(); listaFocoCacheadaLocalmente.clear(); upcToCodigoMap.clear(); alert("Maestra local borrada. Se resincronizará con el repositorio."); checkInitialState(); } });
+    btnBorrarMaestraStorage.addEventListener('click', () => { 
+        if (confirm("¿Seguro que desea borrar la Maestra guardada localmente? \nSe intentará resincronizar con el repositorio.")) { 
+            localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO); 
+            listaFoco.clear(); 
+            listaFocoCacheadaLocalmente.clear(); 
+            upcToCodigoMap.clear(); 
+            alert("Maestra local borrada. Se resincronizará con el repositorio."); 
+            checkInitialState(); // Volver a sincronizar
+        } 
+    });
 
     // ----- NUEVA VERIFICACIÓN -----
-    btnNewVerification.addEventListener('click', () => { listaVerificar.clear(); coincidencias.clear(); verifyTextarea.value = ''; scannedCodesVerifyTextarea.value = ''; verifyFileTxtCsv.value = null; verifyFileExcel.value = null; updateVerifyPreview(); outputResultsDiv.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>'; totalVerifySpan.textContent = '0'; totalMatchesSpan.textContent = '0'; if(scannerVerifierActive && html5QrCodeVerifier && html5QrCodeVerifier.isScanning) { html5QrCodeVerifier.stop().catch(err => console.error("Error deteniendo escáner:", err)); scannerVerifierActive = false; scannerContainerVerify.classList.add('hidden'); startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo'; } navigateToView('panelInicio'); });
+    btnNewVerification.addEventListener('click', () => { 
+        listaVerificar.clear(); 
+        coincidencias.clear(); 
+        verifyTextarea.value = ''; 
+        scannedCodesVerifyTextarea.value = ''; 
+        resetFileInput(verifyFileTxtCsv);
+        resetFileInput(verifyFileExcel);
+        updateVerifyPreview(); 
+        outputResultsDiv.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>'; 
+        totalVerifySpan.textContent = '0'; 
+        totalMatchesSpan.textContent = '0'; 
+        if(scannerVerifierActive && html5QrCodeVerifier && html5QrCodeVerifier.isScanning) { 
+            html5QrCodeVerifier.stop().catch(err => console.error("Error deteniendo escáner en nueva verificación:", err)); 
+            scannerVerifierActive = false; 
+            scannerContainerVerify.classList.add('hidden'); 
+            startScanVerifyBtn.textContent = '📷 Escanear UPC de Artículo'; 
+        } 
+        navigateToView('panelInicio'); // Volver al panel de inicio
+    });
 
   </script>
 </body>
