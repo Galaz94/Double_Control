@@ -713,11 +713,9 @@
             if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0) {
                 DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
-                // If no changes, ensure current listaFoco is the one from repo if it's subtly different but no "changes" were detected by fields
-                // This ensures consistency if parsearMaestraCSV or cleanCode has very minor differences not caught by field comparison.
                 if (JSON.stringify(Array.from(listaFoco.values())) !== JSON.stringify(Array.from(maestraDesdeRepositorio.values()))) {
                     listaFoco = new Map(maestraDesdeRepositorio);
-                    saveListaFocoToStorage(false); // Silently update local storage
+                    saveListaFocoToStorage(false); 
                 }
 
             } else {
@@ -739,7 +737,7 @@
         }
         rebuildUpcToCodigoMap();
         updateFocoPreviewAndSearch();
-        if(document.getElementById('confirmacionCambiosStep').classList.contains('hidden')){ // only navigate if not on confirm step
+        if(document.getElementById('confirmacionCambiosStep').classList.contains('hidden')){ 
              navigateToView('panelInicio');
         }
     }
@@ -854,7 +852,6 @@
         reader.onload = (e) => {
             const content = e.target.result;
             
-            // Clear previous verification data for new file upload
             listaVerificar.clear();
             datosVerificacionCargados = [];
             DOM.inputs.scannedCodesVerifyTextarea.value = '';
@@ -865,7 +862,6 @@
                     parsedItems = processExcelDataForVerify(content, idItemColUserInput, hasHeader);
                 } else { // textcsv
                     const itemIdsOnly = processTextCsvDataForVerify(content, idItemColUserInput - 1, hasHeader, delimiter);
-                    // Convert simple ID list to the structure used by datosVerificacionCargados for consistency
                     parsedItems = itemIdsOnly.map(id => ({
                         idItem: id,
                         contenedora: 'N/A_TXT_CSV',
@@ -876,12 +872,10 @@
                 }
 
                 parsedItems.forEach(itemObj => {
-                    const trimmedIdItem = cleanCode(itemObj.idItem); // Ensure cleaning
+                    const trimmedIdItem = cleanCode(itemObj.idItem); 
                     if (trimmedIdItem && /^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
-                        listaVerificar.add(trimmedIdItem); // Add to Set for matching
-                        // For Excel, itemObj already has contenedora, cantidad etc.
-                        // For TXT/CSV, it has the default N/A structure
-                        datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); // Store processed item
+                        listaVerificar.add(trimmedIdItem); 
+                        datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); 
                     } else {
                         console.warn("Item ID inválido o no encontrado en fila:", itemObj.idItem, "Skipping.");
                     }
@@ -906,7 +900,7 @@
         const delimRegex = getDelimiterRegex(delimiter);
         return dataRows.map(line => {
             const parts = line.split(delimRegex);
-            return parts[colIdx] ? String(Number(parts[colIdx])).trim() : null;
+            return parts[colIdx] ? String(Number(parts[colIdx])).trim() : null; // Ensure number to string for consistency
         }).filter(Boolean);
     }
 
@@ -919,21 +913,17 @@
         if (jsonData.length === 0) return [];
 
         let headerRow = [];
-        let dataRows = jsonData; // Assume all rows are data initially
+        let dataRows = jsonData; 
 
         if (hasHeader && jsonData.length > 0) {
             headerRow = jsonData[0].map(h => h ? String(h).toLowerCase().trim() : '');
             dataRows = jsonData.slice(1);
-        } else if (hasHeader && jsonData.length === 0) { // Header row exists but no data
+        } else if (hasHeader && jsonData.length === 0) { 
              return [];
         } else if (!hasHeader) {
-            // If no header, we must rely on fixed indices, makes finding 'contenedora' and 'cantidad' hard.
-            // Strongly recommend headers for the grouped report feature.
             alert("Para la funcionalidad de reporte XLSX agrupado, el archivo Excel DEBE tener encabezados ('item_', 'contenedoras', 'cantidad').");
-            // Proceed by using user-provided column index for item_, others will be marked as not suitable.
         }
         
-        // Find column indices by header name (if headers exist)
         const itemHeaderName = 'item_';
         const contenedoraHeaderName = 'contenedoras';
         const cantidadHeaderName = 'cantidad';
@@ -948,29 +938,30 @@
             contenedoraColIdx = headerRow.indexOf(contenedoraHeaderName);
             cantidadColIdx = headerRow.indexOf(cantidadHeaderName);
 
-            if (actualItemColIdx === -1 && itemColIdxUser > 0) { // Fallback to user-provided index if 'item_' not found by name
+            if (actualItemColIdx === -1 && itemColIdxUser > 0) { 
                 actualItemColIdx = itemColIdxUser - 1;
             } else if (actualItemColIdx === -1) {
                  throw new Error(`Columna con encabezado "${itemHeaderName}" no encontrada. Verifique el archivo o la configuración de columna.`);
             }
-            if (contenedoraColIdx === -1) console.warn(`Encabezado "${contenedoraHeaderName}" no encontrado. El reporte agrupado no estará disponible.`);
-            if (cantidadColIdx === -1) console.warn(`Encabezado "${cantidadHeaderName}" no encontrado. El reporte agrupado no estará disponible.`);
+            if (contenedoraColIdx === -1) console.warn(`Encabezado "${contenedoraHeaderName}" no encontrado. El reporte agrupado no estará disponible para estos datos.`);
+            if (cantidadColIdx === -1) console.warn(`Encabezado "${cantidadHeaderName}" no encontrado. El reporte agrupado no estará disponible para estos datos.`);
             
             isSuitableForGroupedReport = (contenedoraColIdx !== -1 && cantidadColIdx !== -1 && actualItemColIdx !== -1);
 
-        } else if (!hasHeader && itemColIdxUser > 0) { // No headers, rely on user input for item_
+        } else if (!hasHeader && itemColIdxUser > 0) { 
             actualItemColIdx = itemColIdxUser - 1;
-            // contenedora and cantidad cannot be reliably found without headers
             isSuitableForGroupedReport = false;
-             console.warn("Archivo Excel sin encabezados. El reporte agrupado por contenedora no estará disponible.");
+             console.warn("Archivo Excel sin encabezados. El reporte agrupado por contenedora no estará disponible para estos datos.");
         } else if (!hasHeader && itemColIdxUser <=0) {
             throw new Error("Archivo Excel sin encabezados y no se especificó una columna de ID de ítem válida.");
         }
 
 
         return dataRows.map(row => {
-            const idItem = (actualItemColIdx !== -1 && row[actualItemColIdx]) ? String(Number(row[actualItemColIdx])).trim() : null;
-            const contenedora = (contenedoraColIdx !== -1 && row[contenedoraColIdx]) ? String(row[contenedoraColIdx]).trim() : (isSuitableForGroupedReport ? 'Sin Contenedora Especificada' : 'N/A_EXCEL_NO_HEADER');
+            if (!row || row.every(cell => cell === null || cell === '')) return null; // Skip totally empty rows
+
+            const idItem = (actualItemColIdx !== -1 && row[actualItemColIdx]) ? String(Number(row[actualItemColIdx])).trim() : null; // Ensure number to string
+            const contenedora = (contenedoraColIdx !== -1 && row[contenedoraColIdx]) ? String(row[contenedoraColIdx]).trim() : (isSuitableForGroupedReport ? 'Sin Contenedora Especificada' : 'N/A_EXCEL_NO_HEADER_CONT');
             const cantidadVal = (cantidadColIdx !== -1 && row[cantidadColIdx]) ? String(row[cantidadColIdx]).replace(',', '.') : null;
             const cantidad = cantidadVal ? parseFloat(cantidadVal) : 0;
 
@@ -979,7 +970,7 @@
                 headerRow.forEach((header, idx) => {
                     if (header) allRowData[header] = row[idx];
                 });
-            } else { // No headers, just use column index as key for allRowData
+            } else { 
                  row.forEach((val, idx) => allRowData[`col_${idx+1}`] = val);
             }
             
@@ -988,9 +979,9 @@
                 contenedora: contenedora,
                 cantidad: !isNaN(cantidad) ? cantidad : 0,
                 allRowData: allRowData,
-                isSuitableForGroupedReport: isSuitableForGroupedReport && idItem !== null // Mark if this row can be used for grouped report
+                isSuitableForGroupedReport: isSuitableForGroupedReport && idItem !== null 
             };
-        }).filter(item => item.idItem); // Ensure item_ is present and valid
+        }).filter(item => item && item.idItem); 
     }
     
     function updateVerifyPreview() {
@@ -1001,22 +992,16 @@
     function collectVerifyDataFromInputs() {
         const textVerifyItems = DOM.inputs.verifyTextarea.value.trim();
         if (textVerifyItems) {
-            // If textarea is used after a file upload, decide if it appends or replaces.
-            // Current logic: file upload clears previous. Textarea input will append to current state of `listaVerificar` and `datosVerificacionCargados`.
-            // For simplicity, let's assume a user finishes file ops, then uses textarea to add one-offs.
             textVerifyItems.split(/\s+/).forEach(id => {
-                const trimmedIdItem = String(Number(id)).trim();
+                const trimmedIdItem = String(Number(id)).trim(); // Ensure number to string
                 if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
                     listaVerificar.add(trimmedIdItem); 
-
-                    // Check if this item from textarea is already in datosVerificacionCargados (e.g. from a file)
-                    // If not, add a basic entry.
                     const existsInDatos = datosVerificacionCargados.some(d => d.idItem === trimmedIdItem);
                     if (!existsInDatos) {
                         datosVerificacionCargados.push({
                             idItem: trimmedIdItem,
                             contenedora: 'N/A_TEXTAREA',
-                            cantidad: 0,
+                            cantidad: 0, 
                             allRowData: { item_: trimmedIdItem },
                             isSuitableForGroupedReport: false
                         });
@@ -1024,7 +1009,7 @@
                 }
             });
         }
-        updateVerifyPreview(); // Update preview after potential additions
+        updateVerifyPreview(); 
     }
     
     function onScanSuccessVerify(decodedText){
@@ -1044,7 +1029,7 @@
                         datosVerificacionCargados.push({
                             idItem: cleanedInternalCode,
                             contenedora: 'N/A_SCAN',
-                            cantidad: 0, // Scanned items usually are single units for verification here
+                            cantidad: 0, 
                             allRowData: { item_: cleanedInternalCode, upc_scanned: scannedUPC },
                             isSuitableForGroupedReport: false
                         });
@@ -1093,7 +1078,7 @@
     // ----- COMPARACIÓN Y RESULTADOS -----
     function compareListsAndDisplayResults(){
         coincidencias.clear();
-        listaVerificar.forEach(idItemToVerify => { // listaVerificar is the Set of unique item IDs
+        listaVerificar.forEach(idItemToVerify => { 
             if(listaFoco.has(idItemToVerify)) {
                 coincidencias.set(idItemToVerify, listaFoco.get(idItemToVerify));
             }
@@ -1101,44 +1086,111 @@
         displayFinalResults();
     }
     
-    function displayFinalResults(){
-        DOM.stats.totalFoco.textContent=listaFoco.size;
-        DOM.stats.totalVerify.textContent=listaVerificar.size; // Count of unique items to verify
-        DOM.stats.totalMatches.textContent=coincidencias.size;
+    function displayFinalResults() {
+        DOM.stats.totalFoco.textContent = listaFoco.size;
+        DOM.stats.totalVerify.textContent = listaVerificar.size;
+        DOM.stats.totalMatches.textContent = coincidencias.size;
+
         DOM.displays.outputResults.innerHTML = '';
         DOM.displays.outputResults.className = 'list'; // Default to list view
-        
-        if(coincidencias.size === 0){
-            DOM.displays.outputResults.innerHTML='<p>No se encontraron Ítems concordantes.</p>';
+
+        if (coincidencias.size === 0) { 
+            DOM.displays.outputResults.innerHTML = '<p>No se encontraron Ítems concordantes para mostrar.</p>';
             return;
         }
 
         const fragment = document.createDocumentFragment();
-        coincidencias.forEach(item => { // Iterate matched items from master list
-            const cD = document.createElement("div");
-            cD.className="barcode-item-container";
-            cD.dataset.iditem = item.codigo; 
+        const groupedForDisplay = new Map();
 
-            const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
-            const brandText = `<p style="font-size: 0.8em; text-align: center; color: #777;">Marca: ${item.brand ?? 'N/A'}</p>`;
-            
-            cD.innerHTML = `
-                <p class="barcode-item-code">${item.codigo}</p>
-                ${descText}
-                ${brandText}
-                <div class="barcode-item-svg"></div>
-            `;
-            
-            const svgContainer = cD.querySelector('.barcode-item-svg');
-            const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-            try {
-                JsBarcode(svg, item.codigo, { format:"CODE128", width:2, height:50, displayValue:false, margin:5 });
-                svgContainer.appendChild(svg);
-            } catch(e) {
-                console.error("Error JsBarcode:", e, "para item:", item.codigo);
-                svgContainer.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`;
+        // 1. Group matched items from datosVerificacionCargados by contenedora
+        datosVerificacionCargados.forEach(uploadedItem => {
+            if (coincidencias.has(uploadedItem.idItem)) {
+                const masterDetails = coincidencias.get(uploadedItem.idItem);
+                const contenedoraKey = uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora ?
+                                       uploadedItem.contenedora :
+                                       "Ítems Verificados (Otros/Sin Contenedora Específica)";
+                
+                if (!groupedForDisplay.has(contenedoraKey)) {
+                    groupedForDisplay.set(contenedoraKey, []);
+                }
+                if (!groupedForDisplay.get(contenedoraKey).some(existing => existing.codigo === masterDetails.codigo)) {
+                    groupedForDisplay.get(contenedoraKey).push({
+                        ...masterDetails, 
+                        cantidadOriginal: uploadedItem.cantidad, 
+                        isFromUploadWithContainerInfo: uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora
+                    });
+                }
             }
-            fragment.appendChild(cD);
+        });
+
+        // 2. Add other matched items (not from datosVerificacionCargados with specific container info)
+        coincidencias.forEach(masterItem => {
+            const alreadyDisplayedWithContainer = Array.from(groupedForDisplay.values())
+                                       .flat()
+                                       .some(dispItem => dispItem.codigo === masterItem.codigo && dispItem.isFromUploadWithContainerInfo);
+            
+            if (!alreadyDisplayedWithContainer) {
+                const defaultGroupKey = "Ítems Verificados (Otros/Sin Contenedora Específica)";
+                if (!groupedForDisplay.has(defaultGroupKey)) {
+                    groupedForDisplay.set(defaultGroupKey, []);
+                }
+                if (!groupedForDisplay.get(defaultGroupKey).some(existing => existing.codigo === masterItem.codigo)) {
+                    groupedForDisplay.get(defaultGroupKey).push({ ...masterItem, cantidadOriginal: null, isFromUploadWithContainerInfo: false });
+                }
+            }
+        });
+        
+        if (groupedForDisplay.size === 0) { 
+             DOM.displays.outputResults.innerHTML='<p>No se encontraron Ítems concordantes para mostrar después de agrupar.</p>';
+             return;
+        }
+
+        const sortedContenedoraKeys = Array.from(groupedForDisplay.keys()).sort((a, b) => {
+            if (a.startsWith("Ítems Verificados (Otros")) return 1;
+            if (b.startsWith("Ítems Verificados (Otros")) return -1;
+            return a.localeCompare(b);
+        });
+
+        sortedContenedoraKeys.forEach(contenedora => {
+            const itemsArray = groupedForDisplay.get(contenedora);
+            if (itemsArray.length === 0) return; 
+
+            const contenedoraHeader = document.createElement('h4');
+            contenedoraHeader.textContent = `${contenedora}`; 
+            contenedoraHeader.style.marginTop = "20px";
+            contenedoraHeader.style.paddingBottom = "5px";
+            contenedoraHeader.style.borderBottom = "1px solid #ccc";
+            contenedoraHeader.style.color = "#2c3e50";
+            fragment.appendChild(contenedoraHeader);
+
+            itemsArray.forEach(item => {
+                const cD = document.createElement("div");
+                cD.className = "barcode-item-container";
+                cD.dataset.iditem = item.codigo;
+
+                const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
+                const brandText = `<p style="font-size: 0.8em; text-align: center; color: #777;">Marca: ${item.brand ?? 'N/A'}</p>`;
+                const cantidadText = (typeof item.cantidadOriginal === 'number' && item.cantidadOriginal !== null) ? `<p style="font-size: 0.9em; text-align: center; color: #333; font-weight: bold;">Cantidad (cargada): ${item.cantidadOriginal}</p>` : '';
+
+                cD.innerHTML = `
+                    <p class="barcode-item-code">${item.codigo}</p>
+                    ${descText}
+                    ${brandText}
+                    ${cantidadText}
+                    <div class="barcode-item-svg"></div>
+                `;
+
+                const svgContainer = cD.querySelector('.barcode-item-svg');
+                const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+                try {
+                    JsBarcode(svg, item.codigo, { format:"CODE128", width:2, height:50, displayValue:false, margin:5 });
+                    svgContainer.appendChild(svg);
+                } catch(e) {
+                    console.error("Error JsBarcode:", e, "para item:", item.codigo);
+                    svgContainer.innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`;
+                }
+                fragment.appendChild(cD);
+            });
         });
         DOM.displays.outputResults.appendChild(fragment);
     }
@@ -1181,7 +1233,7 @@
             return;
         }
         listaVerificar.clear();
-        datosVerificacionCargados = []; // Clear detailed verification data too
+        datosVerificacionCargados = []; 
         coincidencias.clear();
         DOM.inputs.verifyTextarea.value = '';
         DOM.inputs.scannedCodesVerifyTextarea.value = '';
@@ -1198,12 +1250,12 @@
             listaFocoCacheadaLocalmente.clear();
             upcToCodigoMap.clear();
             alert("Maestra local borrada. Resincronizando...");
-            checkInitialState(); // This will attempt to reload from repo and update UI
+            checkInitialState(); 
         }
     }
 
     function handleCompare() {
-        collectVerifyDataFromInputs(); // Process textarea input if any
+        collectVerifyDataFromInputs(); 
         if (listaVerificar.size === 0) {
             alert("Cargue o escanee Ítems válidos para la Lista de Verificación.");
             return;
@@ -1225,8 +1277,8 @@
 
     function downloadCsvResults(){
         if(coincidencias.size===0){alert("No hay Ítems concordantes para descargar.");return;}
-        let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; // Standard CSV output of matched items
-        coincidencias.forEach(item=>{ // Uses 'coincidencias' which is based on 'listaFoco' details
+        let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; 
+        coincidencias.forEach(item=>{ 
             const desc = `"${(item.descripcion??'').replace(/"/g,'""')}"`;
             const upcVal = `"${(item.upc??'').replace(/"/g,'""')}"`;
             const brandVal = `"${(item.brand??'').replace(/"/g,'""')}"`;
@@ -1242,28 +1294,30 @@
     }
 
     async function downloadXlsxResults() {
-        if (coincidencias.size === 0) { alert("No hay ítems concordantes para exportar."); return; }
+        const hasGroupableData = datosVerificacionCargados.some(item => item.isSuitableForGroupedReport);
+        const itemsConCantidadSuficiente = datosVerificacionCargados.filter(item => item.cantidad >= 100 && item.isSuitableForGroupedReport);
 
-        // Check if we have data suitable for the new grouped report
-        const hasGroupableData = datosVerificacionCargados.some(item => item.isSuitableForGroupedReport && coincidencias.has(item.idItem));
+        if (coincidencias.size === 0 && itemsConCantidadSuficiente.length === 0) {
+             alert("No hay ítems concordantes ni ítems con cantidad >= 100 del archivo de verificación para exportar."); return;
+        }
+
         const btn = DOM.buttons.downloadXlsx;
         const originalText = btn.textContent;
+        let groupedByContenedora = new Map(); 
 
-        if (hasGroupableData) {
-            // Proceed with new grouped report
+        if (hasGroupableData || itemsConCantidadSuficiente.length > 0) {
             btn.textContent = 'Generando (Agrupado)...';
             btn.disabled = true;
 
             try {
-                const groupedByContenedora = new Map();
                 for (const uploadedItem of datosVerificacionCargados) {
                     if (uploadedItem.isSuitableForGroupedReport && coincidencias.has(uploadedItem.idItem)) {
                         const masterDetails = coincidencias.get(uploadedItem.idItem);
                         const itemDataForReport = {
                             idItem: uploadedItem.idItem,
-                            descripcion: masterDetails.descripcion || uploadedItem.allRowData?.descripcion || '',
-                            marca: masterDetails.brand || '',
-                            cantidad: uploadedItem.cantidad, // from upload
+                            descripcion: masterDetails.descripcion || uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.['descripción'] || uploadedItem.allRowData?.['description'] || 'Descripción del archivo',
+                            marca: masterDetails.brand || uploadedItem.allRowData?.marca || uploadedItem.allRowData?.['brand'] || 'Marca del archivo',
+                            cantidad: uploadedItem.cantidad, 
                         };
                         const contenedoraKey = uploadedItem.contenedora || "Sin Contenedora Asignada";
                         if (!groupedByContenedora.has(contenedoraKey)) {
@@ -1273,90 +1327,121 @@
                     }
                 }
 
+                for (const uploadedItem of itemsConCantidadSuficiente) {
+                    if (!coincidencias.has(uploadedItem.idItem)) { 
+                        const itemDataForReport = {
+                            idItem: uploadedItem.idItem,
+                            descripcion: uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.['descripción'] || uploadedItem.allRowData?.['description'] || 'Descripción del archivo (Ítem no en Maestra)',
+                            marca: uploadedItem.allRowData?.marca || uploadedItem.allRowData?.['brand'] || 'Marca del archivo (Ítem no en Maestra)',
+                            cantidad: uploadedItem.cantidad,
+                            notInMaster: true 
+                        };
+                        const contenedoraKey = uploadedItem.contenedora || "Sin Contenedora Asignada";
+                        if (!groupedByContenedora.has(contenedoraKey)) {
+                            groupedByContenedora.set(contenedoraKey, []);
+                        }
+                        const existingInGroup = groupedByContenedora.get(contenedoraKey);
+                        if (!existingInGroup.some(ex => ex.idItem === itemDataForReport.idItem)) {
+                           existingInGroup.push(itemDataForReport);
+                        }
+                    }
+                }
+
                 if (groupedByContenedora.size === 0) {
-                    alert("No hay ítems concordantes con datos de contenedora válidos para el reporte agrupado. Se generará el reporte estándar.");
-                    // Fall through to standard report logic below.
+                    alert("No hay ítems concordantes con datos de contenedora válidos ni ítems con cantidad >= 100 para el reporte agrupado. Se generará el reporte estándar si hay coincidencias generales.");
                 } else {
                     const dataForSheet = [];
                     dataForSheet.push(["Reporte de Control TMR Agrupado por Contenedora"]);
                     dataForSheet.push(["Fecha de Generación:", new Date().toLocaleDateString("es-CL", { day: '2-digit', month: '2-digit', year: 'numeric' })]);
-                    dataForSheet.push([]); 
+                    dataForSheet.push([]);
 
-                    let currentRowIdx = dataForSheet.length - 1; 
-                    const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }]; // Main title merge, assuming 6 columns
+                    let currentRowIdx = dataForSheet.length - 1;
+                    const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
 
                     groupedByContenedora.forEach((itemsArray, contenedora) => {
                         currentRowIdx++;
-                        dataForSheet.push([`Contenedora: ${contenedora}`]); 
-                        merges.push({ s: { r: currentRowIdx, c: 0 }, e: { r: currentRowIdx, c: 5 } }); 
+                        dataForSheet.push([`Contenedora: ${contenedora}`]);
+                        merges.push({ s: { r: currentRowIdx, c: 0 }, e: { r: currentRowIdx, c: 5 } });
                         currentRowIdx++;
-                        
-                        dataForSheet.push(["ID Ítem", "Descripción", "Marca", "Cantidad (Verificada)", "Revisado", "Diferencias Encontradas"]);
-                        // currentRowIdx++; // Header row itself increases index
+                        dataForSheet.push(["ID Ítem", "Descripción", "Marca", "Cantidad (Unidades)", "Revisado", "Diferencias Encontradas"]);
 
                         itemsArray.forEach(item => {
+                            let idItemDisplay = item.idItem;
+                            if (item.notInMaster) {
+                                idItemDisplay += " (No en Maestra)";
+                            }
                             dataForSheet.push([
-                                item.idItem, item.descripcion, item.marca, item.cantidad,
+                                idItemDisplay, item.descripcion, item.marca, item.cantidad,
                                 "☐ " + "_".repeat(20), "_".repeat(30)
                             ]);
                             currentRowIdx++;
                         });
-                        dataForSheet.push([]); // Blank row after each group
+                        dataForSheet.push([]);
                         currentRowIdx++;
                     });
 
                     const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-                    ws['!cols'] = [ { wch: 18 }, { wch: 45 }, { wch: 22 }, { wch: 18 }, { wch: 28 }, { wch: 35 } ];
+                    ws['!cols'] = [ { wch: 25 }, { wch: 50 }, { wch: 25 }, { wch: 20 }, { wch: 28 }, { wch: 35 } ];
                     ws['!merges'] = merges;
 
-                    // Styling
-                    ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center", vertical: "center" } };
+                    if(ws['A1']) ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center", vertical: "center" } };
                     for(let i = 0; i < dataForSheet.length; i++) {
                         if (dataForSheet[i] && typeof dataForSheet[i][0] === 'string' && dataForSheet[i][0].startsWith("Contenedora:")) {
                             const cellAddress = XLSX.utils.encode_cell({r: i, c: 0});
                             if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: dataForSheet[i][0] };
                             ws[cellAddress].s = { font: { bold: true, sz: 13, color: { rgb: "1F497D" } }, fill: { fgColor: { rgb: "DCE6F1" } }, alignment: { vertical: "center"} };
                         }
-                        if (dataForSheet[i] && dataForSheet[i][0] === "ID Ítem") { // Item headers
+                        if (dataForSheet[i] && dataForSheet[i][0] === "ID Ítem") {
                              for (let j=0; j<dataForSheet[i].length; j++) {
                                 const cellAddress = XLSX.utils.encode_cell({r: i, c: j});
                                 if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: dataForSheet[i][j] };
                                 ws[cellAddress].s = { font: { bold: true, sz:10 }, fill: { fgColor: { rgb: "F2F2F2" } }, border: { bottom: { style: "thin"} }, alignment: {wrapText: true, vertical: "center"} };
                              }
                         }
+                        if (dataForSheet[i] && dataForSheet[i][0] && typeof dataForSheet[i][0] === 'string' && dataForSheet[i][0].includes("(No en Maestra)")) {
+                            for (let j=0; j<4; j++) { 
+                                const cellAddress = XLSX.utils.encode_cell({r: i, c: j});
+                                if (ws[cellAddress]) {
+                                     if(!ws[cellAddress].s) ws[cellAddress].s = {};
+                                     ws[cellAddress].s.font = { ...ws[cellAddress].s.font, color: {rgb: "FF0000"} }; 
+                                }
+                            }
+                        }
                     }
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Control TMR Agrupado");
                     XLSX.writeFile(wb, `Control_TMR_Agrupado_${new Date().toISOString().slice(0,10)}.xlsx`);
-                    
+
                     btn.textContent = originalText;
                     btn.disabled = false;
-                    return; // Successfully generated grouped report
+                    return; 
                 }
             } catch (error) {
                 console.error("Error generando XLSX agrupado:", error);
-                alert("Error al generar archivo XLSX agrupado: " + error.message);
-                // Fall through to standard report logic on error
+                alert("Error al generar archivo XLSX agrupado: " + error.message + "\nSe intentará generar el reporte estándar si hay coincidencias generales.");
             }
         }
 
-        // Fallback to standard report if not groupable or if grouped failed and fell through
-        if (!hasGroupableData || (groupedByContenedora && groupedByContenedora.size === 0) ) { // Check added for clarity
-            if (hasGroupableData && groupedByContenedora.size === 0) { /* alert was shown */ }
-            else if (!hasGroupableData) {
-                 alert("No se encontraron datos adecuados para el reporte agrupado (columnas 'contenedoras', 'cantidad' en Excel con encabezados). Se generará el reporte estándar.");
+        if (coincidencias.size > 0) {
+            if ((hasGroupableData || itemsConCantidadSuficiente.length > 0) && groupedByContenedora.size === 0) {
+            } else if (!hasGroupableData && itemsConCantidadSuficiente.length === 0) {
+                 alert("No se encontraron datos adecuados para el reporte agrupado. Se generará el reporte estándar de coincidencias.");
             }
+        } else { 
+             btn.textContent = originalText; 
+             btn.disabled = false;
+             return; 
         }
 
-        btn.textContent = 'Generando (Estándar)...';
+        btn.textContent = 'Generando (Estándar)...'; 
         btn.disabled = true;
         try {
             const oldDataForSheet = [
-                ["Control TMR 2025 - Reporte Estándar"],
+                ["Control TMR 2025 - Reporte Estándar de Concordancias"],
                 ["Fecha de Generación:", new Date().toLocaleDateString("es-CL")],
-                [], 
+                [],
             ];
-            Array.from(coincidencias.values()).forEach(item => {
+            Array.from(coincidencias.values()).forEach(item => { 
                 oldDataForSheet.push(
                     ["ID Ítem:", item.codigo],
                     ["Descripción:", item.descripcion ?? ''],
@@ -1364,16 +1449,20 @@
                     ["Revisado:", "☐ " + "_".repeat(30) + " (Firma/Obs)"],
                     ["Diferencias Encontradas:", "_".repeat(45)],
                     [null, "_".repeat(45)],
-                    [] 
+                    []
                 );
             });
-            const ws_std = XLSX.utils.aoa_to_sheet(oldDataForSheet);
-            ws_std['!cols'] = [ { wch: 25 }, { wch: 60 } ];
-            ws_std['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]; 
-             if(ws_std['A1']) { ws_std['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
-            const wb_std = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb_std, ws_std, "Control TMR Estándar");
-            XLSX.writeFile(wb_std, `Control_TMR_Estandar_${new Date().toISOString().slice(0,10)}.xlsx`);
+            if (oldDataForSheet.length <= 3 && coincidencias.size === 0) { 
+                 alert("No hay ítems concordantes para el reporte estándar.");
+            } else {
+                const ws_std = XLSX.utils.aoa_to_sheet(oldDataForSheet);
+                ws_std['!cols'] = [ { wch: 25 }, { wch: 60 } ];
+                ws_std['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
+                 if(ws_std['A1']) { ws_std['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
+                const wb_std = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb_std, ws_std, "Control TMR Estándar");
+                XLSX.writeFile(wb_std, `Control_TMR_Estandar_${new Date().toISOString().slice(0,10)}.xlsx`);
+            }
         } catch (error) {
             console.error("Error generando XLSX estándar:", error);
             alert("Error al generar archivo XLSX estándar: " + error.message);
@@ -1452,13 +1541,15 @@
         }).finally(() => {
             btn.textContent = originalText;
             btn.disabled = false;
-            document.body.removeChild(pdfExportContainer);
+            if (document.body.contains(pdfExportContainer)) {
+                document.body.removeChild(pdfExportContainer);
+            }
         });
     }
 
     function handleNewVerification() {
         listaVerificar.clear();
-        datosVerificacionCargados = []; // Clear detailed data
+        datosVerificacionCargados = []; 
         coincidencias.clear();
         DOM.inputs.verifyTextarea.value = '';
         DOM.inputs.scannedCodesVerifyTextarea.value = '';
