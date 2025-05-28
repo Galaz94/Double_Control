@@ -337,20 +337,23 @@
         Puede escanear el UPC del artículo físico (si su Lista Maestra contiene UPCs) o ingresar el ID del Ítem.
         Solo se considerarán IDs de Ítem **numéricos de más de 5 dígitos**.
       </p>
+       <p style="font-size:0.85em; color:#c0392b; background-color: #fdedec; padding: 5px; border-left: 3px solid #c0392b;">
+        Para el reporte XLSX agrupado por contenedora, suba un archivo Excel (.xlsx) con encabezados: `item_`, `contenedoras`, `cantidad`.
+      </p>
       <div class="input-group">
         <label for="verifyTextarea">Pegar IDs de Ítem a verificar (uno por línea o separados por espacio/tabulador):</label>
         <textarea id="verifyTextarea" rows="5" inputmode="numeric"></textarea>
       </div>
        <div class="input-group">
         <label>Subir archivo con IDs de Ítem a verificar:</label>
-        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Solo se considerarán IDs numéricos de más de 5 dígitos.</p>
+        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Para el reporte agrupado, use Excel con las columnas indicadas arriba.</p>
         <div class="input-columns">
             <div><label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label><input type="file" id="verifyFileTxtCsv" accept=".txt,.csv"></div>
             <div><label for="verifyFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label><input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
         </div>
         <div class="file-options">
             <div class="input-columns">
-                <div><label for="verifyCodigoCol">Col. ID Ítem (ej: 1):</label><input type="number" id="verifyCodigoCol" value="1" min="1"></div>
+                <div><label for="verifyCodigoCol">Col. ID Ítem (ej: 1 o por header 'item_'):</label><input type="number" id="verifyCodigoCol" value="1" min="1"></div>
                  <div><label for="verifyCsvDelimiter">Delimitador CSV:</label><input type="text" id="verifyCsvDelimiter" value=","></div>
             </div>
              <label><input type="checkbox" id="verifyHasHeader" checked> El archivo tiene encabezados</label>
@@ -412,22 +415,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // CAMBIO: El siguiente paso sería mover este script a un archivo 'script.js' externo.
-
     // ----- URL DE LA LISTA MAESTRA EN REPOSITORIO -----
     const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv';
 
     // ----- ESTADO DE LA APLICACIÓN -----
     let listaFoco = new Map();
     let upcToCodigoMap = new Map();
-    let listaVerificar = new Set();
+    let listaVerificar = new Set(); // Stores unique, valid item IDs from any source for matching
+    let datosVerificacionCargados = []; // Stores richer objects from upload, esp. for Excel {idItem, contenedora, cantidad, allRowData, isSuitableForGroupedReport}
     let coincidencias = new Map();
     const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.8.9';
     let listaFocoCacheadaLocalmente = new Map();
     let html5QrCodeVerifier = null;
     let scannerVerifierActive = false;
 
-    // CAMBIO: Selectores del DOM agrupados en un objeto para mayor organización.
     const $ = (id) => document.getElementById(id);
     const DOM = {
         views: {
@@ -505,7 +506,6 @@
         addEventListeners();
     });
 
-    // CAMBIO: Todos los event listeners agrupados en una función.
     function addEventListeners() {
         DOM.views.itemDetailModal.addEventListener('click', (event) => {
             if (event.target === DOM.views.itemDetailModal) closeItemDetailModal();
@@ -521,12 +521,10 @@
             DOM.modal.imageError.style.display = 'none';
         };
 
-        // Panel Inicio
         DOM.buttons.iniciarDobleControl.addEventListener('click', handleIniciarDobleControl);
         DOM.buttons.gestionMaestra.addEventListener('click', () => navigateToView('gestionMaestraStep'));
         DOM.buttons.borrarStorage.addEventListener('click', handleBorrarStorage);
 
-        // Gestión Maestra
         DOM.inputs.searchFoco.addEventListener('input', () => {
             const searchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
             if (!searchTerm) {
@@ -544,21 +542,18 @@
         });
         DOM.buttons.volverDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
-        // Doble Control
-        DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], false));
-        DOM.inputs.verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], true));
+        DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], 'textcsv'));
+        DOM.inputs.verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], 'excel'));
         DOM.buttons.startScanVerify.addEventListener('click', toggleScanner);
         DOM.buttons.compare.addEventListener('click', handleCompare);
         DOM.buttons.volverDesdeDobleControl.addEventListener('click', () => navigateToView('panelInicio'));
 
-        // Resultados
         DOM.buttons.layoutToggle.addEventListener('click', toggleResultsLayout);
         DOM.buttons.downloadCsv.addEventListener('click', downloadCsvResults);
         DOM.buttons.downloadXlsx.addEventListener('click', downloadXlsxResults);
         DOM.buttons.downloadPdf.addEventListener('click', generatePdfReport);
         DOM.buttons.newVerification.addEventListener('click', handleNewVerification);
 
-        // CAMBIO: Delegación de eventos para los resultados. Un solo listener en el contenedor.
         DOM.displays.outputResults.addEventListener('click', (event) => {
             const itemContainer = event.target.closest('.barcode-item-container, .search-result-item');
             if (itemContainer) {
@@ -573,6 +568,31 @@
                 if(itemId) openItemDetailModal(itemId);
             }
         });
+        DOM.buttons.confirmarCambios.addEventListener('click', () => { // Combined from previous to keep listener here
+            const maestraRepositorioMap = JSON.parse(DOM.buttons.confirmarCambios.dataset.maestraRepositorio || '{}', (key, value) => {
+                if (typeof value === 'object' && value !== null && value.__isMap__) return new Map(value.data);
+                return value;
+            });
+            if (maestraRepositorioMap && maestraRepositorioMap.size > 0) {
+                listaFoco = maestraRepositorioMap;
+                rebuildUpcToCodigoMap();
+                saveListaFocoToStorage();
+                updateFocoPreviewAndSearch();
+                DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) desde el repositorio y guardada localmente.`;
+                DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
+            } else {
+                 DOM.displays.panelInicioInfo.innerHTML = `⚠️ Error al aplicar cambios. Se mantuvo la versión actual.`;
+                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
+            }
+            navigateToView('panelInicio');
+        });
+        DOM.buttons.rechazarCambios.addEventListener('click', () => { // Combined from previous
+            rebuildUpcToCodigoMap(); 
+            updateFocoPreviewAndSearch();
+            DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Se mantiene la Maestra local (${listaFoco.size} ítems).`;
+            DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
+            navigateToView('panelInicio');
+        });
     }
 
     // ----- Lógica de Carga y Sincronización con Repositorio -----
@@ -581,7 +601,7 @@
     function parsearMaestraCSV(csvText) {
         return csvText.trim().split(/\r\n|\n/).slice(1).map(linea => {
             if (!linea.trim()) return null;
-            const partes = linea.split(',');
+            const partes = linea.split(','); // Asume CSV, ajustar si delimitador es variable
             if (!partes[0]) return null;
             return {
                 codigo: cleanText(partes[0]),
@@ -590,7 +610,7 @@
                 brand: cleanText(partes[3]),
                 url: cleanText(partes[4])
             };
-        }).filter(Boolean); // Filtra líneas nulas o vacías
+        }).filter(Boolean);
     }
 
     function rebuildUpcToCodigoMap() {
@@ -608,7 +628,7 @@
             return null;
         }
         try {
-            const response = await fetch(`${URL_LISTA_MAESTRA_REPOSITORIO}?t=${new Date().getTime()}`); // Cache busting
+            const response = await fetch(`${URL_LISTA_MAESTRA_REPOSITORIO}?t=${new Date().getTime()}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const csvText = await response.text();
             const itemsArray = parsearMaestraCSV(csvText);
@@ -658,7 +678,6 @@
         popularListaResumen(DOM.resumenCambios.eliminados, eliminados, itemFormatter);
 
         popularListaResumen(DOM.resumenCambios.modificados, modificados, itm => {
-             // CAMBIO: Simplificado con optional chaining y nullish coalescing
             let chgs = '';
             if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old??'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new??'N/A'}</span>`;
             if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old??'N/A'}</s> &rarr; ${itm.changedFields.upc.new??'N/A'}</span>`;
@@ -666,23 +685,13 @@
             if(itm.changedFields.url) chgs += `<span class="field-change">URL Img: <s>${itm.changedFields.url.old??'N/A'}</s> &rarr; ${itm.changedFields.url.new??'N/A'}</span>`;
             return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`;
         });
+        
+        // Store maestraRepositorioMap in a data attribute to retrieve it in the event listener
+        DOM.buttons.confirmarCambios.dataset.maestraRepositorio = JSON.stringify(maestraRepositorioMap, (key, value) => {
+             if (value instanceof Map) return { __isMap__: true, data: Array.from(value.entries()) };
+             return value;
+        });
 
-        DOM.buttons.confirmarCambios.onclick = () => {
-            listaFoco = new Map(maestraRepositorioMap);
-            rebuildUpcToCodigoMap();
-            saveListaFocoToStorage();
-            updateFocoPreviewAndSearch();
-            DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems) desde el repositorio y guardada localmente.`;
-            DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
-            navigateToView('panelInicio');
-        };
-        DOM.buttons.rechazarCambios.onclick = () => {
-            rebuildUpcToCodigoMap(); // Usa la local que ya está cargada
-            updateFocoPreviewAndSearch();
-            DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Se mantiene la Maestra local (${listaFoco.size} ítems).`;
-            DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
-            navigateToView('panelInicio');
-        };
         navigateToView('confirmacionCambiosStep');
     }
 
@@ -699,17 +708,23 @@
         DOM.buttons.gestionMaestra.disabled = false;
 
         if (maestraDesdeRepositorio) {
-            // CAMBIO: Lógica de comparación simplificada. Se eliminó la comprobación manual redundante.
             const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeRepositorio);
 
             if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0) {
                 DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra TMR Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
+                // If no changes, ensure current listaFoco is the one from repo if it's subtly different but no "changes" were detected by fields
+                // This ensures consistency if parsearMaestraCSV or cleanCode has very minor differences not caught by field comparison.
+                if (JSON.stringify(Array.from(listaFoco.values())) !== JSON.stringify(Array.from(maestraDesdeRepositorio.values()))) {
+                    listaFoco = new Map(maestraDesdeRepositorio);
+                    saveListaFocoToStorage(false); // Silently update local storage
+                }
+
             } else {
                 DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Se detectaron cambios en la Maestra TMR del repositorio. Revisa y confirma.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
                 mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio);
-                return; // Esperar acción del usuario
+                return; 
             }
         } else {
             if (listaFoco.size > 0) {
@@ -724,7 +739,9 @@
         }
         rebuildUpcToCodigoMap();
         updateFocoPreviewAndSearch();
-        navigateToView('panelInicio');
+        if(document.getElementById('confirmacionCambiosStep').classList.contains('hidden')){ // only navigate if not on confirm step
+             navigateToView('panelInicio');
+        }
     }
 
     // ----- NAVEGACIÓN DE VISTAS -----
@@ -772,7 +789,7 @@
                 itemsToShow.slice(0, 30).forEach(item => {
                     const p = document.createElement('div');
                     p.className = 'search-result-item';
-                    p.dataset.iditem = item.codigo; // Para delegación de eventos
+                    p.dataset.iditem = item.codigo;
                     p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
                     fragment.appendChild(p);
                 });
@@ -816,30 +833,18 @@
             }
         }
     }
-
+    
     // ----- LECTURA DE ARCHIVOS (VERIFICACIÓN) Y MANEJO LISTA A VERIFICAR -----
-    function addValidCodeToVerifyList(idItem) {
-        const trimmedIdItem = String(Number(idItem)).trim();
-        if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
-            if (!listaVerificar.has(trimmedIdItem)) {
-                listaVerificar.add(trimmedIdItem);
-                return trimmedIdItem;
-            }
-            return null; // Ya existe
-        }
-        return false; // Inválido
-    }
-
-    function handleFileUpload(file, isExcel) {
+    function handleFileUpload(file, fileType) { // fileType can be 'excel' or 'textcsv'
         if (!file) return;
         DOM.displays.verifyPreview.innerHTML = `Procesando "${file.name}"...`;
-        const idItemCol = parseInt(DOM.inputs.verifyCodigoCol.value) - 1;
+        const idItemColUserInput = parseInt(DOM.inputs.verifyCodigoCol.value); // 1-based for user
         const delimiter = DOM.inputs.verifyCsvDelimiter.value;
         const hasHeader = DOM.inputs.verifyHasHeader.checked;
-        const targetFileElement = isExcel ? DOM.inputs.verifyFileExcel : DOM.inputs.verifyFileTxtCsv;
+        const targetFileElement = fileType === 'excel' ? DOM.inputs.verifyFileExcel : DOM.inputs.verifyFileTxtCsv;
 
-        if (idItemCol < 0) {
-            alert("Col. ID Ítem debe ser >= 1.");
+        if (idItemColUserInput < 1 && fileType === 'textcsv') { // For excel, header name is preferred
+            alert("Col. ID Ítem debe ser >= 1 para archivos de texto/CSV.");
             DOM.displays.verifyPreview.textContent = "Error.";
             resetFileInput(targetFileElement);
             return;
@@ -848,16 +853,41 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target.result;
-            let itemsFromFile = [];
-            try {
-                itemsFromFile = isExcel
-                    ? processExcelDataForVerify(content, idItemCol, hasHeader)
-                    : processTextCsvDataForVerify(content, idItemCol, hasHeader, delimiter);
+            
+            // Clear previous verification data for new file upload
+            listaVerificar.clear();
+            datosVerificacionCargados = [];
+            DOM.inputs.scannedCodesVerifyTextarea.value = '';
 
-                listaVerificar.clear();
-                DOM.inputs.scannedCodesVerifyTextarea.value = '';
-                itemsFromFile.forEach(idItem => addValidCodeToVerifyList(idItem));
+            try {
+                let parsedItems = [];
+                if (fileType === 'excel') {
+                    parsedItems = processExcelDataForVerify(content, idItemColUserInput, hasHeader);
+                } else { // textcsv
+                    const itemIdsOnly = processTextCsvDataForVerify(content, idItemColUserInput - 1, hasHeader, delimiter);
+                    // Convert simple ID list to the structure used by datosVerificacionCargados for consistency
+                    parsedItems = itemIdsOnly.map(id => ({
+                        idItem: id,
+                        contenedora: 'N/A_TXT_CSV',
+                        cantidad: 0,
+                        allRowData: { item_: id },
+                        isSuitableForGroupedReport: false
+                    }));
+                }
+
+                parsedItems.forEach(itemObj => {
+                    const trimmedIdItem = cleanCode(itemObj.idItem); // Ensure cleaning
+                    if (trimmedIdItem && /^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
+                        listaVerificar.add(trimmedIdItem); // Add to Set for matching
+                        // For Excel, itemObj already has contenedora, cantidad etc.
+                        // For TXT/CSV, it has the default N/A structure
+                        datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); // Store processed item
+                    } else {
+                        console.warn("Item ID inválido o no encontrado en fila:", itemObj.idItem, "Skipping.");
+                    }
+                });
                 updateVerifyPreview();
+
             } catch (error) {
                 alert(`Error procesando ${file.name}: ${error.message}`);
                 DOM.displays.verifyPreview.textContent = `Error.`;
@@ -865,7 +895,8 @@
             resetFileInput(targetFileElement);
         };
         reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); resetFileInput(targetFileElement); };
-        if (isExcel) reader.readAsArrayBuffer(file);
+        
+        if (fileType === 'excel') reader.readAsArrayBuffer(file);
         else reader.readAsText(file);
     }
 
@@ -873,28 +904,127 @@
         const lines = content.split(/\r\n|\n/);
         const dataRows = hasHeader ? lines.slice(1) : lines;
         const delimRegex = getDelimiterRegex(delimiter);
-        return dataRows.map(line => line.split(delimRegex)[colIdx]).filter(Boolean).map(val => String(Number(val)));
+        return dataRows.map(line => {
+            const parts = line.split(delimRegex);
+            return parts[colIdx] ? String(Number(parts[colIdx])).trim() : null;
+        }).filter(Boolean);
     }
 
-    function processExcelDataForVerify(arrayBuffer, colIdx, hasHeader) {
+    function processExcelDataForVerify(arrayBuffer, itemColIdxUser /* 1-based */, hasHeader) {
         const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         if (!worksheet) throw new Error("Excel sin hojas.");
+        
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, rawNumbers: false, defval: null });
-        const dataRows = hasHeader ? jsonData.slice(1) : jsonData;
-        return dataRows.map(row => row?.[colIdx]).filter(val => val !== null && val !== undefined).map(val => String(Number(val)));
+        if (jsonData.length === 0) return [];
+
+        let headerRow = [];
+        let dataRows = jsonData; // Assume all rows are data initially
+
+        if (hasHeader && jsonData.length > 0) {
+            headerRow = jsonData[0].map(h => h ? String(h).toLowerCase().trim() : '');
+            dataRows = jsonData.slice(1);
+        } else if (hasHeader && jsonData.length === 0) { // Header row exists but no data
+             return [];
+        } else if (!hasHeader) {
+            // If no header, we must rely on fixed indices, makes finding 'contenedora' and 'cantidad' hard.
+            // Strongly recommend headers for the grouped report feature.
+            alert("Para la funcionalidad de reporte XLSX agrupado, el archivo Excel DEBE tener encabezados ('item_', 'contenedoras', 'cantidad').");
+            // Proceed by using user-provided column index for item_, others will be marked as not suitable.
+        }
+        
+        // Find column indices by header name (if headers exist)
+        const itemHeaderName = 'item_';
+        const contenedoraHeaderName = 'contenedoras';
+        const cantidadHeaderName = 'cantidad';
+
+        let actualItemColIdx = -1;
+        let contenedoraColIdx = -1;
+        let cantidadColIdx = -1;
+        let isSuitableForGroupedReport = false;
+
+        if (hasHeader && headerRow.length > 0) {
+            actualItemColIdx = headerRow.indexOf(itemHeaderName);
+            contenedoraColIdx = headerRow.indexOf(contenedoraHeaderName);
+            cantidadColIdx = headerRow.indexOf(cantidadHeaderName);
+
+            if (actualItemColIdx === -1 && itemColIdxUser > 0) { // Fallback to user-provided index if 'item_' not found by name
+                actualItemColIdx = itemColIdxUser - 1;
+            } else if (actualItemColIdx === -1) {
+                 throw new Error(`Columna con encabezado "${itemHeaderName}" no encontrada. Verifique el archivo o la configuración de columna.`);
+            }
+            if (contenedoraColIdx === -1) console.warn(`Encabezado "${contenedoraHeaderName}" no encontrado. El reporte agrupado no estará disponible.`);
+            if (cantidadColIdx === -1) console.warn(`Encabezado "${cantidadHeaderName}" no encontrado. El reporte agrupado no estará disponible.`);
+            
+            isSuitableForGroupedReport = (contenedoraColIdx !== -1 && cantidadColIdx !== -1 && actualItemColIdx !== -1);
+
+        } else if (!hasHeader && itemColIdxUser > 0) { // No headers, rely on user input for item_
+            actualItemColIdx = itemColIdxUser - 1;
+            // contenedora and cantidad cannot be reliably found without headers
+            isSuitableForGroupedReport = false;
+             console.warn("Archivo Excel sin encabezados. El reporte agrupado por contenedora no estará disponible.");
+        } else if (!hasHeader && itemColIdxUser <=0) {
+            throw new Error("Archivo Excel sin encabezados y no se especificó una columna de ID de ítem válida.");
+        }
+
+
+        return dataRows.map(row => {
+            const idItem = (actualItemColIdx !== -1 && row[actualItemColIdx]) ? String(Number(row[actualItemColIdx])).trim() : null;
+            const contenedora = (contenedoraColIdx !== -1 && row[contenedoraColIdx]) ? String(row[contenedoraColIdx]).trim() : (isSuitableForGroupedReport ? 'Sin Contenedora Especificada' : 'N/A_EXCEL_NO_HEADER');
+            const cantidadVal = (cantidadColIdx !== -1 && row[cantidadColIdx]) ? String(row[cantidadColIdx]).replace(',', '.') : null;
+            const cantidad = cantidadVal ? parseFloat(cantidadVal) : 0;
+
+            const allRowData = {};
+            if (hasHeader && headerRow.length > 0) {
+                headerRow.forEach((header, idx) => {
+                    if (header) allRowData[header] = row[idx];
+                });
+            } else { // No headers, just use column index as key for allRowData
+                 row.forEach((val, idx) => allRowData[`col_${idx+1}`] = val);
+            }
+            
+            return {
+                idItem: idItem,
+                contenedora: contenedora,
+                cantidad: !isNaN(cantidad) ? cantidad : 0,
+                allRowData: allRowData,
+                isSuitableForGroupedReport: isSuitableForGroupedReport && idItem !== null // Mark if this row can be used for grouped report
+            };
+        }).filter(item => item.idItem); // Ensure item_ is present and valid
     }
     
     function updateVerifyPreview() {
-        DOM.displays.verifyPreview.textContent = `Lista de IDs de Ítem Válidos a Verificar: ${listaVerificar.size}. ${listaVerificar.size > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${listaVerificar.size > 5 ? '...' : ''}` : 'Vacía.'}`;
+        const count = listaVerificar.size;
+        DOM.displays.verifyPreview.textContent = `Lista de IDs de Ítem Válidos a Verificar: ${count}. ${count > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${count > 5 ? '...' : ''}` : 'Vacía.'}`;
     }
 
     function collectVerifyDataFromInputs() {
         const textVerifyItems = DOM.inputs.verifyTextarea.value.trim();
         if (textVerifyItems) {
-            textVerifyItems.split(/\s+/).forEach(idItem => addValidCodeToVerifyList(idItem));
+            // If textarea is used after a file upload, decide if it appends or replaces.
+            // Current logic: file upload clears previous. Textarea input will append to current state of `listaVerificar` and `datosVerificacionCargados`.
+            // For simplicity, let's assume a user finishes file ops, then uses textarea to add one-offs.
+            textVerifyItems.split(/\s+/).forEach(id => {
+                const trimmedIdItem = String(Number(id)).trim();
+                if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
+                    listaVerificar.add(trimmedIdItem); 
+
+                    // Check if this item from textarea is already in datosVerificacionCargados (e.g. from a file)
+                    // If not, add a basic entry.
+                    const existsInDatos = datosVerificacionCargados.some(d => d.idItem === trimmedIdItem);
+                    if (!existsInDatos) {
+                        datosVerificacionCargados.push({
+                            idItem: trimmedIdItem,
+                            contenedora: 'N/A_TEXTAREA',
+                            cantidad: 0,
+                            allRowData: { item_: trimmedIdItem },
+                            isSuitableForGroupedReport: false
+                        });
+                    }
+                }
+            });
         }
-        updateVerifyPreview();
+        updateVerifyPreview(); // Update preview after potential additions
     }
     
     function onScanSuccessVerify(decodedText){
@@ -904,10 +1034,21 @@
             internalCode = upcToCodigoMap.get(scannedUPC) ?? upcToCodigoMap.get(scannedUPC.slice(0, -1));
             
             if (internalCode) {
-                const addedIdItemResult = addValidCodeToVerifyList(internalCode);
-                if (addedIdItemResult) { // Fue añadido (no es null ni false)
-                    const logMessage = `${addedIdItemResult} (Scan: ${scannedUPC})`;
-                    DOM.inputs.scannedCodesVerifyTextarea.value += `${logMessage}\n`;
+                const cleanedInternalCode = cleanCode(internalCode);
+                if (cleanedInternalCode && /^[0-9]+$/.test(cleanedInternalCode) && cleanedInternalCode.length > 5) {
+                    listaVerificar.add(cleanedInternalCode);
+                    DOM.inputs.scannedCodesVerifyTextarea.value += `${cleanedInternalCode} (Scan: ${scannedUPC})\n`;
+                    
+                    const existsInDatos = datosVerificacionCargados.some(d => d.idItem === cleanedInternalCode);
+                    if (!existsInDatos) {
+                        datosVerificacionCargados.push({
+                            idItem: cleanedInternalCode,
+                            contenedora: 'N/A_SCAN',
+                            cantidad: 0, // Scanned items usually are single units for verification here
+                            allRowData: { item_: cleanedInternalCode, upc_scanned: scannedUPC },
+                            isSuitableForGroupedReport: false
+                        });
+                    }
                     updateVerifyPreview();
                 }
             } else {
@@ -938,7 +1079,7 @@
             DOM.buttons.startScanVerify.textContent = '🛑 Detener Escáner';
             if(!html5QrCodeVerifier) html5QrCodeVerifier = new Html5Qrcode("readerVerify", { verbose: false });
             const config = { fps: 10, qrbox: { width: 250, height: 100 }, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] };
-            html5QrCodeVerifier.start({ facingMode: "environment" }, config, onScanSuccessVerify, () => {})
+            html5QrCodeVerifier.start({ facingMode: "environment" }, config, onScanSuccessVerify, (errorMessage) => { /* console.log("QR Scan error:", errorMessage); */ })
             .then(() => scannerVerifierActive = true)
             .catch(err => {
                 alert(`Error al iniciar escáner: ${err.message || err}`);
@@ -952,7 +1093,7 @@
     // ----- COMPARACIÓN Y RESULTADOS -----
     function compareListsAndDisplayResults(){
         coincidencias.clear();
-        listaVerificar.forEach(idItemToVerify => {
+        listaVerificar.forEach(idItemToVerify => { // listaVerificar is the Set of unique item IDs
             if(listaFoco.has(idItemToVerify)) {
                 coincidencias.set(idItemToVerify, listaFoco.get(idItemToVerify));
             }
@@ -962,22 +1103,21 @@
     
     function displayFinalResults(){
         DOM.stats.totalFoco.textContent=listaFoco.size;
-        DOM.stats.totalVerify.textContent=listaVerificar.size;
+        DOM.stats.totalVerify.textContent=listaVerificar.size; // Count of unique items to verify
         DOM.stats.totalMatches.textContent=coincidencias.size;
         DOM.displays.outputResults.innerHTML = '';
-        DOM.displays.outputResults.className = 'list';
+        DOM.displays.outputResults.className = 'list'; // Default to list view
         
         if(coincidencias.size === 0){
             DOM.displays.outputResults.innerHTML='<p>No se encontraron Ítems concordantes.</p>';
             return;
         }
 
-        // CAMBIO: Uso de DocumentFragment para mejor rendimiento al añadir múltiples elementos.
         const fragment = document.createDocumentFragment();
-        coincidencias.forEach(item => {
+        coincidencias.forEach(item => { // Iterate matched items from master list
             const cD = document.createElement("div");
             cD.className="barcode-item-container";
-            cD.dataset.iditem = item.codigo; // Para delegación de eventos
+            cD.dataset.iditem = item.codigo; 
 
             const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
             const brandText = `<p style="font-size: 0.8em; text-align: center; color: #777;">Marca: ${item.brand ?? 'N/A'}</p>`;
@@ -1041,6 +1181,7 @@
             return;
         }
         listaVerificar.clear();
+        datosVerificacionCargados = []; // Clear detailed verification data too
         coincidencias.clear();
         DOM.inputs.verifyTextarea.value = '';
         DOM.inputs.scannedCodesVerifyTextarea.value = '';
@@ -1057,12 +1198,12 @@
             listaFocoCacheadaLocalmente.clear();
             upcToCodigoMap.clear();
             alert("Maestra local borrada. Resincronizando...");
-            checkInitialState();
+            checkInitialState(); // This will attempt to reload from repo and update UI
         }
     }
 
     function handleCompare() {
-        collectVerifyDataFromInputs();
+        collectVerifyDataFromInputs(); // Process textarea input if any
         if (listaVerificar.size === 0) {
             alert("Cargue o escanee Ítems válidos para la Lista de Verificación.");
             return;
@@ -1084,8 +1225,8 @@
 
     function downloadCsvResults(){
         if(coincidencias.size===0){alert("No hay Ítems concordantes para descargar.");return;}
-        let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n";
-        coincidencias.forEach(item=>{
+        let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; // Standard CSV output of matched items
+        coincidencias.forEach(item=>{ // Uses 'coincidencias' which is based on 'listaFoco' details
             const desc = `"${(item.descripcion??'').replace(/"/g,'""')}"`;
             const upcVal = `"${(item.upc??'').replace(/"/g,'""')}"`;
             const brandVal = `"${(item.brand??'').replace(/"/g,'""')}"`;
@@ -1101,46 +1242,147 @@
     }
 
     async function downloadXlsxResults() {
-        if (coincidencias.size === 0) { alert("No hay ítems para exportar."); return; }
-        DOM.buttons.downloadXlsx.textContent = 'Generando...';
-        DOM.buttons.downloadXlsx.disabled = true;
+        if (coincidencias.size === 0) { alert("No hay ítems concordantes para exportar."); return; }
 
+        // Check if we have data suitable for the new grouped report
+        const hasGroupableData = datosVerificacionCargados.some(item => item.isSuitableForGroupedReport && coincidencias.has(item.idItem));
+        const btn = DOM.buttons.downloadXlsx;
+        const originalText = btn.textContent;
+
+        if (hasGroupableData) {
+            // Proceed with new grouped report
+            btn.textContent = 'Generando (Agrupado)...';
+            btn.disabled = true;
+
+            try {
+                const groupedByContenedora = new Map();
+                for (const uploadedItem of datosVerificacionCargados) {
+                    if (uploadedItem.isSuitableForGroupedReport && coincidencias.has(uploadedItem.idItem)) {
+                        const masterDetails = coincidencias.get(uploadedItem.idItem);
+                        const itemDataForReport = {
+                            idItem: uploadedItem.idItem,
+                            descripcion: masterDetails.descripcion || uploadedItem.allRowData?.descripcion || '',
+                            marca: masterDetails.brand || '',
+                            cantidad: uploadedItem.cantidad, // from upload
+                        };
+                        const contenedoraKey = uploadedItem.contenedora || "Sin Contenedora Asignada";
+                        if (!groupedByContenedora.has(contenedoraKey)) {
+                            groupedByContenedora.set(contenedoraKey, []);
+                        }
+                        groupedByContenedora.get(contenedoraKey).push(itemDataForReport);
+                    }
+                }
+
+                if (groupedByContenedora.size === 0) {
+                    alert("No hay ítems concordantes con datos de contenedora válidos para el reporte agrupado. Se generará el reporte estándar.");
+                    // Fall through to standard report logic below.
+                } else {
+                    const dataForSheet = [];
+                    dataForSheet.push(["Reporte de Control TMR Agrupado por Contenedora"]);
+                    dataForSheet.push(["Fecha de Generación:", new Date().toLocaleDateString("es-CL", { day: '2-digit', month: '2-digit', year: 'numeric' })]);
+                    dataForSheet.push([]); 
+
+                    let currentRowIdx = dataForSheet.length - 1; 
+                    const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }]; // Main title merge, assuming 6 columns
+
+                    groupedByContenedora.forEach((itemsArray, contenedora) => {
+                        currentRowIdx++;
+                        dataForSheet.push([`Contenedora: ${contenedora}`]); 
+                        merges.push({ s: { r: currentRowIdx, c: 0 }, e: { r: currentRowIdx, c: 5 } }); 
+                        currentRowIdx++;
+                        
+                        dataForSheet.push(["ID Ítem", "Descripción", "Marca", "Cantidad (Verificada)", "Revisado", "Diferencias Encontradas"]);
+                        // currentRowIdx++; // Header row itself increases index
+
+                        itemsArray.forEach(item => {
+                            dataForSheet.push([
+                                item.idItem, item.descripcion, item.marca, item.cantidad,
+                                "☐ " + "_".repeat(20), "_".repeat(30)
+                            ]);
+                            currentRowIdx++;
+                        });
+                        dataForSheet.push([]); // Blank row after each group
+                        currentRowIdx++;
+                    });
+
+                    const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
+                    ws['!cols'] = [ { wch: 18 }, { wch: 45 }, { wch: 22 }, { wch: 18 }, { wch: 28 }, { wch: 35 } ];
+                    ws['!merges'] = merges;
+
+                    // Styling
+                    ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center", vertical: "center" } };
+                    for(let i = 0; i < dataForSheet.length; i++) {
+                        if (dataForSheet[i] && typeof dataForSheet[i][0] === 'string' && dataForSheet[i][0].startsWith("Contenedora:")) {
+                            const cellAddress = XLSX.utils.encode_cell({r: i, c: 0});
+                            if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: dataForSheet[i][0] };
+                            ws[cellAddress].s = { font: { bold: true, sz: 13, color: { rgb: "1F497D" } }, fill: { fgColor: { rgb: "DCE6F1" } }, alignment: { vertical: "center"} };
+                        }
+                        if (dataForSheet[i] && dataForSheet[i][0] === "ID Ítem") { // Item headers
+                             for (let j=0; j<dataForSheet[i].length; j++) {
+                                const cellAddress = XLSX.utils.encode_cell({r: i, c: j});
+                                if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: dataForSheet[i][j] };
+                                ws[cellAddress].s = { font: { bold: true, sz:10 }, fill: { fgColor: { rgb: "F2F2F2" } }, border: { bottom: { style: "thin"} }, alignment: {wrapText: true, vertical: "center"} };
+                             }
+                        }
+                    }
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Control TMR Agrupado");
+                    XLSX.writeFile(wb, `Control_TMR_Agrupado_${new Date().toISOString().slice(0,10)}.xlsx`);
+                    
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    return; // Successfully generated grouped report
+                }
+            } catch (error) {
+                console.error("Error generando XLSX agrupado:", error);
+                alert("Error al generar archivo XLSX agrupado: " + error.message);
+                // Fall through to standard report logic on error
+            }
+        }
+
+        // Fallback to standard report if not groupable or if grouped failed and fell through
+        if (!hasGroupableData || (groupedByContenedora && groupedByContenedora.size === 0) ) { // Check added for clarity
+            if (hasGroupableData && groupedByContenedora.size === 0) { /* alert was shown */ }
+            else if (!hasGroupableData) {
+                 alert("No se encontraron datos adecuados para el reporte agrupado (columnas 'contenedoras', 'cantidad' en Excel con encabezados). Se generará el reporte estándar.");
+            }
+        }
+
+        btn.textContent = 'Generando (Estándar)...';
+        btn.disabled = true;
         try {
-            const dataForSheet = [
-                ["Control TMR 2025"],
+            const oldDataForSheet = [
+                ["Control TMR 2025 - Reporte Estándar"],
                 ["Fecha de Generación:", new Date().toLocaleDateString("es-CL")],
-                [], // Blank row
+                [], 
             ];
             Array.from(coincidencias.values()).forEach(item => {
-                dataForSheet.push(
+                oldDataForSheet.push(
                     ["ID Ítem:", item.codigo],
                     ["Descripción:", item.descripcion ?? ''],
                     ["Marca:", item.brand ?? ''],
                     ["Revisado:", "☐ " + "_".repeat(30) + " (Firma/Obs)"],
                     ["Diferencias Encontradas:", "_".repeat(45)],
                     [null, "_".repeat(45)],
-                    [] // Separator
+                    [] 
                 );
             });
-
-            const ws = XLSX.utils.aoa_to_sheet(dataForSheet, {cellStyles: true});
-            ws['!cols'] = [ { wch: 25 }, { wch: 60 } ];
-            ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
-            if(ws['A1']) { ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
-            
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Control TMR");
-            XLSX.writeFile(wb, `Control_TMR_${new Date().toISOString().slice(0,10)}.xlsx`);
+            const ws_std = XLSX.utils.aoa_to_sheet(oldDataForSheet);
+            ws_std['!cols'] = [ { wch: 25 }, { wch: 60 } ];
+            ws_std['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }]; 
+             if(ws_std['A1']) { ws_std['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
+            const wb_std = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb_std, ws_std, "Control TMR Estándar");
+            XLSX.writeFile(wb_std, `Control_TMR_Estandar_${new Date().toISOString().slice(0,10)}.xlsx`);
         } catch (error) {
-            console.error("Error generando XLSX:", error);
-            alert("Error al generar archivo XLSX: " + error.message);
+            console.error("Error generando XLSX estándar:", error);
+            alert("Error al generar archivo XLSX estándar: " + error.message);
         } finally {
-            DOM.buttons.downloadXlsx.textContent = '📊 Descargar XLSX';
-            DOM.buttons.downloadXlsx.disabled = false;
+            btn.textContent = originalText;
+            btn.disabled = false;
         }
     }
     
-    // CAMBIO: Función auxiliar para crear campos del PDF y evitar repetición
     function createPdfField(label, value) {
         return `<div class="pdf-item-field">
                     <span class="pdf-item-label">${label}:</span>
@@ -1160,7 +1402,7 @@
         pdfExportContainer.className = 'pdf-export-container';
         pdfExportContainer.style.position = 'absolute';
         pdfExportContainer.style.left = '-9999px';
-        pdfExportContainer.style.width = '180mm'; // Ancho Aprox. para Carta
+        pdfExportContainer.style.width = '180mm'; 
 
         const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
         let contentHTML = `
@@ -1216,6 +1458,7 @@
 
     function handleNewVerification() {
         listaVerificar.clear();
+        datosVerificacionCargados = []; // Clear detailed data
         coincidencias.clear();
         DOM.inputs.verifyTextarea.value = '';
         DOM.inputs.scannedCodesVerifyTextarea.value = '';
@@ -1225,7 +1468,7 @@
         DOM.displays.outputResults.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>';
         DOM.stats.totalVerify.textContent = '0';
         DOM.stats.totalMatches.textContent = '0';
-        if(scannerVerifierActive) toggleScanner(); // Detiene el escáner si está activo
+        if(scannerVerifierActive) toggleScanner(); 
         navigateToView('panelInicio');
     }
 
