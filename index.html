@@ -178,96 +178,13 @@
       border-top: 1px solid #eee;
     }
 
-    /* Estilos para la exportación a PDF (Formato Ficha Detallada / Carta) */
-    .pdf-export-container {
-        font-family: Arial, sans-serif;
-        color: #333;
-    }
-    .pdf-export-container .main-document-title { /* H1 general del sistema */
-        text-align: center;
-        font-size: 18pt;
-        font-weight: bold;
-        margin-bottom: 8mm;
-    }
-    .pdf-export-container .report-title { /* Título del reporte "Reporte de Verificación..." */
-        text-align: center;
-        font-size: 16pt;
-        font-weight: bold;
-        margin-bottom: 3mm;
-    }
-    .pdf-export-container .report-date { /* "Fecha de Generación: ..." */
-        text-align: center;
-        font-size: 10pt;
-        margin-bottom: 10mm;
-    }
-
-    .pdf-item-ficha {
-        border: 1px solid #b0b0b0;
-        padding: 5mm;
-        margin-bottom: 7mm;
-        border-radius: 3px;
-        background-color: #fff;
-        page-break-inside: avoid !important;
-        break-inside: avoid !important;
-    }
-    .pdf-item-ficha .pdf-item-field {
-        display: flex;
-        margin-bottom: 3mm;
-        font-size: 10pt;
-        line-height: 1.4;
-        align-items: flex-start;
-    }
-    .pdf-item-ficha .pdf-item-label {
-        font-weight: bold;
-        width: 95px;
-        min-width: 95px;
-        margin-right: 5px;
-        flex-shrink: 0;
-    }
-    .pdf-item-ficha .pdf-item-value {
-        flex-grow: 1;
-        word-break: break-word;
-    }
-    .pdf-item-ficha .revisado-field .pdf-item-value,
-    .pdf-item-ficha .diferencias-field .pdf-item-value,
-    .pdf-item-ficha .diferencias-field-extra .pdf-item-value {
-        font-family: 'Courier New', Courier, monospace;
-        white-space: pre;
-        letter-spacing: 0.5px;
-        border-bottom: 0.5px solid #555;
-        min-height: 1.2em;
-        padding-bottom: 1px; /* Pequeño espacio para que la línea no toque el texto */
-    }
-    .pdf-item-ficha .diferencias-field-extra .pdf-item-label {
-        visibility: hidden;
-    }
-
-    .pdf-item-barcode-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 5mm; /* Espacio desde los otros campos */
-        margin-bottom: 3mm; /* Espacio antes de los campos de revisión */
-    }
-
-    .pdf-item-barcode-svg svg {
-        max-width: 90%; /* Para que no ocupe todo el ancho de la ficha */
-        height: 25mm;   /* Altura fija para el código de barras */
-        display: block;
-        margin: 0 auto; /* Centrar el SVG */
-    }
-
-    .pdf-export-container button { /* Ocultar botones dentro del contenido para PDF */
-        display: none !important;
-    }
-
-    /* Estilos para @media print, si html2pdf usa modo 'css' y los recoge */
+    /* Estilos para @media print */
     @media print {
-      .barcode-item-container, .pdf-item-ficha { /* Aplicar a ambos por si acaso */
+      .barcode-item-container {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .no-print-pdf { /* Clase genérica para ocultar en impresión/PDF */
+      .no-print-pdf { /* Clase genérica para ocultar en impresión (si se usa) */
         display: none !important;
       }
     }
@@ -338,7 +255,7 @@
         Solo se considerarán IDs de Ítem **numéricos de más de 5 dígitos**.
       </p>
        <p style="font-size:0.85em; color:#c0392b; background-color: #fdedec; padding: 5px; border-left: 3px solid #c0392b;">
-        Para el reporte XLSX agrupado por contenedora, suba un archivo Excel (.xlsx) con encabezados: `item_`, `contenedoras`, `cantidad`.
+        Para el reporte XLSX con información de carga (contenedora, cantidad), suba un archivo Excel (.xlsx) con encabezados: `item_`, `contenedoras`, `cantidad`.
       </p>
       <div class="input-group">
         <label for="verifyTextarea">Pegar IDs de Ítem a verificar (uno por línea o separados por espacio/tabulador):</label>
@@ -346,7 +263,7 @@
       </div>
        <div class="input-group">
         <label>Subir archivo con IDs de Ítem a verificar:</label>
-        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Para el reporte agrupado, use Excel con las columnas indicadas arriba.</p>
+        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Para información adicional en el reporte XLSX (contenedora, cantidad), use Excel con las columnas indicadas arriba.</p>
         <div class="input-columns">
             <div><label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label><input type="file" id="verifyFileTxtCsv" accept=".txt,.csv"></div>
             <div><label for="verifyFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label><input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
@@ -381,9 +298,8 @@
       <h3>Detalle de Ítems Concordantes (Clic para ver más)</h3>
       <div style="margin-bottom: 15px;">
           <button id="layoutToggleResultsBtn">📊 Cambiar Vista</button>
-          <button id="downloadXlsxResultsBtn" class="secondary">📊 Descargar XLSX</button>
+          <button id="downloadXlsxResultsBtn" class="secondary">📊 Descargar XLSX (Formato Informe)</button>
           <button id="downloadCsvResultsBtn" class="secondary">💾 Descargar CSV de Concordancias</button>
-          <button id="downloadPdfResultsBtn">📄 Generar PDF</button>
       </div>
       <div id="outputResults" class="list"><p>No se han encontrado coincidencias o no se ha realizado la verificación.</p></div>
       <hr style="margin: 20px 0;">
@@ -410,7 +326,6 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -450,7 +365,6 @@
             layoutToggle: $('layoutToggleResultsBtn'),
             downloadXlsx: $('downloadXlsxResultsBtn'),
             downloadCsv: $('downloadCsvResultsBtn'),
-            downloadPdf: $('downloadPdfResultsBtn'),
             newVerification: $('btnNewVerification'),
             confirmarCambios: $('btnConfirmarCambiosRepositorio'),
             rechazarCambios: $('btnRechazarCambiosRepositorio'),
@@ -551,7 +465,6 @@
         DOM.buttons.layoutToggle.addEventListener('click', toggleResultsLayout);
         DOM.buttons.downloadCsv.addEventListener('click', downloadCsvResults);
         DOM.buttons.downloadXlsx.addEventListener('click', downloadXlsxResults);
-        DOM.buttons.downloadPdf.addEventListener('click', generatePdfReport);
         DOM.buttons.newVerification.addEventListener('click', handleNewVerification);
 
         DOM.displays.outputResults.addEventListener('click', (event) => {
@@ -686,7 +599,6 @@
             return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`;
         });
         
-        // Store maestraRepositorioMap in a data attribute to retrieve it in the event listener
         DOM.buttons.confirmarCambios.dataset.maestraRepositorio = JSON.stringify(maestraRepositorioMap, (key, value) => {
              if (value instanceof Map) return { __isMap__: true, data: Array.from(value.entries()) };
              return value;
@@ -852,9 +764,10 @@
         reader.onload = (e) => {
             const content = e.target.result;
             
-            listaVerificar.clear();
-            datosVerificacionCargados = [];
-            DOM.inputs.scannedCodesVerifyTextarea.value = '';
+            // No limpiar listaVerificar ni datosVerificacionCargados aquí para permitir múltiples cargas
+            // Estas se limpiarán al iniciar un nuevo doble control o al procesar específicamente.
+            // En su lugar, acumularemos. El set listaVerificar manejará duplicados de IDs.
+            // datosVerificacionCargados podría tener duplicados si se carga el mismo archivo, pero el impacto es en cómo se usan.
 
             try {
                 let parsedItems = [];
@@ -864,10 +777,10 @@
                     const itemIdsOnly = processTextCsvDataForVerify(content, idItemColUserInput - 1, hasHeader, delimiter);
                     parsedItems = itemIdsOnly.map(id => ({
                         idItem: id,
-                        contenedora: 'N/A_TXT_CSV',
-                        cantidad: 0,
+                        contenedora: 'N/A_TXT_CSV', // Default value
+                        cantidad: 0, // Default value
                         allRowData: { item_: id },
-                        isSuitableForGroupedReport: false
+                        isSuitableForGroupedReport: false // TXT/CSV files don't support the grouped report fields by default
                     }));
                 }
 
@@ -875,7 +788,14 @@
                     const trimmedIdItem = cleanCode(itemObj.idItem); 
                     if (trimmedIdItem && /^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
                         listaVerificar.add(trimmedIdItem); 
-                        datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); 
+                        // Evitar duplicados exactos en datosVerificacionCargados si se vuelve a cargar el mismo item via el mismo método.
+                        // Esta es una heurística simple, podría necesitar una lógica de 'actualización' más compleja.
+                        const existingIndex = datosVerificacionCargados.findIndex(d => d.idItem === trimmedIdItem && d.isSuitableForGroupedReport === itemObj.isSuitableForGroupedReport);
+                        if (existingIndex !== -1) {
+                             datosVerificacionCargados[existingIndex] = {...itemObj, idItem: trimmedIdItem }; // Sobrescribir/Actualizar
+                        } else {
+                             datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); 
+                        }
                     } else {
                         console.warn("Item ID inválido o no encontrado en fila:", itemObj.idItem, "Skipping.");
                     }
@@ -886,7 +806,7 @@
                 alert(`Error procesando ${file.name}: ${error.message}`);
                 DOM.displays.verifyPreview.textContent = `Error.`;
             }
-            resetFileInput(targetFileElement);
+            resetFileInput(targetFileElement); // Reset file input after processing
         };
         reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); resetFileInput(targetFileElement); };
         
@@ -900,7 +820,7 @@
         const delimRegex = getDelimiterRegex(delimiter);
         return dataRows.map(line => {
             const parts = line.split(delimRegex);
-            return parts[colIdx] ? String(Number(parts[colIdx])).trim() : null; // Ensure number to string for consistency
+            return parts[colIdx] ? String(Number(parts[colIdx])).trim() : null; 
         }).filter(Boolean);
     }
 
@@ -920,8 +840,6 @@
             dataRows = jsonData.slice(1);
         } else if (hasHeader && jsonData.length === 0) { 
              return [];
-        } else if (!hasHeader) {
-            alert("Para la funcionalidad de reporte XLSX agrupado, el archivo Excel DEBE tener encabezados ('item_', 'contenedoras', 'cantidad').");
         }
         
         const itemHeaderName = 'item_';
@@ -931,38 +849,40 @@
         let actualItemColIdx = -1;
         let contenedoraColIdx = -1;
         let cantidadColIdx = -1;
-        let isSuitableForGroupedReport = false;
+        let isSuitableForGroupedReport = false; // Renombrado de isSuitableForReport a isSuitableForGroupedReport
 
         if (hasHeader && headerRow.length > 0) {
             actualItemColIdx = headerRow.indexOf(itemHeaderName);
             contenedoraColIdx = headerRow.indexOf(contenedoraHeaderName);
             cantidadColIdx = headerRow.indexOf(cantidadHeaderName);
 
-            if (actualItemColIdx === -1 && itemColIdxUser > 0) { 
+            if (actualItemColIdx === -1 && itemColIdxUser > 0 && (itemColIdxUser-1 < headerRow.length)) { 
                 actualItemColIdx = itemColIdxUser - 1;
+                 console.warn(`Usando columna ${itemColIdxUser} para ID de ítem ya que '${itemHeaderName}' no se encontró.`);
             } else if (actualItemColIdx === -1) {
-                 throw new Error(`Columna con encabezado "${itemHeaderName}" no encontrada. Verifique el archivo o la configuración de columna.`);
+                 throw new Error(`Columna con encabezado "${itemHeaderName}" no encontrada y columna numérica no válida. Verifique el archivo o la configuración.`);
             }
-            if (contenedoraColIdx === -1) console.warn(`Encabezado "${contenedoraHeaderName}" no encontrado. El reporte agrupado no estará disponible para estos datos.`);
-            if (cantidadColIdx === -1) console.warn(`Encabezado "${cantidadHeaderName}" no encontrado. El reporte agrupado no estará disponible para estos datos.`);
             
             isSuitableForGroupedReport = (contenedoraColIdx !== -1 && cantidadColIdx !== -1 && actualItemColIdx !== -1);
+            if(!isSuitableForGroupedReport) {
+                console.warn(`Una o más columnas ('${contenedoraHeaderName}', '${cantidadHeaderName}') no encontradas. La información de contenedora/cantidad no estará completa para el reporte detallado de estos ítems.`);
+            }
 
         } else if (!hasHeader && itemColIdxUser > 0) { 
             actualItemColIdx = itemColIdxUser - 1;
-            isSuitableForGroupedReport = false;
-             console.warn("Archivo Excel sin encabezados. El reporte agrupado por contenedora no estará disponible para estos datos.");
+            isSuitableForGroupedReport = false; // Sin headers, no podemos mapear contenedora/cantidad explícitamente
+             console.warn("Archivo Excel sin encabezados. La información de contenedora y cantidad no se cargará desde el archivo para el reporte detallado.");
         } else if (!hasHeader && itemColIdxUser <=0) {
             throw new Error("Archivo Excel sin encabezados y no se especificó una columna de ID de ítem válida.");
         }
 
 
         return dataRows.map(row => {
-            if (!row || row.every(cell => cell === null || cell === '')) return null; // Skip totally empty rows
+            if (!row || row.every(cell => cell === null || cell === '')) return null; 
 
-            const idItem = (actualItemColIdx !== -1 && row[actualItemColIdx]) ? String(Number(row[actualItemColIdx])).trim() : null; // Ensure number to string
-            const contenedora = (contenedoraColIdx !== -1 && row[contenedoraColIdx]) ? String(row[contenedoraColIdx]).trim() : (isSuitableForGroupedReport ? 'Sin Contenedora Especificada' : 'N/A_EXCEL_NO_HEADER_CONT');
-            const cantidadVal = (cantidadColIdx !== -1 && row[cantidadColIdx]) ? String(row[cantidadColIdx]).replace(',', '.') : null;
+            const idItem = (actualItemColIdx !== -1 && actualItemColIdx < row.length && row[actualItemColIdx]) ? String(Number(row[actualItemColIdx])).trim() : null;
+            const contenedora = (contenedoraColIdx !== -1 && contenedoraColIdx < row.length && row[contenedoraColIdx]) ? String(row[contenedoraColIdx]).trim() : (isSuitableForGroupedReport ? 'Sin Contenedora Especificada' : 'N/A');
+            const cantidadVal = (cantidadColIdx !== -1 && cantidadColIdx < row.length && row[cantidadColIdx]) ? String(row[cantidadColIdx]).replace(',', '.') : null;
             const cantidad = cantidadVal ? parseFloat(cantidadVal) : 0;
 
             const allRowData = {};
@@ -993,10 +913,10 @@
         const textVerifyItems = DOM.inputs.verifyTextarea.value.trim();
         if (textVerifyItems) {
             textVerifyItems.split(/\s+/).forEach(id => {
-                const trimmedIdItem = String(Number(id)).trim(); // Ensure number to string
+                const trimmedIdItem = String(Number(id)).trim(); 
                 if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
                     listaVerificar.add(trimmedIdItem); 
-                    const existsInDatos = datosVerificacionCargados.some(d => d.idItem === trimmedIdItem);
+                    const existsInDatos = datosVerificacionCargados.some(d => d.idItem === trimmedIdItem && d.contenedora === 'N/A_TEXTAREA');
                     if (!existsInDatos) {
                         datosVerificacionCargados.push({
                             idItem: trimmedIdItem,
@@ -1016,15 +936,15 @@
         const scannedUPC = cleanText(decodedText);
         let internalCode = null;
         if (scannedUPC) {
-            internalCode = upcToCodigoMap.get(scannedUPC) ?? upcToCodigoMap.get(scannedUPC.slice(0, -1));
+            internalCode = upcToCodigoMap.get(scannedUPC) ?? upcToCodigoMap.get(scannedUPC.slice(0, -1)); // Intenta con y sin check digit
             
             if (internalCode) {
                 const cleanedInternalCode = cleanCode(internalCode);
                 if (cleanedInternalCode && /^[0-9]+$/.test(cleanedInternalCode) && cleanedInternalCode.length > 5) {
                     listaVerificar.add(cleanedInternalCode);
-                    DOM.inputs.scannedCodesVerifyTextarea.value += `${cleanedInternalCode} (Scan: ${scannedUPC})\n`;
+                    DOM.inputs.scannedCodesVerifyTextarea.value += `${cleanedInternalCode} (Scan UPC: ${scannedUPC})\n`;
                     
-                    const existsInDatos = datosVerificacionCargados.some(d => d.idItem === cleanedInternalCode);
+                    const existsInDatos = datosVerificacionCargados.some(d => d.idItem === cleanedInternalCode && d.contenedora === 'N/A_SCAN');
                     if (!existsInDatos) {
                         datosVerificacionCargados.push({
                             idItem: cleanedInternalCode,
@@ -1035,6 +955,8 @@
                         });
                     }
                     updateVerifyPreview();
+                } else {
+                     alert(`Código interno (${internalCode}) asociado al UPC (${scannedUPC}) no es válido.`);
                 }
             } else {
                 alert(`UPC escaneado (${scannedUPC}) no encontrado en la Lista Maestra.`);
@@ -1050,7 +972,7 @@
                     DOM.displays.scannerContainerVerify.classList.add('hidden');
                     DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC de Artículo';
                 }).catch(err => console.error("Error deteniendo escáner:", err));
-            } else {
+            } else { // If not scanning but active, just toggle state and UI
                 scannerVerifierActive = false;
                 DOM.displays.scannerContainerVerify.classList.add('hidden');
                 DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC de Artículo';
@@ -1063,7 +985,24 @@
             DOM.displays.scannerContainerVerify.classList.remove('hidden');
             DOM.buttons.startScanVerify.textContent = '🛑 Detener Escáner';
             if(!html5QrCodeVerifier) html5QrCodeVerifier = new Html5Qrcode("readerVerify", { verbose: false });
-            const config = { fps: 10, qrbox: { width: 250, height: 100 }, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] };
+            
+            const qrboxFunction = function(viewfinderWidth, viewfinderHeight) {
+                let minEdgePercentage = 0.7; // 70%
+                let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+                return {
+                    width: qrboxSize,
+                    height: qrboxSize * 0.5 // Rectangular for barcodes
+                };
+            }
+
+            const config = { 
+                fps: 10, 
+                qrbox: qrboxFunction,
+                // aspectRatio: 1.0, // Optional: You might want to play with this for barcode scanning
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] 
+            };
+            
             html5QrCodeVerifier.start({ facingMode: "environment" }, config, onScanSuccessVerify, (errorMessage) => { /* console.log("QR Scan error:", errorMessage); */ })
             .then(() => scannerVerifierActive = true)
             .catch(err => {
@@ -1092,7 +1031,7 @@
         DOM.stats.totalMatches.textContent = coincidencias.size;
 
         DOM.displays.outputResults.innerHTML = '';
-        DOM.displays.outputResults.className = 'list'; // Default to list view
+        DOM.displays.outputResults.className = 'list'; 
 
         if (coincidencias.size === 0) { 
             DOM.displays.outputResults.innerHTML = '<p>No se encontraron Ítems concordantes para mostrar.</p>';
@@ -1102,11 +1041,10 @@
         const fragment = document.createDocumentFragment();
         const groupedForDisplay = new Map();
 
-        // 1. Group matched items from datosVerificacionCargados by contenedora
         datosVerificacionCargados.forEach(uploadedItem => {
             if (coincidencias.has(uploadedItem.idItem)) {
                 const masterDetails = coincidencias.get(uploadedItem.idItem);
-                const contenedoraKey = uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora ?
+                const contenedoraKey = (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora && uploadedItem.contenedora !== 'N/A' && uploadedItem.contenedora !== 'N/A_EXCEL_NO_HEADER_CONT' && uploadedItem.contenedora !== 'N/A_TXT_CSV' && uploadedItem.contenedora !== 'N/A_TEXTAREA' && uploadedItem.contenedora !== 'N/A_SCAN') ?
                                        uploadedItem.contenedora :
                                        "Ítems Verificados (Otros/Sin Contenedora Específica)";
                 
@@ -1117,13 +1055,12 @@
                     groupedForDisplay.get(contenedoraKey).push({
                         ...masterDetails, 
                         cantidadOriginal: uploadedItem.cantidad, 
-                        isFromUploadWithContainerInfo: uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora
+                        isFromUploadWithContainerInfo: uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora !== 'N/A' && uploadedItem.contenedora !== 'N/A_EXCEL_NO_HEADER_CONT' && uploadedItem.contenedora !== 'N/A_TXT_CSV' && uploadedItem.contenedora !== 'N/A_TEXTAREA' && uploadedItem.contenedora !== 'N/A_SCAN'
                     });
                 }
             }
         });
 
-        // 2. Add other matched items (not from datosVerificacionCargados with specific container info)
         coincidencias.forEach(masterItem => {
             const alreadyDisplayedWithContainer = Array.from(groupedForDisplay.values())
                                        .flat()
@@ -1140,6 +1077,19 @@
             }
         });
         
+        if (groupedForDisplay.size === 0 && coincidencias.size > 0) { // Fallback if grouping somehow fails but there are matches
+             coincidencias.forEach(masterItem => {
+                const defaultGroupKey = "Ítems Verificados (Otros/Sin Contenedora Específica)";
+                 if (!groupedForDisplay.has(defaultGroupKey)) {
+                    groupedForDisplay.set(defaultGroupKey, []);
+                }
+                if (!groupedForDisplay.get(defaultGroupKey).some(existing => existing.codigo === masterItem.codigo)) {
+                    groupedForDisplay.get(defaultGroupKey).push({ ...masterItem, cantidadOriginal: null, isFromUploadWithContainerInfo: false });
+                }
+             });
+        }
+
+
         if (groupedForDisplay.size === 0) { 
              DOM.displays.outputResults.innerHTML='<p>No se encontraron Ítems concordantes para mostrar después de agrupar.</p>';
              return;
@@ -1156,7 +1106,7 @@
             if (itemsArray.length === 0) return; 
 
             const contenedoraHeader = document.createElement('h4');
-            contenedoraHeader.textContent = `${contenedora}`; 
+            contenedoraHeader.textContent = `${contenedora} (${itemsArray.length} ítem(s))`; 
             contenedoraHeader.style.marginTop = "20px";
             contenedoraHeader.style.paddingBottom = "5px";
             contenedoraHeader.style.borderBottom = "1px solid #ccc";
@@ -1170,7 +1120,7 @@
 
                 const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
                 const brandText = `<p style="font-size: 0.8em; text-align: center; color: #777;">Marca: ${item.brand ?? 'N/A'}</p>`;
-                const cantidadText = (typeof item.cantidadOriginal === 'number' && item.cantidadOriginal !== null) ? `<p style="font-size: 0.9em; text-align: center; color: #333; font-weight: bold;">Cantidad (cargada): ${item.cantidadOriginal}</p>` : '';
+                const cantidadText = (typeof item.cantidadOriginal === 'number' && item.cantidadOriginal !== null && item.isFromUploadWithContainerInfo) ? `<p style="font-size: 0.9em; text-align: center; color: #333; font-weight: bold;">Cantidad (cargada): ${item.cantidadOriginal}</p>` : '';
 
                 cD.innerHTML = `
                     <p class="barcode-item-code">${item.codigo}</p>
@@ -1198,15 +1148,15 @@
     function openItemDetailModal(idItem) {
         const item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
         if (item) {
-            DOM.modal.codigo.textContent = "ID Ítem: " + item.codigo;
-            DOM.modal.descripcion.textContent = item.descripcion ?? 'No disponible';
-            DOM.modal.upc.textContent = item.upc ?? 'No disponible';
-            DOM.modal.brand.textContent = item.brand ?? 'No disponible';
+            DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
+            DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
+            DOM.modal.upc.textContent = item.upc || 'No disponible';
+            DOM.modal.brand.textContent = item.brand || 'No disponible';
             
             const imageUrl = item.url?.trim();
             if (imageUrl) {
                 DOM.modal.image.src = imageUrl;
-                DOM.modal.image.alt = "Imagen de " + (item.descripcion ?? item.codigo);
+                DOM.modal.image.alt = "Imagen de " + (item.descripcion || item.codigo || 'ítem');
                 DOM.modal.image.style.display = 'block';
                 DOM.modal.imageError.style.display = 'none';
             } else {
@@ -1229,7 +1179,7 @@
     // ----- MANEJADORES DE EVENTOS DE BOTONES -----
     function handleIniciarDobleControl() {
         if (listaFoco.size === 0) {
-            alert("No hay Lista Maestra cargada. Sincronice con el repositorio.");
+            alert("No hay Lista Maestra cargada. Sincronice con el repositorio o verifique la conexión.");
             return;
         }
         listaVerificar.clear();
@@ -1257,11 +1207,11 @@
     function handleCompare() {
         collectVerifyDataFromInputs(); 
         if (listaVerificar.size === 0) {
-            alert("Cargue o escanee Ítems válidos para la Lista de Verificación.");
+            alert("Cargue, ingrese o escanee Ítems válidos para la Lista de Verificación.");
             return;
         }
         if (listaFoco.size === 0) {
-            alert("La Lista Maestra está vacía. Sincronice con el repositorio.");
+            alert("La Lista Maestra está vacía. Sincronice con el repositorio o verifique la conexión.");
             navigateToView('panelInicio');
             return;
         }
@@ -1279,13 +1229,10 @@
         if(coincidencias.size===0){alert("No hay Ítems concordantes para descargar.");return;}
         let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; 
         coincidencias.forEach(item=>{ 
-            const desc = `"${(item.descripcion??'').replace(/"/g,'""')}"`;
-            const upcVal = `"${(item.upc??'').replace(/"/g,'""')}"`;
-            const brandVal = `"${(item.brand??'').replace(/"/g,'""')}"`;
-            const urlVal = `"${(item.url??'').replace(/"/g,'""')}"`;
-            csvContent+=`${item.codigo},${upcVal},${desc},${brandVal},${urlVal}\n`;
+            const escapeCsv = (val) => `"${(val === null || val === undefined ? '' : String(val)).replace(/"/g,'""')}"`;
+            csvContent+=`${escapeCsv(item.codigo)},${escapeCsv(item.upc)},${escapeCsv(item.descripcion)},${escapeCsv(item.brand)},${escapeCsv(item.url)}\n`;
         });
-        const blob = new Blob([csvContent],{type:'text/csv;charset=utf-8;'});
+        const blob = new Blob(["\uFEFF" + csvContent],{type:'text/csv;charset=utf-8;'}); // \uFEFF for BOM
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = `concordancias_sdci_${new Date().toISOString().slice(0,10)}.csv`;
@@ -1294,257 +1241,121 @@
     }
 
     async function downloadXlsxResults() {
-        const hasGroupableData = datosVerificacionCargados.some(item => item.isSuitableForGroupedReport);
-        const itemsConCantidadSuficiente = datosVerificacionCargados.filter(item => item.cantidad >= 100 && item.isSuitableForGroupedReport);
-
-        if (coincidencias.size === 0 && itemsConCantidadSuficiente.length === 0) {
-             alert("No hay ítems concordantes ni ítems con cantidad >= 100 del archivo de verificación para exportar."); return;
+        if (coincidencias.size === 0) {
+            alert("No hay Ítems concordantes para exportar a XLSX.");
+            return;
         }
 
         const btn = DOM.buttons.downloadXlsx;
         const originalText = btn.textContent;
-        let groupedByContenedora = new Map(); 
-
-        if (hasGroupableData || itemsConCantidadSuficiente.length > 0) {
-            btn.textContent = 'Generando (Agrupado)...';
-            btn.disabled = true;
-
-            try {
-                for (const uploadedItem of datosVerificacionCargados) {
-                    if (uploadedItem.isSuitableForGroupedReport && coincidencias.has(uploadedItem.idItem)) {
-                        const masterDetails = coincidencias.get(uploadedItem.idItem);
-                        const itemDataForReport = {
-                            idItem: uploadedItem.idItem,
-                            descripcion: masterDetails.descripcion || uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.['descripción'] || uploadedItem.allRowData?.['description'] || 'Descripción del archivo',
-                            marca: masterDetails.brand || uploadedItem.allRowData?.marca || uploadedItem.allRowData?.['brand'] || 'Marca del archivo',
-                            cantidad: uploadedItem.cantidad, 
-                        };
-                        const contenedoraKey = uploadedItem.contenedora || "Sin Contenedora Asignada";
-                        if (!groupedByContenedora.has(contenedoraKey)) {
-                            groupedByContenedora.set(contenedoraKey, []);
-                        }
-                        groupedByContenedora.get(contenedoraKey).push(itemDataForReport);
-                    }
-                }
-
-                for (const uploadedItem of itemsConCantidadSuficiente) {
-                    if (!coincidencias.has(uploadedItem.idItem)) { 
-                        const itemDataForReport = {
-                            idItem: uploadedItem.idItem,
-                            descripcion: uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.['descripción'] || uploadedItem.allRowData?.['description'] || 'Descripción del archivo (Ítem no en Maestra)',
-                            marca: uploadedItem.allRowData?.marca || uploadedItem.allRowData?.['brand'] || 'Marca del archivo (Ítem no en Maestra)',
-                            cantidad: uploadedItem.cantidad,
-                            notInMaster: true 
-                        };
-                        const contenedoraKey = uploadedItem.contenedora || "Sin Contenedora Asignada";
-                        if (!groupedByContenedora.has(contenedoraKey)) {
-                            groupedByContenedora.set(contenedoraKey, []);
-                        }
-                        const existingInGroup = groupedByContenedora.get(contenedoraKey);
-                        if (!existingInGroup.some(ex => ex.idItem === itemDataForReport.idItem)) {
-                           existingInGroup.push(itemDataForReport);
-                        }
-                    }
-                }
-
-                if (groupedByContenedora.size === 0) {
-                    alert("No hay ítems concordantes con datos de contenedora válidos ni ítems con cantidad >= 100 para el reporte agrupado. Se generará el reporte estándar si hay coincidencias generales.");
-                } else {
-                    const dataForSheet = [];
-                    dataForSheet.push(["Reporte de Control TMR Agrupado por Contenedora"]);
-                    dataForSheet.push(["Fecha de Generación:", new Date().toLocaleDateString("es-CL", { day: '2-digit', month: '2-digit', year: 'numeric' })]);
-                    dataForSheet.push([]);
-
-                    let currentRowIdx = dataForSheet.length - 1;
-                    const merges = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }];
-
-                    groupedByContenedora.forEach((itemsArray, contenedora) => {
-                        currentRowIdx++;
-                        dataForSheet.push([`Contenedora: ${contenedora}`]);
-                        merges.push({ s: { r: currentRowIdx, c: 0 }, e: { r: currentRowIdx, c: 5 } });
-                        currentRowIdx++;
-                        dataForSheet.push(["ID Ítem", "Descripción", "Marca", "Cantidad (Unidades)", "Revisado", "Diferencias Encontradas"]);
-
-                        itemsArray.forEach(item => {
-                            let idItemDisplay = item.idItem;
-                            if (item.notInMaster) {
-                                idItemDisplay += " (No en Maestra)";
-                            }
-                            dataForSheet.push([
-                                idItemDisplay, item.descripcion, item.marca, item.cantidad,
-                                "☐ " + "_".repeat(20), "_".repeat(30)
-                            ]);
-                            currentRowIdx++;
-                        });
-                        dataForSheet.push([]);
-                        currentRowIdx++;
-                    });
-
-                    const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-                    ws['!cols'] = [ { wch: 25 }, { wch: 50 }, { wch: 25 }, { wch: 20 }, { wch: 28 }, { wch: 35 } ];
-                    ws['!merges'] = merges;
-
-                    if(ws['A1']) ws['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center", vertical: "center" } };
-                    for(let i = 0; i < dataForSheet.length; i++) {
-                        if (dataForSheet[i] && typeof dataForSheet[i][0] === 'string' && dataForSheet[i][0].startsWith("Contenedora:")) {
-                            const cellAddress = XLSX.utils.encode_cell({r: i, c: 0});
-                            if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: dataForSheet[i][0] };
-                            ws[cellAddress].s = { font: { bold: true, sz: 13, color: { rgb: "1F497D" } }, fill: { fgColor: { rgb: "DCE6F1" } }, alignment: { vertical: "center"} };
-                        }
-                        if (dataForSheet[i] && dataForSheet[i][0] === "ID Ítem") {
-                             for (let j=0; j<dataForSheet[i].length; j++) {
-                                const cellAddress = XLSX.utils.encode_cell({r: i, c: j});
-                                if (!ws[cellAddress]) ws[cellAddress] = { t: 's', v: dataForSheet[i][j] };
-                                ws[cellAddress].s = { font: { bold: true, sz:10 }, fill: { fgColor: { rgb: "F2F2F2" } }, border: { bottom: { style: "thin"} }, alignment: {wrapText: true, vertical: "center"} };
-                             }
-                        }
-                        if (dataForSheet[i] && dataForSheet[i][0] && typeof dataForSheet[i][0] === 'string' && dataForSheet[i][0].includes("(No en Maestra)")) {
-                            for (let j=0; j<4; j++) { 
-                                const cellAddress = XLSX.utils.encode_cell({r: i, c: j});
-                                if (ws[cellAddress]) {
-                                     if(!ws[cellAddress].s) ws[cellAddress].s = {};
-                                     ws[cellAddress].s.font = { ...ws[cellAddress].s.font, color: {rgb: "FF0000"} }; 
-                                }
-                            }
-                        }
-                    }
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Control TMR Agrupado");
-                    XLSX.writeFile(wb, `Control_TMR_Agrupado_${new Date().toISOString().slice(0,10)}.xlsx`);
-
-                    btn.textContent = originalText;
-                    btn.disabled = false;
-                    return; 
-                }
-            } catch (error) {
-                console.error("Error generando XLSX agrupado:", error);
-                alert("Error al generar archivo XLSX agrupado: " + error.message + "\nSe intentará generar el reporte estándar si hay coincidencias generales.");
-            }
-        }
-
-        if (coincidencias.size > 0) {
-            if ((hasGroupableData || itemsConCantidadSuficiente.length > 0) && groupedByContenedora.size === 0) {
-            } else if (!hasGroupableData && itemsConCantidadSuficiente.length === 0) {
-                 alert("No se encontraron datos adecuados para el reporte agrupado. Se generará el reporte estándar de coincidencias.");
-            }
-        } else { 
-             btn.textContent = originalText; 
-             btn.disabled = false;
-             return; 
-        }
-
-        btn.textContent = 'Generando (Estándar)...'; 
+        btn.textContent = 'Generando XLSX...';
         btn.disabled = true;
+
         try {
-            const oldDataForSheet = [
-                ["Control TMR 2025 - Reporte Estándar de Concordancias"],
-                ["Fecha de Generación:", new Date().toLocaleDateString("es-CL")],
-                [],
+            const dataForSheet = [];
+            const mainTitleQuery = document.querySelector('.container > h1');
+            const reportTitle = mainTitleQuery ? mainTitleQuery.innerText : "Sistema de Doble Control de Ítems";
+            const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
+
+            dataForSheet.push([reportTitle]); 
+            dataForSheet.push(["Informe de Verificación de Ítems Concordantes"]); 
+            dataForSheet.push([`Fecha de Generación: ${currentDateFormatted}`]); 
+            dataForSheet.push([]); 
+
+            const merges = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }, 
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, 
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } }  
             ];
-            Array.from(coincidencias.values()).forEach(item => { 
-                oldDataForSheet.push(
-                    ["ID Ítem:", item.codigo],
-                    ["Descripción:", item.descripcion ?? ''],
-                    ["Marca:", item.brand ?? ''],
-                    ["Revisado:", "☐ " + "_".repeat(30) + " (Firma/Obs)"],
-                    ["Diferencias Encontradas:", "_".repeat(45)],
-                    [null, "_".repeat(45)],
-                    []
-                );
+            let currentRow = 4; 
+
+            coincidencias.forEach((item, itemCodigo) => {
+                const uploadedItemData = datosVerificacionCargados.find(dvc => dvc.idItem === itemCodigo && coincidencias.has(dvc.idItem));
+
+                dataForSheet.push([`Ficha de Ítem: ${item.codigo || 'N/A'}`]);
+                merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 1 } });
+                currentRow++;
+
+                dataForSheet.push(["ID Ítem:", item.codigo || 'N/A']);
+                currentRow++;
+                dataForSheet.push(["Descripción:", item.descripcion || 'N/A']);
+                currentRow++;
+                dataForSheet.push(["Marca:", item.brand || 'N/A']);
+                currentRow++;
+                dataForSheet.push(["UPC:", item.upc || 'N/A']);
+                currentRow++;
+                dataForSheet.push(["URL Imagen:", item.url || 'N/A']);
+                currentRow++;
+
+                if (uploadedItemData && (uploadedItemData.isSuitableForGroupedReport || (uploadedItemData.contenedora && uploadedItemData.contenedora !== 'N/A_TEXTAREA' && uploadedItemData.contenedora !== 'N/A_SCAN'))) {
+                    dataForSheet.push(["Contenedora (Info. Carga):", uploadedItemData.contenedora || 'N/A']);
+                    currentRow++;
+                    dataForSheet.push(["Cantidad (Info. Carga):", (typeof uploadedItemData.cantidad === 'number') ? uploadedItemData.cantidad : 'N/A']);
+                    currentRow++;
+                }
+
+                dataForSheet.push(["Revisado:", "☐ " + "_".repeat(40) + " (Firma/Obs)"]);
+                currentRow++;
+                dataForSheet.push(["Diferencias Encontradas:", "_".repeat(50)]);
+                currentRow++;
+                dataForSheet.push(["Notas Adicionales:", "_".repeat(50)]);
+                currentRow++;
+                dataForSheet.push([]); 
+                currentRow++;
             });
-            if (oldDataForSheet.length <= 3 && coincidencias.size === 0) { 
-                 alert("No hay ítems concordantes para el reporte estándar.");
-            } else {
-                const ws_std = XLSX.utils.aoa_to_sheet(oldDataForSheet);
-                ws_std['!cols'] = [ { wch: 25 }, { wch: 60 } ];
-                ws_std['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }];
-                 if(ws_std['A1']) { ws_std['A1'].s = { font: { bold: true, sz: 16 }, alignment: { horizontal: "center" } }; }
-                const wb_std = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb_std, ws_std, "Control TMR Estándar");
-                XLSX.writeFile(wb_std, `Control_TMR_Estandar_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+            if (dataForSheet.length <= 4 && coincidencias.size > 0) { // Should not happen if coincidencias.size > 0
+                 alert("Error preparando datos para XLSX. Se encontraron coincidencias pero no se generaron filas.");
+            } else if (coincidencias.size === 0) { // Redundant check, but safe
+                 alert("No hay Ítems concordantes para exportar.");
             }
+
+
+            const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
+            ws['!cols'] = [ { wch: 30 }, { wch: 70 } ]; 
+            ws['!merges'] = merges;
+
+            const titleStyle = { font: { bold: true, sz: 16, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
+            const subtitleStyle = { font: { bold: true, sz: 14, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
+            const dateStyle = { font: { sz: 10, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
+            const itemHeaderStyle = { font: { bold: true, sz: 12, color: { rgb: "1F497D" }, name: "Arial" }, fill: { fgColor: { rgb: "DCE6F1" } }, alignment: { vertical: "center"} };
+            const fieldLabelStyle = { font: { bold: true, name: "Arial" } };
+            const naStyle = { font: { italic: true, color: { rgb: "808080" }, name: "Arial" } };
+            const defaultStyle = { font: { name: "Arial", sz: 10 }};
+
+
+            for (let r_idx = 0; r_idx < dataForSheet.length; ++r_idx) {
+                for (let c_idx = 0; c_idx < (dataForSheet[r_idx] ? dataForSheet[r_idx].length : 0) ; ++c_idx) {
+                    const cellAddress = XLSX.utils.encode_cell({r:r_idx, c:c_idx});
+                    if (!ws[cellAddress]) ws[cellAddress] = { t:'s', v: dataForSheet[r_idx][c_idx] }; // Ensure cell object exists
+                    
+                    if (r_idx === 0 && c_idx === 0) ws[cellAddress].s = titleStyle; // Main Title
+                    else if (r_idx === 1 && c_idx === 0) ws[cellAddress].s = subtitleStyle; // Subtitle
+                    else if (r_idx === 2 && c_idx === 0) ws[cellAddress].s = dateStyle; // Date
+                    else if (dataForSheet[r_idx][c_idx] && typeof dataForSheet[r_idx][c_idx] === 'string' && dataForSheet[r_idx][c_idx].startsWith("Ficha de Ítem:")) {
+                         ws[cellAddress].s = itemHeaderStyle;
+                    } else if (c_idx === 0 && dataForSheet[r_idx].length > 1 && dataForSheet[r_idx][0] !== "") { // Label column
+                         ws[cellAddress].s = fieldLabelStyle;
+                    } else if (dataForSheet[r_idx][c_idx] === 'N/A') {
+                         ws[cellAddress].s = naStyle;
+                    } else {
+                        if (!ws[cellAddress].s) ws[cellAddress].s = defaultStyle; // Apply default to other cells
+                        else ws[cellAddress].s = {...defaultStyle, ...ws[cellAddress].s };
+                    }
+                }
+            }
+            
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Informe Ítems Verificados");
+            XLSX.writeFile(wb, `Informe_Verificacion_Items_SDCI_${new Date().toISOString().slice(0,10)}.xlsx`);
+
         } catch (error) {
-            console.error("Error generando XLSX estándar:", error);
-            alert("Error al generar archivo XLSX estándar: " + error.message);
+            console.error("Error generando XLSX:", error);
+            alert("Error al generar archivo XLSX: " + error.message);
         } finally {
             btn.textContent = originalText;
             btn.disabled = false;
         }
-    }
-    
-    function createPdfField(label, value) {
-        return `<div class="pdf-item-field">
-                    <span class="pdf-item-label">${label}:</span>
-                    <span class="pdf-item-value">${value ?? 'N/A'}</span>
-                </div>`;
-    }
-
-    function generatePdfReport() {
-        if (coincidencias.size === 0) { alert("No hay Ítems para generar el PDF."); return; }
-        
-        const btn = DOM.buttons.downloadPdf;
-        const originalText = btn.textContent;
-        btn.textContent = 'Generando PDF...';
-        btn.disabled = true;
-
-        const pdfExportContainer = document.createElement('div');
-        pdfExportContainer.className = 'pdf-export-container';
-        pdfExportContainer.style.position = 'absolute';
-        pdfExportContainer.style.left = '-9999px';
-        pdfExportContainer.style.width = '180mm'; 
-
-        const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
-        let contentHTML = `
-            <h1 class="main-document-title">${document.querySelector('.container > h1').innerText}</h1>
-            <h2 class="report-title">Reporte de Verificación de Ítems</h2>
-            <p class="report-date">Fecha de Generación: ${currentDateFormatted}</p>`;
-        
-        coincidencias.forEach(item => {
-            const svgBarcode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            try {
-                JsBarcode(svgBarcode, item.codigo, { format: "CODE128", width: 1.5, height: 60, displayValue: true, fontSize: 12, margin: 5 });
-            } catch (e) { console.error("Error JsBarcode para PDF:", e); }
-
-            contentHTML += `
-                <div class="pdf-item-ficha">
-                    ${createPdfField('ID Ítem', item.codigo)}
-                    ${createPdfField('Descripción', item.descripcion)}
-                    ${createPdfField('Marca', item.brand)}
-                    <div class="pdf-item-barcode-container">${svgBarcode.outerHTML}</div>
-                    <div class="pdf-item-field revisado-field">
-                        <span class="pdf-item-label">Revisado:</span><span class="pdf-item-value">☐ ${" ".repeat(40)} (Firma/Obs)</span>
-                    </div>
-                    <div class="pdf-item-field diferencias-field">
-                        <span class="pdf-item-label">Diferencias:</span><span class="pdf-item-value">${" ".repeat(55)}</span>
-                    </div>
-                     <div class="pdf-item-field diferencias-field-extra">
-                        <span class="pdf-item-label">&nbsp;</span><span class="pdf-item-value">${" ".repeat(55)}</span>
-                    </div>
-                </div>`;
-        });
-        
-        pdfExportContainer.innerHTML = contentHTML;
-        document.body.appendChild(pdfExportContainer);
-
-        const opt = {
-            margin: [20, 18, 20, 18],
-            filename: `Reporte_Control_TMR_Detallado_${new Date().toISOString().slice(0,10)}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, logging: false, useCORS: true },
-            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' },
-            pagebreak: { mode: ['css', 'avoid-all'], avoid: '.pdf-item-ficha' }
-        };
-
-        html2pdf().from(pdfExportContainer).set(opt).save().catch(err => {
-            console.error("Error al generar PDF:", err);
-            alert("Error al generar PDF: " + err.message);
-        }).finally(() => {
-            btn.textContent = originalText;
-            btn.disabled = false;
-            if (document.body.contains(pdfExportContainer)) {
-                document.body.removeChild(pdfExportContainer);
-            }
-        });
     }
 
     function handleNewVerification() {
@@ -1559,7 +1370,9 @@
         DOM.displays.outputResults.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>';
         DOM.stats.totalVerify.textContent = '0';
         DOM.stats.totalMatches.textContent = '0';
-        if(scannerVerifierActive) toggleScanner(); 
+        if(scannerVerifierActive && html5QrCodeVerifier?.isScanning) {
+            toggleScanner(); // Stop scanner if active
+        }
         navigateToView('panelInicio');
     }
 
