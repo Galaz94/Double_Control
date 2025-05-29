@@ -1081,10 +1081,10 @@
         if (item) {
             DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
             DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
-            DOM.modal.upc.textContent = item.upc || 'No disponible'; // Aunque no se muestre en XLSX, el modal sí lo usa
+            DOM.modal.upc.textContent = item.upc || 'No disponible'; 
             DOM.modal.brand.textContent = item.brand || 'No disponible';
             
-            const imageUrl = item.url?.trim(); // Aunque no se muestre en XLSX, el modal sí lo usa
+            const imageUrl = item.url?.trim(); 
             if (imageUrl) {
                 DOM.modal.image.src = imageUrl;
                 DOM.modal.image.alt = "Imagen de " + (item.descripcion || item.codigo || 'ítem');
@@ -1138,6 +1138,8 @@
 
     function downloadCsvResults(){
         if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;}
+        // Incluir también los ítems no concordantes con cantidad >= 100 en el CSV si se desea.
+        // Por ahora, mantiene el comportamiento original de solo concordancias.
         let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; 
         coincidencias.forEach(item=>{ 
             const esc = (v) => `"${(v??'').replace(/"/g,'""')}"`;
@@ -1151,8 +1153,10 @@
     }
 
     async function downloadXlsxResults() {
-        if (coincidencias.size === 0) {
-            alert("No hay Ítems concordantes para exportar a XLSX.");
+        // Verifica si hay ítems concordantes O ítems con cantidad >= 100 en datosVerificacionCargados
+        const hasHighQuantityItems = datosVerificacionCargados.some(item => item.cantidad >= 100 && !coincidencias.has(item.idItem));
+        if (coincidencias.size === 0 && !hasHighQuantityItems) {
+            alert("No hay Ítems concordantes ni ítems con cantidad >= 100 (no en maestra) para exportar a XLSX.");
             return;
         }
 
@@ -1165,11 +1169,11 @@
             const groupedForXLSX = new Map();
             const itemsHandledBySpecificContainer = new Set(); 
 
+            // Step 1: Process concordant items from `datosVerificacionCargados`
             datosVerificacionCargados.forEach(uploadedItem => {
                 if (coincidencias.has(uploadedItem.idItem)) {
                     const masterDetails = coincidencias.get(uploadedItem.idItem);
                     let contenedoraKey;
-
                     if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora && 
                         uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
                         contenedoraKey = uploadedItem.contenedora.trim();
@@ -1177,44 +1181,81 @@
                     } else {
                         contenedoraKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
                     }
-
                     if (!groupedForXLSX.has(contenedoraKey)) {
                         groupedForXLSX.set(contenedoraKey, []);
                     }
-                    
                     groupedForXLSX.get(contenedoraKey).push({
                         ...masterDetails,
                         cantidadCargada: (typeof uploadedItem.cantidad === 'number') ? uploadedItem.cantidad : 'N/A',
-                        _originalUploadedItemContext: { 
-                            contenedora: uploadedItem.contenedora, 
-                            cantidad: uploadedItem.cantidad 
-                        } 
+                        status: "Concordante",
+                        _originalUploadedItemContext: { contenedora: uploadedItem.contenedora, cantidad: uploadedItem.cantidad } 
                     });
                 }
             });
             
+            // Step 2: Add concordant items not originating from a file with specific container info
             coincidencias.forEach((masterItem, itemCodigo) => {
                 if (!itemsHandledBySpecificContainer.has(itemCodigo)) {
                     const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
                     if (!groupedForXLSX.has(defaultGroupKey)) {
                         groupedForXLSX.set(defaultGroupKey, []);
                     }
-                    if (!groupedForXLSX.get(defaultGroupKey).some(item => item.codigo === itemCodigo)) {
+                    if (!groupedForXLSX.get(defaultGroupKey).some(item => item.codigo === itemCodigo && item.status === "Concordante")) {
                         groupedForXLSX.get(defaultGroupKey).push({
                             ...masterItem,
-                            cantidadCargada: 'N/A'
+                            cantidadCargada: 'N/A',
+                            status: "Concordante"
                         });
                     }
                 }
             });
 
+            // Step 3: Add items from `datosVerificacionCargados` with cantidad >= 100 that are NOT concordances
+            datosVerificacionCargados.forEach(uploadedItem => {
+                if (uploadedItem.cantidad >= 100 && !coincidencias.has(uploadedItem.idItem)) {
+                    let contenedoraKey = (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora &&
+                                      uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_'))
+                                     ? uploadedItem.contenedora.trim()
+                                     : "Ítems Adicionales por Cantidad (Cont. Diversas)";
+
+                    if (!groupedForXLSX.has(contenedoraKey)) {
+                        groupedForXLSX.set(contenedoraKey, []);
+                    }
+                    
+                    const descFromUpload = uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.descripción || uploadedItem.allRowData?.description || "N/A (No en Maestra)";
+                    const brandFromUpload = uploadedItem.allRowData?.marca || uploadedItem.allRowData?.brand || "N/A (No en Maestra)";
+
+                    // Ensure this specific non-concordant high-quantity item isn't duplicated in its group
+                    const itemExistsCheckKey = `${uploadedItem.idItem}-${uploadedItem.cantidad}-${uploadedItem.contenedora}`;
+                    let alreadyExists = false;
+                    if(groupedForXLSX.get(contenedoraKey).find(it => `${it.codigo}-${it.cantidadCargada}-${it._originalUploadedItemContext?.contenedora}` === itemExistsCheckKey && it.status === "No en Maestra (Cant. >= 100)")) {
+                        alreadyExists = true;
+                    }
+
+                    if (!alreadyExists) {
+                        groupedForXLSX.get(contenedoraKey).push({
+                            codigo: uploadedItem.idItem,
+                            descripcion: descFromUpload,
+                            marca: brandFromUpload,
+                            upc: "N/A", 
+                            url: "N/A", 
+                            cantidadCargada: uploadedItem.cantidad,
+                            status: "No en Maestra (Cant. >= 100)",
+                            _originalUploadedItemContext: { contenedora: uploadedItem.contenedora, cantidad: uploadedItem.cantidad }
+                        });
+                    }
+                }
+            });
+
+
+            // XLSX SHEET GENERATION
             const dataForSheet = [];
             const mainTitleQuery = document.querySelector('.container > h1');
             const reportTitle = mainTitleQuery ? mainTitleQuery.innerText : "Sistema de Doble Control de Ítems";
             const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
 
             dataForSheet.push([reportTitle]); 
-            dataForSheet.push(["Informe de Verificación: Ítems Concordantes por Contenedora"]); 
+            dataForSheet.push(["Informe de Verificación: Ítems por Contenedora"]); 
             dataForSheet.push([`Fecha de Generación: ${currentDateFormatted}`]); 
             dataForSheet.push([]); 
 
@@ -1226,9 +1267,15 @@
             let currentRow = 4; 
 
             const sortedContenedoraKeys = Array.from(groupedForXLSX.keys()).sort((a, b) => {
-                const defaultKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-                if (a === defaultKey && b !== defaultKey) return 1;
-                if (a !== defaultKey && b === defaultKey) return -1;
+                const defaultKey1 = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
+                const defaultKey2 = "Ítems Adicionales por Cantidad (Cont. Diversas)";
+                const aIsDefault = (a === defaultKey1 || a === defaultKey2);
+                const bIsDefault = (b === defaultKey1 || b === defaultKey2);
+
+                if (aIsDefault && !bIsDefault) return 1;
+                if (!aIsDefault && bIsDefault) return -1;
+                if (a === defaultKey2 && b === defaultKey1) return 1; // Adicionales después de Concordantes Otros
+                if (a === defaultKey1 && b === defaultKey2) return -1;
                 return a.localeCompare(b);
             });
 
@@ -1239,8 +1286,7 @@
                 const uniqueItemsForXLSXInGroup = [];
                 const seenInThisGroup = new Set();
                 itemsInContenedora.forEach(item => {
-                    // Uniqueness key considers item code and its specific quantity in this context
-                    const itemKey = `${item.codigo}-${item.cantidadCargada}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`; 
+                    const itemKey = `${item.codigo}-${item.cantidadCargada}-${item.status || 'concordante'}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`; 
                     if (!seenInThisGroup.has(itemKey)) {
                         uniqueItemsForXLSXInGroup.push(item);
                         seenInThisGroup.add(itemKey);
@@ -1252,10 +1298,13 @@
                 currentRow++;
 
                 uniqueItemsForXLSXInGroup.forEach(item => {
-                    dataForSheet.push(["ID Ítem:", item.codigo || 'N/A']); currentRow++;
+                    let displayId = item.codigo || 'N/A';
+                    if (item.status === "No en Maestra (Cant. >= 100)") {
+                        displayId += " (No en Maestra)";
+                    }
+                    dataForSheet.push(["ID Ítem:", displayId]); currentRow++;
                     dataForSheet.push(["Descripción:", item.descripcion || 'N/A']); currentRow++;
                     dataForSheet.push(["Marca:", item.brand || 'N/A']); currentRow++;
-                    // UPC y URL Imagen removidas
                     dataForSheet.push(["Cantidad (Info. Carga):", item.cantidadCargada !== undefined ? item.cantidadCargada : 'N/A']); currentRow++;
                     dataForSheet.push(["Revisado:", "☐ " + "_".repeat(40) + " (Firma/Obs)"]); currentRow++;
                     dataForSheet.push(["Diferencias Encontradas:", "_".repeat(50)]); currentRow++;
@@ -1270,7 +1319,7 @@
             }
 
             const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-            ws['!cols'] = [ { wch: 30 }, { wch: 70 } ]; 
+            ws['!cols'] = [ { wch: 35 }, { wch: 65 } ]; 
             ws['!merges'] = merges;
 
             const titleStyle = { font: { bold: true, sz: 16, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
@@ -1280,7 +1329,8 @@
             const fieldLabelStyle = { font: { bold: true, name: "Arial", sz:10 } };
             const naStyle = { font: { italic: true, color: { rgb: "808080" }, name: "Arial", sz:10 } };
             const defaultCellStyle = { font: { name: "Arial", sz: 10 }};
-            const cantidadValueStyle = { font: { bold: true, sz: 12, name: "Arial" } }; // Estilo para cantidad grande
+            const cantidadValueStyle = { font: { bold: true, sz: 12, name: "Arial" } }; 
+            const notInMasterTextStyle = { font: { color: { rgb: "FF0000" } } }; // Para el texto "(No en Maestra)"
 
             for (let r_idx = 0; r_idx < dataForSheet.length; ++r_idx) {
                 for (let c_idx = 0; c_idx < (dataForSheet[r_idx] ? dataForSheet[r_idx].length : 0) ; ++c_idx) {
@@ -1289,26 +1339,37 @@
                     else if (ws[cellAddress].v === null || ws[cellAddress].v === undefined ) ws[cellAddress].v = ""; 
 
                     let appliedStyle = null;
-                    const currentCellValue = String(ws[cellAddress].v).trim();
-                    const currentLabel = dataForSheet[r_idx][0] ? String(dataForSheet[r_idx][0]).trim() : "";
+                    const cellValueString = String(ws[cellAddress].v).trim();
+                    const labelString = dataForSheet[r_idx][0] ? String(dataForSheet[r_idx][0]).trim() : "";
 
                     if (r_idx === 0 && c_idx === 0) appliedStyle = titleStyle;
                     else if (r_idx === 1 && c_idx === 0) appliedStyle = subtitleStyle;
                     else if (r_idx === 2 && c_idx === 0) appliedStyle = dateStyle;
-                    else if (currentLabel.startsWith("Contenedora:")) {
+                    else if (labelString.startsWith("Contenedora:")) {
                          appliedStyle = containerHeaderStyle;
-                    } else if (c_idx === 1 && currentLabel === "Cantidad (Info. Carga):") { // Es el valor de la cantidad
-                        if (currentCellValue !== 'N/A' && currentCellValue !== '') {
+                    } else if (c_idx === 1 && labelString === "Cantidad (Info. Carga):") { 
+                        if (cellValueString !== 'N/A' && cellValueString !== '') {
                              appliedStyle = cantidadValueStyle;
                         } else {
-                             appliedStyle = naStyle; // Cantidad es N/A
+                             appliedStyle = naStyle; 
                         }
-                    } else if (c_idx === 0 && currentLabel !== "") { // Es una etiqueta de campo
+                    } else if (c_idx === 0 && labelString !== "") { 
                          appliedStyle = fieldLabelStyle;
-                    } else if (currentCellValue === 'N/A') { // Otros valores N/A
+                    } else if (cellValueString === 'N/A') { 
                          appliedStyle = naStyle;
                     } else {
                          appliedStyle = defaultCellStyle; 
+                    }
+                    
+                    // Apply "No en Maestra" text style if applicable, potentially merging
+                    if (typeof cellValueString === 'string' && cellValueString.includes("(No en Maestra)")) {
+                        if (appliedStyle && appliedStyle.font) {
+                            appliedStyle.font = { ...appliedStyle.font, ...notInMasterTextStyle.font };
+                        } else if (appliedStyle) {
+                             appliedStyle.font = { ...notInMasterTextStyle.font };
+                        } else {
+                            appliedStyle = { font : {...notInMasterTextStyle.font }};
+                        }
                     }
                     ws[cellAddress].s = appliedStyle;
                 }
