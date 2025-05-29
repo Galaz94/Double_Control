@@ -184,7 +184,7 @@
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .no-print-pdf { /* Clase genérica para ocultar en impresión (si se usa) */
+      .no-print-pdf { 
         display: none !important;
       }
     }
@@ -623,7 +623,7 @@
                 DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
                 if (JSON.stringify(Array.from(listaFoco.values())) !== JSON.stringify(Array.from(maestraDesdeRepositorio.values()))) {
-                    listaFoco = new Map(maestraDesdeRepositorio); // Ensure listaFoco has the latest, even if structure is same
+                    listaFoco = new Map(maestraDesdeRepositorio); 
                     saveListaFocoToStorage(false); 
                 }
             } else {
@@ -774,7 +774,6 @@
                     const trimmedIdItem = cleanCode(itemObj.idItem); 
                     if (trimmedIdItem && /^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
                         listaVerificar.add(trimmedIdItem); 
-                        // Add to datosVerificacionCargados, allowing multiple entries for same ID if context (e.g. contenedora) differs
                         datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); 
                     } else {
                         console.warn("ID inválido o no encontrado:", itemObj.idItem, "Skipping.");
@@ -999,11 +998,9 @@
                 if (!groupedForDisplay.has(contenedoraKey)) {
                     groupedForDisplay.set(contenedoraKey, []);
                 }
-                // Add item with its specific context from this upload
                 groupedForDisplay.get(contenedoraKey).push({
                     ...masterDetails, 
                     cantidadOriginal: uploadedItem.cantidad, 
-                    // Flag to indicate if this item display instance comes from a specific container context
                     isFromSpecificContainerContext: (contenedoraKey !== "Ítems Concordantes (Otros/Sin Contenedora Específica)") 
                 });
             }
@@ -1049,7 +1046,6 @@
 
         sortedContenedoraKeys.forEach(contenedora => {
             const itemsArray = groupedForDisplay.get(contenedora);
-            // Filter out duplicates within the same group for display (e.g. if item was in N/A_SCAN and N/A_TEXTAREA)
             const uniqueItemsInGroup = itemsArray.filter((item, index, self) => 
                 index === self.findIndex((t) => t.codigo === item.codigo && t.cantidadOriginal === item.cantidadOriginal)
             );
@@ -1085,10 +1081,10 @@
         if (item) {
             DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
             DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
-            DOM.modal.upc.textContent = item.upc || 'No disponible';
+            DOM.modal.upc.textContent = item.upc || 'No disponible'; // Aunque no se muestre en XLSX, el modal sí lo usa
             DOM.modal.brand.textContent = item.brand || 'No disponible';
             
-            const imageUrl = item.url?.trim();
+            const imageUrl = item.url?.trim(); // Aunque no se muestre en XLSX, el modal sí lo usa
             if (imageUrl) {
                 DOM.modal.image.src = imageUrl;
                 DOM.modal.image.alt = "Imagen de " + (item.descripcion || item.codigo || 'ítem');
@@ -1167,19 +1163,17 @@
 
         try {
             const groupedForXLSX = new Map();
-            const itemsHandledBySpecificContainer = new Set(); // Tracks item IDs that have been put into a non-default container
+            const itemsHandledBySpecificContainer = new Set(); 
 
-            // Step 1: Process items from `datosVerificacionCargados`
             datosVerificacionCargados.forEach(uploadedItem => {
                 if (coincidencias.has(uploadedItem.idItem)) {
                     const masterDetails = coincidencias.get(uploadedItem.idItem);
                     let contenedoraKey;
 
-                    // Determine if this item belongs to a specific, named container
                     if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora && 
                         uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
                         contenedoraKey = uploadedItem.contenedora.trim();
-                        itemsHandledBySpecificContainer.add(uploadedItem.idItem); // Mark this item ID as handled by a specific container
+                        itemsHandledBySpecificContainer.add(uploadedItem.idItem); 
                     } else {
                         contenedoraKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
                     }
@@ -1188,11 +1182,9 @@
                         groupedForXLSX.set(contenedoraKey, []);
                     }
                     
-                    // Add item data. An item can appear multiple times if it's in different containers in source data.
                     groupedForXLSX.get(contenedoraKey).push({
                         ...masterDetails,
                         cantidadCargada: (typeof uploadedItem.cantidad === 'number') ? uploadedItem.cantidad : 'N/A',
-                        // Store original context for potential disambiguation if an item appears in the same default group from multiple N/A_ sources
                         _originalUploadedItemContext: { 
                             contenedora: uploadedItem.contenedora, 
                             cantidad: uploadedItem.cantidad 
@@ -1201,14 +1193,12 @@
                 }
             });
             
-            // Step 2: Add items from `coincidencias` that were not handled by a specific container
             coincidencias.forEach((masterItem, itemCodigo) => {
                 if (!itemsHandledBySpecificContainer.has(itemCodigo)) {
                     const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
                     if (!groupedForXLSX.has(defaultGroupKey)) {
                         groupedForXLSX.set(defaultGroupKey, []);
                     }
-                    // Avoid adding the same item code multiple times to the default group
                     if (!groupedForXLSX.get(defaultGroupKey).some(item => item.codigo === itemCodigo)) {
                         groupedForXLSX.get(defaultGroupKey).push({
                             ...masterItem,
@@ -1218,7 +1208,6 @@
                 }
             });
 
-            // XLSX SHEET GENERATION
             const dataForSheet = [];
             const mainTitleQuery = document.querySelector('.container > h1');
             const reportTitle = mainTitleQuery ? mainTitleQuery.innerText : "Sistema de Doble Control de Ítems";
@@ -1247,20 +1236,16 @@
                 const itemsInContenedora = groupedForXLSX.get(contenedora);
                 if (!itemsInContenedora || itemsInContenedora.length === 0) return;
 
-                // Filter for unique items within this specific container group for XLSX output
-                // (e.g. if item A was from N/A_SCAN and N/A_TEXTAREA, both in default group, show once)
-                // For specific containers, an item might be listed if it truly appears multiple times in `datosVerificacionCargados` for that container.
-                // For simplicity here, we'll make them unique by ID *within each listed container section in XLSX*.
                 const uniqueItemsForXLSXInGroup = [];
                 const seenInThisGroup = new Set();
                 itemsInContenedora.forEach(item => {
-                    const itemKey = `${item.codigo}-${item.cantidadCargada}`; // Uniqueness key
+                    // Uniqueness key considers item code and its specific quantity in this context
+                    const itemKey = `${item.codigo}-${item.cantidadCargada}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`; 
                     if (!seenInThisGroup.has(itemKey)) {
                         uniqueItemsForXLSXInGroup.push(item);
                         seenInThisGroup.add(itemKey);
                     }
                 });
-
 
                 dataForSheet.push([`Contenedora: ${contenedora} (${uniqueItemsForXLSXInGroup.length} ítem(s))`]);
                 merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 1 } });
@@ -1270,8 +1255,7 @@
                     dataForSheet.push(["ID Ítem:", item.codigo || 'N/A']); currentRow++;
                     dataForSheet.push(["Descripción:", item.descripcion || 'N/A']); currentRow++;
                     dataForSheet.push(["Marca:", item.brand || 'N/A']); currentRow++;
-                    dataForSheet.push(["UPC:", item.upc || 'N/A']); currentRow++;
-                    dataForSheet.push(["URL Imagen:", item.url || 'N/A']); currentRow++;
+                    // UPC y URL Imagen removidas
                     dataForSheet.push(["Cantidad (Info. Carga):", item.cantidadCargada !== undefined ? item.cantidadCargada : 'N/A']); currentRow++;
                     dataForSheet.push(["Revisado:", "☐ " + "_".repeat(40) + " (Firma/Obs)"]); currentRow++;
                     dataForSheet.push(["Diferencias Encontradas:", "_".repeat(50)]); currentRow++;
@@ -1296,22 +1280,32 @@
             const fieldLabelStyle = { font: { bold: true, name: "Arial", sz:10 } };
             const naStyle = { font: { italic: true, color: { rgb: "808080" }, name: "Arial", sz:10 } };
             const defaultCellStyle = { font: { name: "Arial", sz: 10 }};
+            const cantidadValueStyle = { font: { bold: true, sz: 12, name: "Arial" } }; // Estilo para cantidad grande
 
             for (let r_idx = 0; r_idx < dataForSheet.length; ++r_idx) {
                 for (let c_idx = 0; c_idx < (dataForSheet[r_idx] ? dataForSheet[r_idx].length : 0) ; ++c_idx) {
                     const cellAddress = XLSX.utils.encode_cell({r:r_idx, c:c_idx});
-                    if (!ws[cellAddress]) ws[cellAddress] = { t:'s', v: dataForSheet[r_idx][c_idx] || "" }; // Ensure cell object exists
-                    else if (ws[cellAddress].v === null || ws[cellAddress].v === undefined ) ws[cellAddress].v = ""; // Ensure value is at least empty string
+                    if (!ws[cellAddress]) ws[cellAddress] = { t:'s', v: dataForSheet[r_idx][c_idx] || "" }; 
+                    else if (ws[cellAddress].v === null || ws[cellAddress].v === undefined ) ws[cellAddress].v = ""; 
 
                     let appliedStyle = null;
+                    const currentCellValue = String(ws[cellAddress].v).trim();
+                    const currentLabel = dataForSheet[r_idx][0] ? String(dataForSheet[r_idx][0]).trim() : "";
+
                     if (r_idx === 0 && c_idx === 0) appliedStyle = titleStyle;
                     else if (r_idx === 1 && c_idx === 0) appliedStyle = subtitleStyle;
                     else if (r_idx === 2 && c_idx === 0) appliedStyle = dateStyle;
-                    else if (dataForSheet[r_idx][c_idx] && typeof dataForSheet[r_idx][c_idx] === 'string' && dataForSheet[r_idx][c_idx].startsWith("Contenedora:")) {
+                    else if (currentLabel.startsWith("Contenedora:")) {
                          appliedStyle = containerHeaderStyle;
-                    } else if (c_idx === 0 && dataForSheet[r_idx].length > 1 && dataForSheet[r_idx][0] !== "") { 
+                    } else if (c_idx === 1 && currentLabel === "Cantidad (Info. Carga):") { // Es el valor de la cantidad
+                        if (currentCellValue !== 'N/A' && currentCellValue !== '') {
+                             appliedStyle = cantidadValueStyle;
+                        } else {
+                             appliedStyle = naStyle; // Cantidad es N/A
+                        }
+                    } else if (c_idx === 0 && currentLabel !== "") { // Es una etiqueta de campo
                          appliedStyle = fieldLabelStyle;
-                    } else if (String(dataForSheet[r_idx][c_idx]) === 'N/A') { 
+                    } else if (currentCellValue === 'N/A') { // Otros valores N/A
                          appliedStyle = naStyle;
                     } else {
                          appliedStyle = defaultCellStyle; 
