@@ -88,6 +88,8 @@
       margin-top: 5px;
     }
     button:hover { background-color: #2980b9; }
+    button.primary { background-color: #3498db; } /* Explicitly define primary */
+    button.primary:hover { background-color: #2980b9; }
     button.secondary { background-color: #95a5a6; }
     button.secondary:hover { background-color: #7f8c8d; }
     button.danger { background-color: #e74c3c; }
@@ -147,27 +149,57 @@
     .barcode-item-desc { text-align: center; margin-bottom: 6px; font-size: 0.9em; color: #555; font-style: italic; }
     .barcode-item-svg svg { max-width: 100%; height: auto; display: block; margin: 0 auto;}
 
-    #itemDetailModal {
+    /* Generic Modal Styles (like itemDetailModal) */
+    .modal-overlay {
       position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
       overflow: auto; background-color: rgba(0,0,0,0.5); display: none;
       align-items: center; justify-content: center;
     }
-    #itemDetailModal .modal-content {
+    .modal-content-inner { /* Renamed from modal-content to avoid conflict if styles are too generic */
       background-color: #fefefe; margin: auto; padding: 25px; border: 1px solid #888;
-      width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      text-align: center;
-      position: relative;
+      width: 90%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-align: center; position: relative;
     }
-    #itemDetailModal .modal-content h3 { margin-top: 0; color: #3498db; }
-    #itemDetailModal .modal-content p { margin: 8px 0; font-size: 1.1em; text-align: left;}
-    #itemDetailModal .modal-content strong { color: #555;}
+    .close-modal-btn { /* Generic close button style */
+      color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;
+      position: absolute; top: 10px; right: 20px;
+    }
+    .close-modal-btn:hover, .close-modal-btn:focus { color: black; text-decoration: none; }
+
+    /* Item Detail Modal Specifics */
+    #itemDetailModal .modal-content-inner { max-width: 600px; }
+    #itemDetailModal .modal-content-inner h3 { margin-top: 0; color: #3498db; }
+    #itemDetailModal .modal-content-inner p { margin: 8px 0; font-size: 1.1em; text-align: left;}
+    #itemDetailModal .modal-content-inner strong { color: #555;}
     #itemDetailModal #modalItemImageContainer { margin-top: 15px; margin-bottom: 15px; min-height: 50px; }
     #itemDetailModal #modalItemImage { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain; }
-    #itemDetailModal .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; top: 10px; right: 20px; }
-    #itemDetailModal .close-modal:hover, #itemDetailModal .close-modal:focus { color: black; text-decoration: none; }
+    
+    /* Scanner Modal Styles */
+    #scannerModal .modal-content-inner { /* Use the generic inner class */
+        max-width: 480px; /* Specific width for scanner modal */
+    }
+    #scannerFeedbackMessage {
+      margin-bottom: 10px; font-style: italic; color: #555;
+      word-break: break-all;
+    }
+    #scannerConfirmationButtons button {
+      margin: 8px 5px; padding: 10px 15px; font-size: 0.95em;
+    }
+    #readerVerifyWrapper { /* New wrapper for the reader div */
+        width: 100%; 
+        max-width: 400px; /* Max width of the camera view */
+        min-height: 200px; /* Min height for the reader */
+        margin: 15px auto; 
+        border: 1px solid #ccc; 
+        padding: 5px; 
+        border-radius: 4px;
+        background-color: #f0f0f0; /* Light background for the reader area */
+    }
+    #readerVerifyInModal { /* The div html5-qrcode targets */
+        width: 100%;
+        height: 100%; /* Make it fill the wrapper if needed, or let html5-qrcode manage */
+    }
 
-    #scannerContainerVerify { max-width: 400px; margin: 15px auto; border: 1px solid #ccc; padding: 5px; border-radius: 4px;}
-    #readerVerify { width: 100%; }
 
     footer {
       text-align: center;
@@ -178,7 +210,6 @@
       border-top: 1px solid #eee;
     }
 
-    /* Estilos para @media print */
     @media print {
       .barcode-item-container {
         page-break-inside: avoid !important;
@@ -278,7 +309,6 @@
       </div>
       <div class="input-group">
         <button id="startScanVerifyBtn">📷 Escanear UPC de Artículo</button>
-        <div id="scannerContainerVerify" class="hidden"><div id="readerVerify"></div></div>
         <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">IDs de Ítem válidos identificados (desde UPC escaneado o ingresado):</label>
         <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los IDs de Ítem válidos aparecerán aquí..." readonly></textarea>
       </div>
@@ -307,9 +337,9 @@
     </div>
   </div>
 
-  <div id="itemDetailModal" class="hidden">
-    <div class="modal-content">
-      <span class="close-modal" onclick="closeItemDetailModal()">&times;</span>
+  <div id="itemDetailModal" class="modal-overlay hidden">
+    <div class="modal-content-inner">
+      <span class="close-modal-btn" onclick="closeItemDetailModal()">&times;</span>
       <h3 id="modalItemCodigo"></h3>
       <div id="modalItemImageContainer">
         <img id="modalItemImage" src="#" alt="Imagen del Ítem" style="display:none;">
@@ -320,6 +350,24 @@
       <p><strong>Marca:</strong> <span id="modalItemBrand"></span></p>
     </div>
   </div>
+
+  <div id="scannerModal" class="modal-overlay hidden">
+    <div class="modal-content-inner"> <span id="closeScannerModalBtn" class="close-modal-btn">&times;</span>
+      <h3 style="margin-top:0; margin-bottom:15px; text-align:center;">Escanear Código de Barras</h3>
+      <div id="readerVerifyWrapper">
+        <div id="readerVerifyInModal"></div>
+      </div>
+      <div id="scannerFeedback" style="margin-top: 15px; min-height: 70px; text-align: center;">
+        <p id="scannerFeedbackMessage">Apunte la cámara al código de barras.</p>
+        <div id="scannerConfirmationButtons" class="hidden">
+          <button id="btnConfirmAddItem" class="primary">Añadir Ítem</button>
+          <button id="btnDiscardAndRescan" class="secondary">Descartar y Re-escanear</button>
+        </div>
+      </div>
+      <button id="fullStopScanBtn" class="danger" style="margin-top: 10px; width:100%; box-sizing: border-box;">🛑 Detener Escáner y Cerrar</button>
+    </div>
+  </div>
+
 
   <footer>
     Sistema de Doble Control de Ítems v2.8.9 - Desarrollado por fgalaz - Chile, 2025
@@ -341,8 +389,24 @@
     let coincidencias = new Map();
     const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.8.9';
     let listaFocoCacheadaLocalmente = new Map();
-    let html5QrCodeVerifier = null;
-    let scannerVerifierActive = false;
+    
+    // Scanner specific state
+    let currentHtml5QrCode = null; 
+    let isScanningPausedForConfirmation = false;
+    let lastScannedData = { rawUPC: null, derivedItemId: null, message: '' };
+    const SCANNER_ELEMENT_ID_MODAL = "readerVerifyInModal";
+    const html5QrCodeScannerConfig = { 
+        fps: 8, 
+        qrbox: (viewfinderWidth, viewfinderHeight) => {
+            let minEdgePercentage = 0.6;
+            let qrboxSizeWidth = Math.floor(viewfinderWidth * minEdgePercentage * 1.5); // Wider for barcodes
+            let qrboxSizeHeight = Math.floor(viewfinderHeight * minEdgePercentage * 0.7);
+            return { width: qrboxSizeWidth, height: qrboxSizeHeight };
+        },
+        supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+        aspectRatio: 1.7777778 // 16:9, common for phone cameras
+    };
+
 
     const $ = (id) => document.getElementById(id);
     const DOM = {
@@ -353,6 +417,7 @@
             resultadosStep: $('resultadosStep'),
             confirmacionCambiosStep: $('confirmacionCambiosStep'),
             itemDetailModal: $('itemDetailModal'),
+            scannerModal: $('scannerModal'),
         },
         buttons: {
             iniciarDobleControl: $('btnIniciarDobleControlDesdePanel'),
@@ -361,13 +426,18 @@
             volverDesdeGestion: $('btnVolverAlPanelDesdeGestion'),
             volverDesdeDobleControl: $('btnVolverAlPanelDesdeDobleControl'),
             compare: $('btnCompare'),
-            startScanVerify: $('startScanVerifyBtn'),
+            startScanVerify: $('startScanVerifyBtn'), // Button to open scanner modal
             layoutToggle: $('layoutToggleResultsBtn'),
             downloadXlsx: $('downloadXlsxResultsBtn'),
             downloadCsv: $('downloadCsvResultsBtn'),
             newVerification: $('btnNewVerification'),
             confirmarCambios: $('btnConfirmarCambiosRepositorio'),
             rechazarCambios: $('btnRechazarCambiosRepositorio'),
+            // Scanner modal buttons
+            closeScannerModalBtn: $('closeScannerModalBtn'),
+            btnConfirmAddItem: $('btnConfirmAddItem'),
+            btnDiscardAndRescan: $('btnDiscardAndRescan'),
+            fullStopScanBtn: $('fullStopScanBtn'),
         },
         inputs: {
             searchFoco: $('searchFocoInput'),
@@ -384,31 +454,23 @@
             focoSearchResults: $('focoSearchResults'),
             focoPreview: $('focoPreview'),
             verifyPreview: $('verifyPreview'),
-            scannerContainerVerify: $('scannerContainerVerify'),
-            readerVerify: $('readerVerify'),
+            // Scanner modal displays
+            readerVerifyInModal: $(SCANNER_ELEMENT_ID_MODAL), 
+            scannerFeedbackMessage: $('scannerFeedbackMessage'),
+            scannerConfirmationButtons: $('scannerConfirmationButtons'),
             outputResults: $('outputResults'),
         },
-        stats: {
-            totalItems: $('statTotalItems'),
-            noImageUrl: $('statNoImageUrl'),
-            noUpc: $('statNoUpc'),
-            noDescription: $('statNoDescription'),
-            noBrand: $('statNoBrand'),
-            totalFoco: $('totalFoco'),
-            totalVerify: $('totalVerify'),
-            totalMatches: $('totalMatches'),
+        stats: { // ... same as before ...
+            totalItems: $('statTotalItems'), noImageUrl: $('statNoImageUrl'), noUpc: $('statNoUpc'),
+            noDescription: $('statNoDescription'), noBrand: $('statNoBrand'),
+            totalFoco: $('totalFoco'), totalVerify: $('totalVerify'), totalMatches: $('totalMatches'),
         },
-        modal: {
-            image: $('modalItemImage'),
-            imageError: $('modalImageError'),
-            codigo: $('modalItemCodigo'),
-            descripcion: $('modalItemDescripcion'),
-            upc: $('modalItemUPC'),
-            brand: $('modalItemBrand'),
+        modal: { // ... same as before, for item detail ...
+            image: $('modalItemImage'), imageError: $('modalImageError'), codigo: $('modalItemCodigo'),
+            descripcion: $('modalItemDescripcion'), upc: $('modalItemUPC'), brand: $('modalItemBrand'),
         },
-        resumenCambios: {
-            nuevos: document.querySelector('#resumenNuevos ul'),
-            eliminados: document.querySelector('#resumenEliminados ul'),
+        resumenCambios: { // ... same as before ...
+            nuevos: document.querySelector('#resumenNuevos ul'), eliminados: document.querySelector('#resumenEliminados ul'),
             modificados: document.querySelector('#resumenModificados ul'),
         }
     };
@@ -423,41 +485,29 @@
         DOM.views.itemDetailModal.addEventListener('click', (event) => {
             if (event.target === DOM.views.itemDetailModal) closeItemDetailModal();
         });
+         DOM.views.scannerModal.addEventListener('click', (event) => { // Close modal on overlay click
+            if (event.target === DOM.views.scannerModal) forceStopScannerAndCloseModal();
+        });
 
-        DOM.modal.image.onerror = function() {
-            this.style.display = 'none';
-            DOM.modal.imageError.style.display = 'block';
-            DOM.modal.imageError.textContent = 'Error al cargar imagen o URL no válida.';
-        };
-        DOM.modal.image.onload = function() {
-            this.style.display = 'block';
-            DOM.modal.imageError.style.display = 'none';
-        };
+
+        DOM.modal.image.onerror = function() { /* ... same ... */ this.style.display='none'; DOM.modal.imageError.style.display='block'; DOM.modal.imageError.textContent='Error al cargar imagen.';};
+        DOM.modal.image.onload = function() { /* ... same ... */ this.style.display='block'; DOM.modal.imageError.style.display='none';};
 
         DOM.buttons.iniciarDobleControl.addEventListener('click', handleIniciarDobleControl);
         DOM.buttons.gestionMaestra.addEventListener('click', () => navigateToView('gestionMaestraStep'));
         DOM.buttons.borrarStorage.addEventListener('click', handleBorrarStorage);
 
-        DOM.inputs.searchFoco.addEventListener('input', () => {
-            const searchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
-            if (!searchTerm) {
-                DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar...</p>';
-                return;
-            }
-            const results = Array.from(listaFoco.values()).filter(item =>
-                item.codigo.toLowerCase().includes(searchTerm) ||
-                (item.upc && item.upc.toLowerCase().includes(searchTerm)) ||
-                (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) ||
-                (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
-                (item.url && item.url.toLowerCase().includes(searchTerm))
-            );
-            updateFocoPreviewAndSearch(results);
+        DOM.inputs.searchFoco.addEventListener('input', () => { /* ... same ... */
+            const searchTerm=DOM.inputs.searchFoco.value.toLowerCase().trim(); if(!searchTerm){DOM.displays.focoSearchResults.innerHTML='<p style="text-align:center;">Ingrese un término para buscar...</p>'; return;}
+            const results=Array.from(listaFoco.values()).filter(item=>item.codigo.toLowerCase().includes(searchTerm)||(item.upc&&item.upc.toLowerCase().includes(searchTerm))||(item.descripcion&&item.descripcion.toLowerCase().includes(searchTerm))||(item.brand&&item.brand.toLowerCase().includes(searchTerm))||(item.url&&item.url.toLowerCase().includes(searchTerm))); updateFocoPreviewAndSearch(results);
         });
         DOM.buttons.volverDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
         DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], 'textcsv'));
         DOM.inputs.verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], 'excel'));
-        DOM.buttons.startScanVerify.addEventListener('click', toggleScanner);
+        
+        DOM.buttons.startScanVerify.addEventListener('click', openScannerModal); // Changed from toggleScanner
+
         DOM.buttons.compare.addEventListener('click', handleCompare);
         DOM.buttons.volverDesdeDobleControl.addEventListener('click', () => navigateToView('panelInicio'));
 
@@ -466,694 +516,171 @@
         DOM.buttons.downloadXlsx.addEventListener('click', downloadXlsxResults);
         DOM.buttons.newVerification.addEventListener('click', handleNewVerification);
 
-        DOM.displays.outputResults.addEventListener('click', (event) => {
-            const itemContainer = event.target.closest('.barcode-item-container, .search-result-item');
-            if (itemContainer) {
-                const itemId = itemContainer.dataset.iditem;
-                if (itemId) openItemDetailModal(itemId);
-            }
-        });
-        DOM.displays.focoSearchResults.addEventListener('click', (event) => {
-            const itemContainer = event.target.closest('.search-result-item');
-            if(itemContainer) {
-                const itemId = itemContainer.dataset.iditem;
-                if(itemId) openItemDetailModal(itemId);
-            }
-        });
-        DOM.buttons.confirmarCambios.addEventListener('click', () => { 
-            const maestraRepositorioMap = JSON.parse(DOM.buttons.confirmarCambios.dataset.maestraRepositorio || '{}', (key, value) => {
-                if (typeof value === 'object' && value !== null && value.__isMap__) return new Map(value.data);
-                return value;
-            });
-            if (maestraRepositorioMap && maestraRepositorioMap.size > 0) {
-                listaFoco = maestraRepositorioMap;
-                rebuildUpcToCodigoMap();
-                saveListaFocoToStorage();
-                updateFocoPreviewAndSearch();
-                DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`;
-                DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
-            } else {
-                 DOM.displays.panelInicioInfo.innerHTML = `⚠️ Error al aplicar cambios. Se mantuvo la versión actual.`;
-                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
-            }
-            navigateToView('panelInicio');
-        });
-        DOM.buttons.rechazarCambios.addEventListener('click', () => { 
-            rebuildUpcToCodigoMap(); 
-            updateFocoPreviewAndSearch();
-            DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`;
-            DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
-            navigateToView('panelInicio');
-        });
+        DOM.displays.outputResults.addEventListener('click', (event) => { /* ... same ... */ const itemContainer=event.target.closest('.barcode-item-container, .search-result-item'); if(itemContainer){const itemId=itemContainer.dataset.iditem; if(itemId)openItemDetailModal(itemId);}});
+        DOM.displays.focoSearchResults.addEventListener('click', (event) => { /* ... same ... */ const itemContainer=event.target.closest('.search-result-item'); if(itemContainer){const itemId=itemContainer.dataset.iditem; if(itemId)openItemDetailModal(itemId);}});
+        
+        DOM.buttons.confirmarCambios.addEventListener('click', () => { /* ... same ... */ const maestraRepositorioMap=JSON.parse(DOM.buttons.confirmarCambios.dataset.maestraRepositorio||'{}',(key,value)=>{if(typeof value==='object'&&value!==null&&value.__isMap__)return new Map(value.data);return value;}); if(maestraRepositorioMap&&maestraRepositorioMap.size>0){listaFoco=maestraRepositorioMap;rebuildUpcToCodigoMap();saveListaFocoToStorage();updateFocoPreviewAndSearch(); DOM.displays.panelInicioInfo.innerHTML=`✅ Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`;DOM.displays.panelInicioInfo.className='panel-inicio-info';}else{DOM.displays.panelInicioInfo.innerHTML=`⚠️ Error al aplicar cambios. Se mantuvo la versión actual.`;DOM.displays.panelInicioInfo.className='panel-inicio-info warning';} navigateToView('panelInicio');});
+        DOM.buttons.rechazarCambios.addEventListener('click', () => { /* ... same ... */ rebuildUpcToCodigoMap();updateFocoPreviewAndSearch(); DOM.displays.panelInicioInfo.innerHTML=`ℹ️ Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`;DOM.displays.panelInicioInfo.className='panel-inicio-info info';navigateToView('panelInicio');});
+
+        // Scanner Modal Button Listeners
+        DOM.buttons.closeScannerModalBtn.addEventListener('click', forceStopScannerAndCloseModal);
+        DOM.buttons.fullStopScanBtn.addEventListener('click', forceStopScannerAndCloseModal);
+        DOM.buttons.btnConfirmAddItem.addEventListener('click', handleAddScannedItem);
+        DOM.buttons.btnDiscardAndRescan.addEventListener('click', handleDiscardAndRescan);
     }
 
+    // ----- Scanner Modal Logic -----
+    function openScannerModal() {
+        if (location.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(location.hostname)) {
+            alert('El escáner requiere un entorno seguro (HTTPS) o localhost.');
+            return;
+        }
+        DOM.views.scannerModal.style.display = 'flex';
+        DOM.displays.scannerFeedbackMessage.textContent = 'Iniciando cámara... Preparando para escanear.';
+        DOM.displays.scannerConfirmationButtons.classList.add('hidden');
+        isScanningPausedForConfirmation = false;
+        
+        if (!currentHtml5QrCode) {
+            currentHtml5QrCode = new Html5Qrcode(SCANNER_ELEMENT_ID_MODAL, { verbose: false });
+        }
+        startScanningSessionInModal();
+    }
+
+    function startScanningSessionInModal() {
+        if (!currentHtml5QrCode) return;
+        isScanningPausedForConfirmation = false;
+        DOM.displays.scannerFeedbackMessage.textContent = 'Apunte la cámara al código de barras.';
+        DOM.displays.scannerConfirmationButtons.classList.add('hidden');
+        DOM.buttons.btnConfirmAddItem.disabled = true;
+
+        currentHtml5QrCode.start(
+            { facingMode: "environment" },
+            html5QrCodeScannerConfig,
+            onScanSuccessVerifyModal, // New success callback for modal flow
+            (errorMessage) => { /* console.log("QR Scan error:", errorMessage); */ }
+        ).catch(err => {
+            console.error("Error al iniciar escáner:", err);
+            DOM.displays.scannerFeedbackMessage.textContent = `Error al iniciar escáner: ${err.message || err}. Verifique permisos de cámara.`;
+            DOM.displays.scannerConfirmationButtons.classList.add('hidden');
+        });
+    }
+    
+    function onScanSuccessVerifyModal(decodedText, decodedResult) {
+        if (isScanningPausedForConfirmation) return; // Already processing a scan
+
+        isScanningPausedForConfirmation = true;
+        if (currentHtml5QrCode && currentHtml5QrCode.getState() === Html5QrcodeScannerState.SCANNING) {
+            currentHtml5QrCode.stop().then(() => {
+                processScannedCode(decodedText);
+            }).catch(err => {
+                console.error("Error al detener el escáner después de la lectura:", err);
+                processScannedCode(decodedText); // Process anyway, but log error
+            });
+        } else {
+            processScannedCode(decodedText); // If already stopped or state unknown, try to process
+        }
+    }
+
+    function processScannedCode(scannedUPC) {
+        lastScannedData.rawUPC = cleanText(scannedUPC);
+        lastScannedData.derivedItemId = null;
+        lastScannedData.message = `UPC Escaneado: ${lastScannedData.rawUPC}. `;
+
+        let internalCode = upcToCodigoMap.get(lastScannedData.rawUPC) ?? upcToCodigoMap.get(lastScannedData.rawUPC.slice(0, -1));
+        
+        if (internalCode) {
+            const cleanedInternalCode = cleanCode(internalCode);
+            if (cleanedInternalCode && /^[0-9]+$/.test(cleanedInternalCode) && cleanedInternalCode.length > 5) {
+                lastScannedData.derivedItemId = cleanedInternalCode;
+                lastScannedData.message += `Ítem encontrado: ${cleanedInternalCode}.`;
+                DOM.buttons.btnConfirmAddItem.disabled = false;
+            } else {
+                lastScannedData.message += `El ID interno (${internalCode}) asociado no es válido.`;
+                DOM.buttons.btnConfirmAddItem.disabled = true;
+            }
+        } else {
+            lastScannedData.message += `UPC no encontrado en Lista Maestra.`;
+            DOM.buttons.btnConfirmAddItem.disabled = true;
+        }
+        
+        DOM.displays.scannerFeedbackMessage.textContent = lastScannedData.message;
+        DOM.displays.scannerConfirmationButtons.classList.remove('hidden');
+    }
+
+    function handleAddScannedItem() {
+        if (lastScannedData.derivedItemId) {
+            const itemId = lastScannedData.derivedItemId;
+            listaVerificar.add(itemId);
+            if (!datosVerificacionCargados.some(d => d.idItem === itemId && d.contenedora === 'N/A_SCAN_MODAL')) {
+                datosVerificacionCargados.push({
+                    idItem: itemId, contenedora: 'N/A_SCAN_MODAL', cantidad: 0, 
+                    allRowData: { item_: itemId, upc_scanned: lastScannedData.rawUPC }, 
+                    isSuitableForGroupedReport: false
+                });
+            }
+            DOM.inputs.scannedCodesVerifyTextarea.value += `${itemId} (Scan UPC: ${lastScannedData.rawUPC})\n`;
+            updateVerifyPreview();
+            DOM.displays.scannerFeedbackMessage.textContent = `Ítem ${itemId} añadido. Listo para escanear siguiente.`;
+        } else {
+            DOM.displays.scannerFeedbackMessage.textContent = `No hay un ítem válido para añadir. ${lastScannedData.message}`;
+        }
+        // Resume scanning
+        DOM.displays.scannerConfirmationButtons.classList.add('hidden');
+        setTimeout(startScanningSessionInModal, 500); // Brief pause before restarting scanner
+    }
+
+    function handleDiscardAndRescan() {
+        DOM.displays.scannerFeedbackMessage.textContent = "Descartado. Listo para escanear siguiente.";
+        DOM.displays.scannerConfirmationButtons.classList.add('hidden');
+        // Resume scanning
+         setTimeout(startScanningSessionInModal, 200);
+    }
+
+    function forceStopScannerAndCloseModal() {
+        if (currentHtml5QrCode && currentHtml5QrCode.getState() === Html5QrcodeScannerState.SCANNING) {
+            currentHtml5QrCode.stop().catch(err => console.error("Error al detener escáner al cerrar modal:", err));
+        }
+        // It's also possible it's stopped but not cleared, clear instance for next open
+        if(currentHtml5QrCode) {
+            // currentHtml5QrCode.clear(); // May not be needed if re-instantiating or careful start/stop
+        }
+
+        DOM.views.scannerModal.style.display = 'none';
+        isScanningPausedForConfirmation = false;
+        lastScannedData = { rawUPC: null, derivedItemId: null, message: '' }; // Reset last scan
+    }
+
+
+    // ----- Core App Logic (largely same) -----
     function cleanText(text) { return text ? String(text).trim() : ''; }
-
-    function parsearMaestraCSV(csvText) {
-        return csvText.trim().split(/\r\n|\n/).slice(1).map(linea => {
-            if (!linea.trim()) return null;
-            const partes = linea.split(','); 
-            if (!partes[0]) return null;
-            return {
-                codigo: cleanText(partes[0]),
-                upc: cleanText(partes[1]),
-                descripcion: cleanText(partes[2]),
-                brand: cleanText(partes[3]),
-                url: cleanText(partes[4])
-            };
-        }).filter(Boolean);
-    }
-
-    function rebuildUpcToCodigoMap() {
-        upcToCodigoMap.clear();
-        listaFoco.forEach(item => {
-            if (item.upc?.trim()) {
-                upcToCodigoMap.set(item.upc.trim(), item.codigo);
-            }
-        });
-    }
-
-    async function cargarMaestraDesdeRepositorio() {
-        if (!URL_LISTA_MAESTRA_REPOSITORIO || URL_LISTA_MAESTRA_REPOSITORIO.includes('PON_AQUI_LA_URL')) {
-            console.warn('URL_LISTA_MAESTRA_REPOSITORIO no configurada.');
-            return null;
-        }
-        try {
-            const response = await fetch(`${URL_LISTA_MAESTRA_REPOSITORIO}?t=${new Date().getTime()}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const csvText = await response.text();
-            const itemsArray = parsearMaestraCSV(csvText);
-            const nuevaListaMap = new Map();
-            itemsArray.forEach(item => {
-                const idItemLimpio = cleanCode(item.codigo);
-                if (idItemLimpio) nuevaListaMap.set(idItemLimpio, item);
-            });
-            return nuevaListaMap;
-        } catch (error) {
-            console.error('Excepción al cargar Maestra:', error);
-            return null;
-        }
-    }
-
-    function compararListas(listaLocalMap, listaRemotaMap) {
-        const nuevos = [], eliminados = [], modificados = [];
-        listaRemotaMap.forEach((itemRemoto, codigo) => {
-            if (!listaLocalMap.has(codigo)) {
-                nuevos.push(itemRemoto);
-            } else {
-                const itemLocal = listaLocalMap.get(codigo);
-                const changedFields = {};
-                if ((itemLocal.descripcion ?? '') !== (itemRemoto.descripcion ?? '')) changedFields.descripcion = { old: itemLocal.descripcion, new: itemRemoto.descripcion };
-                if ((itemLocal.upc ?? '') !== (itemRemoto.upc ?? '')) changedFields.upc = { old: itemLocal.upc, new: itemRemoto.upc };
-                if ((itemLocal.brand ?? '') !== (itemRemoto.brand ?? '')) changedFields.brand = { old: itemLocal.brand, new: itemRemoto.brand };
-                if ((itemLocal.url ?? '') !== (itemRemoto.url ?? '')) changedFields.url = { old: itemLocal.url, new: itemRemoto.url };
-
-                if (Object.keys(changedFields).length > 0) {
-                    modificados.push({ ...itemRemoto, changedFields });
-                }
-            }
-        });
-        listaLocalMap.forEach((itemLocal, codigo) => {
-            if (!listaRemotaMap.has(codigo)) eliminados.push(itemLocal);
-        });
-        return { nuevos, eliminados, modificados };
-    }
-
-    function mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraRepositorioMap) {
-        const popularListaResumen = (ul, items, fmt) => {
-            ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>';
-        };
-        const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion??'N/A'}, U:${itm.upc??'N/A'}</li>`;
-        
-        popularListaResumen(DOM.resumenCambios.nuevos, nuevos, itemFormatter);
-        popularListaResumen(DOM.resumenCambios.eliminados, eliminados, itemFormatter);
-
-        popularListaResumen(DOM.resumenCambios.modificados, modificados, itm => {
-            let chgs = '';
-            if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old??'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new??'N/A'}</span>`;
-            if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old??'N/A'}</s> &rarr; ${itm.changedFields.upc.new??'N/A'}</span>`;
-            if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old??'N/A'}</s> &rarr; ${itm.changedFields.brand.new??'N/A'}</span>`;
-            if(itm.changedFields.url) chgs += `<span class="field-change">URL Img: <s>${itm.changedFields.url.old??'N/A'}</s> &rarr; ${itm.changedFields.url.new??'N/A'}</span>`;
-            return `<li><span class="code">${itm.codigo}</span>${chgs}</li>`;
-        });
-        
-        DOM.buttons.confirmarCambios.dataset.maestraRepositorio = JSON.stringify(maestraRepositorioMap, (key, value) => {
-             if (value instanceof Map) return { __isMap__: true, data: Array.from(value.entries()) };
-             return value;
-        });
-        navigateToView('confirmacionCambiosStep');
-    }
-
-    async function checkInitialState() {
-        loadListaFocoFromStorage(false);
-        listaFocoCacheadaLocalmente = new Map(listaFoco);
-        DOM.displays.panelInicioInfo.innerHTML = '🔄 Sincronizando Maestra desde el repositorio...';
-        DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
-        DOM.buttons.iniciarDobleControl.disabled = true;
-        DOM.buttons.gestionMaestra.disabled = true;
-
-        const maestraDesdeRepositorio = await cargarMaestraDesdeRepositorio();
-        DOM.buttons.iniciarDobleControl.disabled = false;
-        DOM.buttons.gestionMaestra.disabled = false;
-
-        if (maestraDesdeRepositorio) {
-            const { nuevos, eliminados, modificados } = compararListas(listaFocoCacheadaLocalmente, maestraDesdeRepositorio);
-
-            if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0) {
-                DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;
-                DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
-                if (JSON.stringify(Array.from(listaFoco.values())) !== JSON.stringify(Array.from(maestraDesdeRepositorio.values()))) {
-                    listaFoco = new Map(maestraDesdeRepositorio); 
-                    saveListaFocoToStorage(false); 
-                }
-            } else {
-                DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios detectados en Maestra. Revisa y confirma.`;
-                DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
-                mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio);
-                return; 
-            }
-        } else {
-            if (listaFoco.size > 0) {
-                DOM.displays.panelInicioInfo.innerHTML = `⚠️ Error al cargar desde repositorio. Usando Maestra local (${listaFoco.size} ítems).`;
-                DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
-            } else {
-                DOM.displays.panelInicioInfo.innerHTML = `❌ Error al cargar y no hay Maestra local. Funcionalidad limitada.`;
-                DOM.displays.panelInicioInfo.className = 'panel-inicio-info error';
-                DOM.buttons.iniciarDobleControl.disabled = true;
-                DOM.buttons.gestionMaestra.disabled = true;
-            }
-        }
-        rebuildUpcToCodigoMap();
-        updateFocoPreviewAndSearch();
-        if(DOM.views.confirmacionCambiosStep.classList.contains('hidden')){ 
-             navigateToView('panelInicio');
-        }
-    }
-
-    function navigateToView(viewName) {
-        Object.values(DOM.views).forEach(div => div.classList.add('hidden'));
-        if (viewName !== 'itemDetailModal') DOM.views.itemDetailModal.style.display = 'none';
-        
-        const viewToShow = DOM.views[viewName];
-        if (viewToShow) {
-            viewToShow.classList.remove('hidden');
-            if (viewName === 'gestionMaestraStep') updateFocoPreviewAndSearch();
-        }
-    }
-
-    function cleanCode(code) {
-        if (typeof code !== 'string' && typeof code !== 'number') return '';
-        return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase();
-    }
-    function resetFileInput(el) { if(el) el.value = null; }
-    function getDelimiterRegex(d) {
-        if (d.toLowerCase()==='<tab>') return /\t/;
-        return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
-    }
-
-    function updateFocoPreviewAndSearch(itemsToShow = null) {
-        let countNoUrl = 0, countNoUpc = 0, countNoDescription = 0, countNoBrand = 0;
-        listaFoco.forEach(item => {
-            if (!item.url?.trim()) countNoUrl++;
-            if (!item.upc?.trim()) countNoUpc++;
-            if (!item.descripcion?.trim()) countNoDescription++;
-            if (!item.brand?.trim()) countNoBrand++;
-        });
-        DOM.stats.totalItems.textContent = listaFoco.size;
-        DOM.stats.noImageUrl.textContent = countNoUrl;
-        DOM.stats.noUpc.textContent = countNoUpc;
-        DOM.stats.noDescription.textContent = countNoDescription;
-        DOM.stats.noBrand.textContent = countNoBrand;
-
-        if (itemsToShow) {
-            DOM.displays.focoSearchResults.innerHTML = '';
-            if (itemsToShow.length > 0) {
-                const fragment = document.createDocumentFragment();
-                itemsToShow.slice(0, 30).forEach(item => {
-                    const p = document.createElement('div');
-                    p.className = 'search-result-item';
-                    p.dataset.iditem = item.codigo;
-                    p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
-                    fragment.appendChild(p);
-                });
-                DOM.displays.focoSearchResults.appendChild(fragment);
-
-                if (itemsToShow.length > 30) {
-                    DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length - 30} más.</p>`;
-                }
-            } else if (DOM.inputs.searchFoco.value) {
-                DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">No se encontraron ítems.</p>';
-            }
-        }
-    }
-
-    function saveListaFocoToStorage(showAlert = true) {
-        if (listaFoco.size === 0 && showAlert && !confirm("Maestra vacía. ¿Guardar vacía?")) return false;
-        try {
-            localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values())));
-            if (showAlert) alert(`Maestra con ${listaFoco.size} ítems guardada.`);
-            return true;
-        } catch (e) {
-            if (showAlert) alert(`Error al guardar Maestra: ${e.message}`);
-            return false;
-        }
-    }
-
-    function loadListaFocoFromStorage(showAlerts = true) {
-        const data = localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
-        listaFoco.clear();
-        if (data) {
-            try {
-                const itemsArray = JSON.parse(data);
-                itemsArray.forEach(item => {
-                    const idItemLimpio = cleanCode(item.codigo);
-                    if (idItemLimpio) listaFoco.set(idItemLimpio, item);
-                });
-                if (showAlerts) alert(`Maestra local con ${listaFoco.size} ítems cargada.`);
-            } catch (e) {
-                if (showAlerts) alert("Error al cargar Maestra: datos corruptos. Se borrará.");
-                localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
-            }
-        }
-    }
-    
-    function handleFileUpload(file, fileType) {
-        if (!file) return;
-        DOM.displays.verifyPreview.innerHTML = `Procesando "${file.name}"...`;
-        const idItemColUserInput = parseInt(DOM.inputs.verifyCodigoCol.value);
-        const delimiter = DOM.inputs.verifyCsvDelimiter.value;
-        const hasHeader = DOM.inputs.verifyHasHeader.checked;
-        const targetFileElement = fileType === 'excel' ? DOM.inputs.verifyFileExcel : DOM.inputs.verifyFileTxtCsv;
-
-        if (idItemColUserInput < 1 && fileType === 'textcsv') {
-            alert("Col. ID Ítem debe ser >= 1 para texto/CSV.");
-            DOM.displays.verifyPreview.textContent = "Error.";
-            resetFileInput(targetFileElement);
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const content = e.target.result;
-            try {
-                let parsedItems = [];
-                if (fileType === 'excel') {
-                    parsedItems = processExcelDataForVerify(content, idItemColUserInput, hasHeader);
-                } else { 
-                    const itemIdsOnly = processTextCsvDataForVerify(content, idItemColUserInput - 1, hasHeader, delimiter);
-                    parsedItems = itemIdsOnly.map(id => ({
-                        idItem: id,
-                        contenedora: 'N/A_TXT_CSV', 
-                        cantidad: 0, 
-                        allRowData: { item_: id },
-                        isSuitableForGroupedReport: false 
-                    }));
-                }
-
-                parsedItems.forEach(itemObj => {
-                    const trimmedIdItem = cleanCode(itemObj.idItem); 
-                    if (trimmedIdItem && /^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
-                        listaVerificar.add(trimmedIdItem); 
-                        datosVerificacionCargados.push({...itemObj, idItem: trimmedIdItem }); 
-                    } else {
-                        console.warn("ID inválido o no encontrado:", itemObj.idItem, "Skipping.");
-                    }
-                });
-                updateVerifyPreview();
-
-            } catch (error) {
-                alert(`Error procesando ${file.name}: ${error.message}`);
-                DOM.displays.verifyPreview.textContent = `Error.`;
-            }
-            resetFileInput(targetFileElement); 
-        };
-        reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); resetFileInput(targetFileElement); };
-        
-        if (fileType === 'excel') reader.readAsArrayBuffer(file);
-        else reader.readAsText(file);
-    }
-
-    function processTextCsvDataForVerify(content, colIdx, hasHeader, delimiter = ',') {
-        const lines = content.split(/\r\n|\n/);
-        const dataRows = hasHeader ? lines.slice(1) : lines;
-        const delimRegex = getDelimiterRegex(delimiter);
-        return dataRows.map(line => {
-            const parts = line.split(delimRegex);
-            return parts[colIdx] ? String(Number(parts[colIdx])).trim() : null; 
-        }).filter(Boolean);
-    }
-
-    function processExcelDataForVerify(arrayBuffer, itemColIdxUser, hasHeader) {
-        const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        if (!worksheet) throw new Error("Excel sin hojas.");
-        
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, rawNumbers: false, defval: null });
-        if (jsonData.length === 0) return [];
-
-        let headerRow = [];
-        let dataRows = jsonData; 
-
-        if (hasHeader && jsonData.length > 0) {
-            headerRow = jsonData[0].map(h => h ? String(h).toLowerCase().trim() : '');
-            dataRows = jsonData.slice(1);
-        } else if (hasHeader && jsonData.length === 0) return [];
-        
-        const itemHeaderName = 'item_';
-        const contenedoraHeaderName = 'contenedoras';
-        const cantidadHeaderName = 'cantidad';
-
-        let actualItemColIdx = -1;
-        let contenedoraColIdx = -1;
-        let cantidadColIdx = -1;
-        let isSuitableForGroupedReport = false;
-
-        if (hasHeader && headerRow.length > 0) {
-            actualItemColIdx = headerRow.indexOf(itemHeaderName);
-            contenedoraColIdx = headerRow.indexOf(contenedoraHeaderName);
-            cantidadColIdx = headerRow.indexOf(cantidadHeaderName);
-
-            if (actualItemColIdx === -1 && itemColIdxUser > 0 && (itemColIdxUser-1 < headerRow.length)) { 
-                actualItemColIdx = itemColIdxUser - 1;
-            } else if (actualItemColIdx === -1) {
-                 throw new Error(`Columna '${itemHeaderName}' no encontrada o índice numérico no válido.`);
-            }
-            isSuitableForGroupedReport = (contenedoraColIdx !== -1 && cantidadColIdx !== -1 && actualItemColIdx !== -1);
-        } else if (!hasHeader && itemColIdxUser > 0) { 
-            actualItemColIdx = itemColIdxUser - 1;
-            isSuitableForGroupedReport = false; 
-        } else if (!hasHeader && itemColIdxUser <=0) {
-            throw new Error("Excel sin encabezados y sin columna de ID válida.");
-        }
-
-        return dataRows.map(row => {
-            if (!row || row.every(cell => cell === null || cell === '')) return null; 
-
-            const idItem = (actualItemColIdx !== -1 && actualItemColIdx < row.length && row[actualItemColIdx]) ? String(Number(row[actualItemColIdx])).trim() : null;
-            const contenedora = (contenedoraColIdx !== -1 && contenedoraColIdx < row.length && row[contenedoraColIdx]) ? String(row[contenedoraColIdx]).trim() : (isSuitableForGroupedReport ? 'Sin Contenedora' : 'N/A_EXCEL_NO_CONT_INFO');
-            const cantidadVal = (cantidadColIdx !== -1 && cantidadColIdx < row.length && row[cantidadColIdx]) ? String(row[cantidadColIdx]).replace(',', '.') : null;
-            const cantidad = cantidadVal ? parseFloat(cantidadVal) : 0;
-
-            const allRowData = {};
-            if (hasHeader && headerRow.length > 0) {
-                headerRow.forEach((header, idx) => { if (header) allRowData[header] = row[idx]; });
-            } else { 
-                 row.forEach((val, idx) => allRowData[`col_${idx+1}`] = val);
-            }
-            
-            return {
-                idItem: idItem,
-                contenedora: contenedora,
-                cantidad: !isNaN(cantidad) ? cantidad : 0,
-                allRowData: allRowData,
-                isSuitableForGroupedReport: isSuitableForGroupedReport && idItem !== null 
-            };
-        }).filter(item => item && item.idItem); 
-    }
-    
-    function updateVerifyPreview() {
-        const count = listaVerificar.size;
-        DOM.displays.verifyPreview.textContent = `Ítems a Verificar: ${count}. ${count > 0 ? `Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${count > 5 ? '...' : ''}` : 'Vacía.'}`;
-    }
-
-    function collectVerifyDataFromInputs() {
-        const textVerifyItems = DOM.inputs.verifyTextarea.value.trim();
-        if (textVerifyItems) {
-            textVerifyItems.split(/\s+/).forEach(id => {
-                const trimmedIdItem = String(Number(id)).trim(); 
-                if (/^[0-9]+$/.test(trimmedIdItem) && trimmedIdItem.length > 5) {
-                    listaVerificar.add(trimmedIdItem); 
-                    if (!datosVerificacionCargados.some(d => d.idItem === trimmedIdItem && d.contenedora === 'N/A_TEXTAREA')) {
-                        datosVerificacionCargados.push({
-                            idItem: trimmedIdItem, contenedora: 'N/A_TEXTAREA', cantidad: 0, 
-                            allRowData: { item_: trimmedIdItem }, isSuitableForGroupedReport: false
-                        });
-                    }
-                }
-            });
-        }
-        updateVerifyPreview(); 
-    }
-    
-    function onScanSuccessVerify(decodedText){
-        const scannedUPC = cleanText(decodedText);
-        let internalCode = null;
-        if (scannedUPC) {
-            internalCode = upcToCodigoMap.get(scannedUPC) ?? upcToCodigoMap.get(scannedUPC.slice(0, -1));
-            
-            if (internalCode) {
-                const cleanedInternalCode = cleanCode(internalCode);
-                if (cleanedInternalCode && /^[0-9]+$/.test(cleanedInternalCode) && cleanedInternalCode.length > 5) {
-                    listaVerificar.add(cleanedInternalCode);
-                    DOM.inputs.scannedCodesVerifyTextarea.value += `${cleanedInternalCode} (Scan UPC: ${scannedUPC})\n`;
-                    if (!datosVerificacionCargados.some(d => d.idItem === cleanedInternalCode && d.contenedora === 'N/A_SCAN')) {
-                        datosVerificacionCargados.push({
-                            idItem: cleanedInternalCode, contenedora: 'N/A_SCAN', cantidad: 0, 
-                            allRowData: { item_: cleanedInternalCode, upc_scanned: scannedUPC }, isSuitableForGroupedReport: false
-                        });
-                    }
-                    updateVerifyPreview();
-                } else {
-                     alert(`Código interno (${internalCode}) asociado al UPC (${scannedUPC}) no es válido.`);
-                }
-            } else {
-                alert(`UPC escaneado (${scannedUPC}) no encontrado en Maestra.`);
-            }
-        }
-    }
-
-    function toggleScanner() {
-        if(scannerVerifierActive){
-            if(html5QrCodeVerifier?.isScanning){
-                html5QrCodeVerifier.stop().then(() => {
-                    scannerVerifierActive = false;
-                    DOM.displays.scannerContainerVerify.classList.add('hidden');
-                    DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC';
-                }).catch(err => console.error("Error deteniendo escáner:", err));
-            } else { 
-                scannerVerifierActive = false;
-                DOM.displays.scannerContainerVerify.classList.add('hidden');
-                DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC';
-            }
-        } else {
-            if(location.protocol !=='https:' && !['localhost','127.0.0.1'].includes(location.hostname)){
-                alert('Escáner requiere HTTPS o localhost.'); return;
-            }
-            DOM.displays.scannerContainerVerify.classList.remove('hidden');
-            DOM.buttons.startScanVerify.textContent = '🛑 Detener Escáner';
-            if(!html5QrCodeVerifier) html5QrCodeVerifier = new Html5Qrcode("readerVerify", { verbose: false });
-            const qrboxFunction = (vw, vh) => ({ width: Math.floor(vw * 0.8), height: Math.floor(vh * 0.4) });
-            const config = { fps: 10, qrbox: qrboxFunction, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] };
-            
-            html5QrCodeVerifier.start({ facingMode: "environment" }, config, onScanSuccessVerify, (eM) => {})
-            .then(() => scannerVerifierActive = true)
-            .catch(err => {
-                alert(`Error al iniciar escáner: ${err.message || err}`);
-                DOM.displays.scannerContainerVerify.classList.add('hidden');
-                DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC';
-                scannerVerifierActive = false;
-            });
-        }
-    }
-
-    function compareListsAndDisplayResults(){
-        coincidencias.clear();
-        listaVerificar.forEach(idItemToVerify => { 
-            if(listaFoco.has(idItemToVerify)) {
-                coincidencias.set(idItemToVerify, listaFoco.get(idItemToVerify));
-            }
-        });
-        displayFinalResults();
-    }
-    
-    function displayFinalResults() {
-        DOM.stats.totalFoco.textContent = listaFoco.size;
-        DOM.stats.totalVerify.textContent = listaVerificar.size;
-        DOM.stats.totalMatches.textContent = coincidencias.size;
-
-        DOM.displays.outputResults.innerHTML = '';
-        DOM.displays.outputResults.className = 'list'; 
-
-        if (coincidencias.size === 0) { 
-            DOM.displays.outputResults.innerHTML = '<p>No se encontraron Ítems concordantes.</p>';
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-        const groupedForDisplay = new Map();
-        const itemsHandledBySpecificContainer = new Set();
-
-        datosVerificacionCargados.forEach(uploadedItem => {
-            if (coincidencias.has(uploadedItem.idItem)) {
-                const masterDetails = coincidencias.get(uploadedItem.idItem);
-                let contenedoraKey;
-                if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora && 
-                    uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
-                    contenedoraKey = uploadedItem.contenedora.trim();
-                    itemsHandledBySpecificContainer.add(uploadedItem.idItem); 
-                } else {
-                    contenedoraKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-                }
-
-                if (!groupedForDisplay.has(contenedoraKey)) {
-                    groupedForDisplay.set(contenedoraKey, []);
-                }
-                groupedForDisplay.get(contenedoraKey).push({
-                    ...masterDetails, 
-                    cantidadOriginal: uploadedItem.cantidad, 
-                    isFromSpecificContainerContext: (contenedoraKey !== "Ítems Concordantes (Otros/Sin Contenedora Específica)") 
-                });
-            }
-        });
-
-        coincidencias.forEach(masterItem => {
-            if (!itemsHandledBySpecificContainer.has(masterItem.codigo)) {
-                const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-                if (!groupedForDisplay.has(defaultGroupKey)) {
-                    groupedForDisplay.set(defaultGroupKey, []);
-                }
-                if (!groupedForDisplay.get(defaultGroupKey).some(existing => existing.codigo === masterItem.codigo)) {
-                    groupedForDisplay.get(defaultGroupKey).push({ 
-                        ...masterItem, 
-                        cantidadOriginal: null, 
-                        isFromSpecificContainerContext: false 
-                    });
-                }
-            }
-        });
-        
-        if (groupedForDisplay.size === 0 && coincidencias.size > 0) { 
-             coincidencias.forEach(masterItem => {
-                const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-                 if (!groupedForDisplay.has(defaultGroupKey)) groupedForDisplay.set(defaultGroupKey, []);
-                 if (!groupedForDisplay.get(defaultGroupKey).some(ex => ex.codigo === masterItem.codigo)) {
-                    groupedForDisplay.get(defaultGroupKey).push({ ...masterItem, cantidadOriginal: null, isFromSpecificContainerContext: false });
-                 }
-             });
-        }
-
-        if (groupedForDisplay.size === 0) { 
-             DOM.displays.outputResults.innerHTML='<p>No hay ítems concordantes para mostrar después de agrupar.</p>';
-             return;
-        }
-
-        const sortedContenedoraKeys = Array.from(groupedForDisplay.keys()).sort((a, b) => {
-            const defaultKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-            if (a === defaultKey && b !== defaultKey) return 1;
-            if (a !== defaultKey && b === defaultKey) return -1;
-            return a.localeCompare(b);
-        });
-
-        sortedContenedoraKeys.forEach(contenedora => {
-            const itemsArray = groupedForDisplay.get(contenedora);
-            const uniqueItemsInGroup = itemsArray.filter((item, index, self) => 
-                index === self.findIndex((t) => t.codigo === item.codigo && t.cantidadOriginal === item.cantidadOriginal)
-            );
-
-            if (uniqueItemsInGroup.length === 0) return; 
-
-            const contenedoraHeader = document.createElement('h4');
-            contenedoraHeader.textContent = `${contenedora} (${uniqueItemsInGroup.length} ítem(s) únicos)`; 
-            contenedoraHeader.style.marginTop = "20px";
-            contenedoraHeader.style.borderBottom = "1px solid #ccc";
-            fragment.appendChild(contenedoraHeader);
-
-            uniqueItemsInGroup.forEach(item => {
-                const cD = document.createElement("div");
-                cD.className = "barcode-item-container";
-                cD.dataset.iditem = item.codigo;
-                const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
-                const brandText = `<p style="font-size:0.8em;text-align:center;color:#777;">Marca: ${item.brand??'N/A'}</p>`;
-                const cantidadText = (typeof item.cantidadOriginal === 'number' && item.cantidadOriginal !== null && item.isFromSpecificContainerContext) ? `<p style="font-size:0.9em;text-align:center;font-weight:bold;">Cantidad: ${item.cantidadOriginal}</p>` : '';
-
-                cD.innerHTML = `<p class="barcode-item-code">${item.codigo}</p>${descText}${brandText}${cantidadText}<div class="barcode-item-svg"></div>`;
-                const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-                try { JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); cD.querySelector('.barcode-item-svg').appendChild(svg); }
-                catch(e) { cD.querySelector('.barcode-item-svg').innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; }
-                fragment.appendChild(cD);
-            });
-        });
-        DOM.displays.outputResults.appendChild(fragment);
-    }
-    
-    function openItemDetailModal(idItem) {
-        const item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
-        if (item) {
-            DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
-            DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
-            DOM.modal.upc.textContent = item.upc || 'No disponible'; 
-            DOM.modal.brand.textContent = item.brand || 'No disponible';
-            
-            const imageUrl = item.url?.trim(); 
-            if (imageUrl) {
-                DOM.modal.image.src = imageUrl;
-                DOM.modal.image.alt = "Imagen de " + (item.descripcion || item.codigo || 'ítem');
-                DOM.modal.image.style.display = 'block'; DOM.modal.imageError.style.display = 'none';
-            } else {
-                DOM.modal.image.style.display = 'none'; DOM.modal.image.src = '#';
-                DOM.modal.imageError.textContent = 'URL de imagen no especificada.'; DOM.modal.imageError.style.display = 'block';
-            }
-            DOM.views.itemDetailModal.classList.remove('hidden');
-            DOM.views.itemDetailModal.style.display = 'flex';
-        }
-    }
-
-    function closeItemDetailModal() {
-        DOM.views.itemDetailModal.classList.add('hidden');
-        DOM.views.itemDetailModal.style.display = 'none';
-        DOM.modal.image.src="#";
-    }
-
-    function handleIniciarDobleControl() {
-        if (listaFoco.size === 0) { alert("No hay Lista Maestra cargada."); return; }
-        listaVerificar.clear(); datosVerificacionCargados = []; coincidencias.clear();
-        DOM.inputs.verifyTextarea.value = ''; DOM.inputs.scannedCodesVerifyTextarea.value = '';
-        resetFileInput(DOM.inputs.verifyFileTxtCsv); resetFileInput(DOM.inputs.verifyFileExcel);
-        updateVerifyPreview();
-        navigateToView('dobleControlStep');
-    }
-
-    function handleBorrarStorage() {
-        if (confirm("¿Borrar Maestra local y resincronizar?")) {
-            localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
-            listaFoco.clear(); listaFocoCacheadaLocalmente.clear(); upcToCodigoMap.clear();
-            alert("Maestra local borrada. Resincronizando...");
-            checkInitialState(); 
-        }
-    }
-
-    function handleCompare() {
-        collectVerifyDataFromInputs(); 
-        if (listaVerificar.size === 0) { alert("Cargue o escanee Ítems para la Lista de Verificación."); return; }
-        if (listaFoco.size === 0) { alert("Lista Maestra vacía. Sincronice."); navigateToView('panelInicio'); return; }
-        compareListsAndDisplayResults();
-        navigateToView('resultadosStep');
-    }
-
-    function toggleResultsLayout(){
-        DOM.displays.outputResults.classList.toggle('grid');
-        DOM.displays.outputResults.classList.toggle('list');
-        DOM.buttons.layoutToggle.textContent = DOM.displays.outputResults.classList.contains('grid') ? '📊 Vista Lista' : '📊 Vista Cuadrícula';
-    }
-
-    function downloadCsvResults(){
-        if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;}
-        // Incluir también los ítems no concordantes con cantidad >= 100 en el CSV si se desea.
-        // Por ahora, mantiene el comportamiento original de solo concordancias.
-        let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; 
-        coincidencias.forEach(item=>{ 
-            const esc = (v) => `"${(v??'').replace(/"/g,'""')}"`;
-            csvContent+=`${esc(item.codigo)},${esc(item.upc)},${esc(item.descripcion)},${esc(item.brand)},${esc(item.url)}\n`;
-        });
-        const blob = new Blob(["\uFEFF"+csvContent],{type:'text/csv;charset=utf-8;'});
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `concordancias_sdci_${new Date().toISOString().slice(0,10)}.csv`;
-        link.click(); URL.revokeObjectURL(link.href);
-    }
-
-    async function downloadXlsxResults() {
-        // Verifica si hay ítems concordantes O ítems con cantidad >= 100 en datosVerificacionCargados
+    function parsearMaestraCSV(csvText) { /* ... same ... */ return csvText.trim().split(/\r\n|\n/).slice(1).map(linea=>{if(!linea.trim())return null;const partes=linea.split(',');if(!partes[0])return null;return{codigo:cleanText(partes[0]),upc:cleanText(partes[1]),descripcion:cleanText(partes[2]),brand:cleanText(partes[3]),url:cleanText(partes[4])};}).filter(Boolean);}
+    function rebuildUpcToCodigoMap() { /* ... same ... */ upcToCodigoMap.clear();listaFoco.forEach(item=>{if(item.upc?.trim()){upcToCodigoMap.set(item.upc.trim(),item.codigo);}}); }
+    async function cargarMaestraDesdeRepositorio() { /* ... same ... */ if(!URL_LISTA_MAESTRA_REPOSITORIO||URL_LISTA_MAESTRA_REPOSITORIO.includes('PON_AQUI_LA_URL')){console.warn('URL_LISTA_MAESTRA_REPOSITORIO no configurada.');return null;}try{const response=await fetch(`${URL_LISTA_MAESTRA_REPOSITORIO}?t=${new Date().getTime()}`);if(!response.ok)throw new Error(`HTTP error! status: ${response.status}`);const csvText=await response.text();const itemsArray=parsearMaestraCSV(csvText);const nuevaListaMap=new Map();itemsArray.forEach(item=>{const idItemLimpio=cleanCode(item.codigo);if(idItemLimpio)nuevaListaMap.set(idItemLimpio,item);});return nuevaListaMap;}catch(error){console.error('Excepción al cargar Maestra:',error);return null;}}
+    function compararListas(listaLocalMap,listaRemotaMap){/* ... same ... */const nuevos=[],eliminados=[],modificados=[];listaRemotaMap.forEach((itemRemoto,codigo)=>{if(!listaLocalMap.has(codigo)){nuevos.push(itemRemoto);}else{const itemLocal=listaLocalMap.get(codigo);const changedFields={};if((itemLocal.descripcion??'')!==(itemRemoto.descripcion??''))changedFields.descripcion={old:itemLocal.descripcion,new:itemRemoto.descripcion};if((itemLocal.upc??'')!==(itemRemoto.upc??''))changedFields.upc={old:itemLocal.upc,new:itemRemoto.upc};if((itemLocal.brand??'')!==(itemRemoto.brand??''))changedFields.brand={old:itemLocal.brand,new:itemRemoto.brand};if((itemLocal.url??'')!==(itemRemoto.url??''))changedFields.url={old:itemLocal.url,new:itemRemoto.url};if(Object.keys(changedFields).length>0){modificados.push({...itemRemoto,changedFields});}}});listaLocalMap.forEach((itemLocal,codigo)=>{if(!listaRemotaMap.has(codigo))eliminados.push(itemLocal);});return{nuevos,eliminados,modificados};}
+    function mostrarConfirmacionCambios(nuevos,eliminados,modificados,maestraRepositorioMap){/* ... same ... */const popularListaResumen=(ul,items,fmt)=>{ul.innerHTML=items.length>0?items.map(fmt).join(''):'<li>Ninguno</li>';};const itemFormatter=itm=>`<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion??'N/A'}, U:${itm.upc??'N/A'}</li>`;popularListaResumen(DOM.resumenCambios.nuevos,nuevos,itemFormatter);popularListaResumen(DOM.resumenCambios.eliminados,eliminados,itemFormatter);popularListaResumen(DOM.resumenCambios.modificados,modificados,itm=>{let chgs='';if(itm.changedFields.descripcion)chgs+=`<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old??'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new??'N/A'}</span>`;if(itm.changedFields.upc)chgs+=`<span class="field-change">UPC: <s>${itm.changedFields.upc.old??'N/A'}</s> &rarr; ${itm.changedFields.upc.new??'N/A'}</span>`;if(itm.changedFields.brand)chgs+=`<span class="field-change">Brand: <s>${itm.changedFields.brand.old??'N/A'}</s> &rarr; ${itm.changedFields.brand.new??'N/A'}</span>`;if(itm.changedFields.url)chgs+=`<span class="field-change">URL Img: <s>${itm.changedFields.url.old??'N/A'}</s> &rarr; ${itm.changedFields.url.new??'N/A'}</span>`;return`<li><span class="code">${itm.codigo}</span>${chgs}</li>`;});DOM.buttons.confirmarCambios.dataset.maestraRepositorio=JSON.stringify(maestraRepositorioMap,(key,value)=>{if(value instanceof Map)return{__isMap__:true,data:Array.from(value.entries())};return value;});navigateToView('confirmacionCambiosStep');}
+    async function checkInitialState(){/* ... same ... */loadListaFocoFromStorage(false);listaFocoCacheadaLocalmente=new Map(listaFoco);DOM.displays.panelInicioInfo.innerHTML='🔄 Sincronizando Maestra desde el repositorio...';DOM.displays.panelInicioInfo.className='panel-inicio-info info';DOM.buttons.iniciarDobleControl.disabled=true;DOM.buttons.gestionMaestra.disabled=true;const maestraDesdeRepositorio=await cargarMaestraDesdeRepositorio();DOM.buttons.iniciarDobleControl.disabled=false;DOM.buttons.gestionMaestra.disabled=false;if(maestraDesdeRepositorio){const{nuevos,eliminados,modificados}=compararListas(listaFocoCacheadaLocalmente,maestraDesdeRepositorio);if(nuevos.length===0&&eliminados.length===0&&modificados.length===0){DOM.displays.panelInicioInfo.innerHTML=`✅ Maestra Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;DOM.displays.panelInicioInfo.className='panel-inicio-info';if(JSON.stringify(Array.from(listaFoco.values()))!==JSON.stringify(Array.from(maestraDesdeRepositorio.values()))){listaFoco=new Map(maestraDesdeRepositorio);saveListaFocoToStorage(false);}}else{DOM.displays.panelInicioInfo.innerHTML=`ℹ️ Cambios detectados en Maestra. Revisa y confirma.`;DOM.displays.panelInicioInfo.className='panel-inicio-info warning';mostrarConfirmacionCambios(nuevos,eliminados,modificados,maestraDesdeRepositorio);return;}}else{if(listaFoco.size>0){DOM.displays.panelInicioInfo.innerHTML=`⚠️ Error al cargar desde repositorio. Usando Maestra local (${listaFoco.size} ítems).`;DOM.displays.panelInicioInfo.className='panel-inicio-info warning';}else{DOM.displays.panelInicioInfo.innerHTML=`❌ Error al cargar y no hay Maestra local. Funcionalidad limitada.`;DOM.displays.panelInicioInfo.className='panel-inicio-info error';DOM.buttons.iniciarDobleControl.disabled=true;DOM.buttons.gestionMaestra.disabled=true;}} rebuildUpcToCodigoMap();updateFocoPreviewAndSearch();if(DOM.views.confirmacionCambiosStep.classList.contains('hidden')){navigateToView('panelInicio');}}
+    function navigateToView(viewName){/* ... same ... */Object.values(DOM.views).forEach(div=>div.classList.add('hidden'));if(viewName!=='itemDetailModal'&&viewName!=='scannerModal'){DOM.views.itemDetailModal.style.display='none';DOM.views.scannerModal.style.display='none';} const viewToShow=DOM.views[viewName];if(viewToShow){if(viewToShow.classList.contains('modal-overlay')){viewToShow.style.display='flex';}else{viewToShow.classList.remove('hidden');} if(viewName==='gestionMaestraStep')updateFocoPreviewAndSearch();}}
+    function cleanCode(code){/* ... same ... */if(typeof code!=='string'&&typeof code!=='number')return'';return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g,'').toUpperCase();}
+    function resetFileInput(el){/* ... same ... */if(el)el.value=null;}
+    function getDelimiterRegex(d){/* ... same ... */if(d.toLowerCase()==='<tab>')return/\t/;return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));}
+    function updateFocoPreviewAndSearch(itemsToShow=null){/* ... same ... */let countNoUrl=0,countNoUpc=0,countNoDescription=0,countNoBrand=0;listaFoco.forEach(item=>{if(!item.url?.trim())countNoUrl++;if(!item.upc?.trim())countNoUpc++;if(!item.descripcion?.trim())countNoDescription++;if(!item.brand?.trim())countNoBrand++;});DOM.stats.totalItems.textContent=listaFoco.size;DOM.stats.noImageUrl.textContent=countNoUrl;DOM.stats.noUpc.textContent=countNoUpc;DOM.stats.noDescription.textContent=countNoDescription;DOM.stats.noBrand.textContent=countNoBrand;if(itemsToShow){DOM.displays.focoSearchResults.innerHTML='';if(itemsToShow.length>0){const fragment=document.createDocumentFragment();itemsToShow.slice(0,30).forEach(item=>{const p=document.createElement('div');p.className='search-result-item';p.dataset.iditem=item.codigo;p.innerHTML=`<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;fragment.appendChild(p);});DOM.displays.focoSearchResults.appendChild(fragment);if(itemsToShow.length>30){DOM.displays.focoSearchResults.innerHTML+=`<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length-30} más.</p>`;}}else if(DOM.inputs.searchFoco.value){DOM.displays.focoSearchResults.innerHTML='<p style="text-align:center;">No se encontraron ítems.</p>';}}}
+    function saveListaFocoToStorage(showAlert=true){/* ... same ... */if(listaFoco.size===0&&showAlert&&!confirm("Maestra vacía. ¿Guardar vacía?"))return false;try{localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO,JSON.stringify(Array.from(listaFoco.values())));if(showAlert)alert(`Maestra con ${listaFoco.size} ítems guardada.`);return true;}catch(e){if(showAlert)alert(`Error al guardar Maestra: ${e.message}`);return false;}}
+    function loadListaFocoFromStorage(showAlerts=true){/* ... same ... */const data=localStorage.getItem(LOCAL_STORAGE_KEY_LISTA_FOCO);listaFoco.clear();if(data){try{const itemsArray=JSON.parse(data);itemsArray.forEach(item=>{const idItemLimpio=cleanCode(item.codigo);if(idItemLimpio)listaFoco.set(idItemLimpio,item);});if(showAlerts)alert(`Maestra local con ${listaFoco.size} ítems cargada.`);}catch(e){if(showAlerts)alert("Error al cargar Maestra: datos corruptos. Se borrará.");localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);}}}
+    function handleFileUpload(file,fileType){/* ... same as before, no changes needed here specifically for scanner modal ... */if(!file)return;DOM.displays.verifyPreview.innerHTML=`Procesando "${file.name}"...`;const idItemColUserInput=parseInt(DOM.inputs.verifyCodigoCol.value);const delimiter=DOM.inputs.verifyCsvDelimiter.value;const hasHeader=DOM.inputs.verifyHasHeader.checked;const targetFileElement=fileType==='excel'?DOM.inputs.verifyFileExcel:DOM.inputs.verifyFileTxtCsv;if(idItemColUserInput<1&&fileType==='textcsv'){alert("Col. ID Ítem debe ser >= 1 para texto/CSV.");DOM.displays.verifyPreview.textContent="Error.";resetFileInput(targetFileElement);return;}const reader=new FileReader();reader.onload=(e)=>{const content=e.target.result;try{let parsedItems=[];if(fileType==='excel'){parsedItems=processExcelDataForVerify(content,idItemColUserInput,hasHeader);}else{const itemIdsOnly=processTextCsvDataForVerify(content,idItemColUserInput-1,hasHeader,delimiter);parsedItems=itemIdsOnly.map(id=>({idItem:id,contenedora:'N/A_TXT_CSV',cantidad:0,allRowData:{item_:id},isSuitableForGroupedReport:false}));}parsedItems.forEach(itemObj=>{const trimmedIdItem=cleanCode(itemObj.idItem);if(trimmedIdItem&&/^[0-9]+$/.test(trimmedIdItem)&&trimmedIdItem.length>5){listaVerificar.add(trimmedIdItem);datosVerificacionCargados.push({...itemObj,idItem:trimmedIdItem});}else{console.warn("ID inválido o no encontrado:",itemObj.idItem,"Skipping.");}});updateVerifyPreview();}catch(error){alert(`Error procesando ${file.name}: ${error.message}`);DOM.displays.verifyPreview.textContent=`Error.`;}resetFileInput(targetFileElement);};reader.onerror=()=>{alert(`No se pudo leer ${file.name}.`);resetFileInput(targetFileElement);};if(fileType==='excel')reader.readAsArrayBuffer(file);else reader.readAsText(file);}
+    function processTextCsvDataForVerify(content,colIdx,hasHeader,delimiter=','){/* ... same ... */const lines=content.split(/\r\n|\n/);const dataRows=hasHeader?lines.slice(1):lines;const delimRegex=getDelimiterRegex(delimiter);return dataRows.map(line=>{const parts=line.split(delimRegex);return parts[colIdx]?String(Number(parts[colIdx])).trim():null;}).filter(Boolean);}
+    function processExcelDataForVerify(arrayBuffer,itemColIdxUser,hasHeader){/* ... same ... */const workbook=XLSX.read(new Uint8Array(arrayBuffer),{type:"array"});const worksheet=workbook.Sheets[workbook.SheetNames[0]];if(!worksheet)throw new Error("Excel sin hojas.");const jsonData=XLSX.utils.sheet_to_json(worksheet,{header:1,rawNumbers:false,defval:null});if(jsonData.length===0)return[];let headerRow=[];let dataRows=jsonData;if(hasHeader&&jsonData.length>0){headerRow=jsonData[0].map(h=>h?String(h).toLowerCase().trim():'');dataRows=jsonData.slice(1);}else if(hasHeader&&jsonData.length===0)return[];const itemHeaderName='item_';const contenedoraHeaderName='contenedoras';const cantidadHeaderName='cantidad';let actualItemColIdx=-1;let contenedoraColIdx=-1;let cantidadColIdx=-1;let isSuitableForGroupedReport=false;if(hasHeader&&headerRow.length>0){actualItemColIdx=headerRow.indexOf(itemHeaderName);contenedoraColIdx=headerRow.indexOf(contenedoraHeaderName);cantidadColIdx=headerRow.indexOf(cantidadHeaderName);if(actualItemColIdx===-1&&itemColIdxUser>0&&(itemColIdxUser-1<headerRow.length)){actualItemColIdx=itemColIdxUser-1;}else if(actualItemColIdx===-1){throw new Error(`Columna '${itemHeaderName}' no encontrada o índice numérico no válido.`);}isSuitableForGroupedReport=(contenedoraColIdx!==-1&&cantidadColIdx!==-1&&actualItemColIdx!==-1);}else if(!hasHeader&&itemColIdxUser>0){actualItemColIdx=itemColIdxUser-1;isSuitableForGroupedReport=false;}else if(!hasHeader&&itemColIdxUser<=0){throw new Error("Excel sin encabezados y sin columna de ID válida.");}return dataRows.map(row=>{if(!row||row.every(cell=>cell===null||cell===''))return null;const idItem=(actualItemColIdx!==-1&&actualItemColIdx<row.length&&row[actualItemColIdx])?String(Number(row[actualItemColIdx])).trim():null;const contenedora=(contenedoraColIdx!==-1&&contenedoraColIdx<row.length&&row[contenedoraColIdx])?String(row[contenedoraColIdx]).trim():(isSuitableForGroupedReport?'Sin Contenedora':'N/A_EXCEL_NO_CONT_INFO');const cantidadVal=(cantidadColIdx!==-1&&cantidadColIdx<row.length&&row[cantidadColIdx])?String(row[cantidadColIdx]).replace(',','.'):null;const cantidad=cantidadVal?parseFloat(cantidadVal):0;const allRowData={};if(hasHeader&&headerRow.length>0){headerRow.forEach((header,idx)=>{if(header)allRowData[header]=row[idx];});}else{row.forEach((val,idx)=>allRowData[`col_${idx+1}`]=val);}return{idItem:idItem,contenedora:contenedora,cantidad:!isNaN(cantidad)?cantidad:0,allRowData:allRowData,isSuitableForGroupedReport:isSuitableForGroupedReport&&idItem!==null};}).filter(item=>item&&item.idItem);}
+    function updateVerifyPreview(){/* ... same ... */const count=listaVerificar.size;DOM.displays.verifyPreview.textContent=`Ítems a Verificar: ${count}. ${count>0?`Primeros: ${[...listaVerificar].slice(0,5).join(', ')}${count>5?'...':''}`:'Vacía.';}
+    function collectVerifyDataFromInputs(){/* ... same ... */const textVerifyItems=DOM.inputs.verifyTextarea.value.trim();if(textVerifyItems){textVerifyItems.split(/\s+/).forEach(id=>{const trimmedIdItem=String(Number(id)).trim();if(/^[0-9]+$/.test(trimmedIdItem)&&trimmedIdItem.length>5){listaVerificar.add(trimmedIdItem);if(!datosVerificacionCargados.some(d=>d.idItem===trimmedIdItem&&d.contenedora==='N/A_TEXTAREA')){datosVerificacionCargados.push({idItem:trimmedIdItem,contenedora:'N/A_TEXTAREA',cantidad:0,allRowData:{item_:trimmedIdItem},isSuitableForGroupedReport:false});}}});}updateVerifyPreview();}
+    function compareListsAndDisplayResults(){/* ... same ... */coincidencias.clear();listaVerificar.forEach(idItemToVerify=>{if(listaFoco.has(idItemToVerify)){coincidencias.set(idItemToVerify,listaFoco.get(idItemToVerify));}});displayFinalResults();}
+    function displayFinalResults(){/* ... same as before ... */ DOM.stats.totalFoco.textContent=listaFoco.size;DOM.stats.totalVerify.textContent=listaVerificar.size;DOM.stats.totalMatches.textContent=coincidencias.size;DOM.displays.outputResults.innerHTML='';DOM.displays.outputResults.className='list';if(coincidencias.size===0){DOM.displays.outputResults.innerHTML='<p>No se encontraron Ítems concordantes.</p>';return;}const fragment=document.createDocumentFragment();const groupedForDisplay=new Map();const itemsHandledBySpecificContainer=new Set();datosVerificacionCargados.forEach(uploadedItem=>{if(coincidencias.has(uploadedItem.idItem)){const masterDetails=coincidencias.get(uploadedItem.idItem);let contenedoraKey;if(uploadedItem.isSuitableForGroupedReport&&uploadedItem.contenedora&&uploadedItem.contenedora.trim()!==''&&!uploadedItem.contenedora.startsWith('N/A_')){contenedoraKey=uploadedItem.contenedora.trim();itemsHandledBySpecificContainer.add(uploadedItem.idItem);}else{contenedoraKey="Ítems Concordantes (Otros/Sin Contenedora Específica)";}if(!groupedForDisplay.has(contenedoraKey)){groupedForDisplay.set(contenedoraKey,[]);}groupedForDisplay.get(contenedoraKey).push({...masterDetails,cantidadOriginal:uploadedItem.cantidad,isFromSpecificContainerContext:(contenedoraKey!=="Ítems Concordantes (Otros/Sin Contenedora Específica)")});}});coincidencias.forEach(masterItem=>{if(!itemsHandledBySpecificContainer.has(masterItem.codigo)){const defaultGroupKey="Ítems Concordantes (Otros/Sin Contenedora Específica)";if(!groupedForDisplay.has(defaultGroupKey)){groupedForDisplay.set(defaultGroupKey,[]);}if(!groupedForDisplay.get(defaultGroupKey).some(existing=>existing.codigo===masterItem.codigo)){groupedForDisplay.get(defaultGroupKey).push({...masterItem,cantidadOriginal:null,isFromSpecificContainerContext:false});}}});if(groupedForDisplay.size===0&&coincidencias.size>0){coincidencias.forEach(masterItem=>{const defaultGroupKey="Ítems Concordantes (Otros/Sin Contenedora Específica)";if(!groupedForDisplay.has(defaultGroupKey))groupedForDisplay.set(defaultGroupKey,[]);if(!groupedForDisplay.get(defaultGroupKey).some(ex=>ex.codigo===masterItem.codigo)){groupedForDisplay.get(defaultGroupKey).push({...masterItem,cantidadOriginal:null,isFromSpecificContainerContext:false});}});}if(groupedForDisplay.size===0){DOM.displays.outputResults.innerHTML='<p>No hay ítems concordantes para mostrar después de agrupar.</p>';return;}const sortedContenedoraKeys=Array.from(groupedForDisplay.keys()).sort((a,b)=>{const defaultKey="Ítems Concordantes (Otros/Sin Contenedora Específica)";if(a===defaultKey&&b!==defaultKey)return 1;if(a!==defaultKey&&b===defaultKey)return-1;return a.localeCompare(b);});sortedContenedoraKeys.forEach(contenedora=>{const itemsArray=groupedForDisplay.get(contenedora);const uniqueItemsInGroup=itemsArray.filter((item,index,self)=>index===self.findIndex((t)=>t.codigo===item.codigo&&t.cantidadOriginal===item.cantidadOriginal));if(uniqueItemsInGroup.length===0)return;const contenedoraHeader=document.createElement('h4');contenedoraHeader.textContent=`${contenedora} (${uniqueItemsInGroup.length} ítem(s) únicos)`;contenedoraHeader.style.marginTop="20px";contenedoraHeader.style.borderBottom="1px solid #ccc";fragment.appendChild(contenedoraHeader);uniqueItemsInGroup.forEach(item=>{const cD=document.createElement("div");cD.className="barcode-item-container";cD.dataset.iditem=item.codigo;const descText=item.descripcion?`<p class="barcode-item-desc">${item.descripcion}</p>`:'';const brandText=`<p style="font-size:0.8em;text-align:center;color:#777;">Marca: ${item.brand??'N/A'}</p>`;const cantidadText=(typeof item.cantidadOriginal==='number'&&item.cantidadOriginal!==null&&item.isFromSpecificContainerContext)?`<p style="font-size:0.9em;text-align:center;font-weight:bold;">Cantidad: ${item.cantidadOriginal}</p>`:'';cD.innerHTML=`<p class="barcode-item-code">${item.codigo}</p>${descText}${brandText}${cantidadText}<div class="barcode-item-svg"></div>`;const svg=document.createElementNS("http://www.w3.org/2000/svg","svg");try{JsBarcode(svg,item.codigo,{format:"CODE128",width:2,height:50,displayValue:false,margin:5});cD.querySelector('.barcode-item-svg').appendChild(svg);}catch(e){cD.querySelector('.barcode-item-svg').innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`;}fragment.appendChild(cD);});});DOM.displays.outputResults.appendChild(fragment);}
+    function openItemDetailModal(idItem){/* ... same ... */const item=listaFoco.get(idItem)??coincidencias.get(idItem);if(item){DOM.modal.codigo.textContent="ID Ítem: "+(item.codigo||'N/A');DOM.modal.descripcion.textContent=item.descripcion||'No disponible';DOM.modal.upc.textContent=item.upc||'No disponible';DOM.modal.brand.textContent=item.brand||'No disponible';const imageUrl=item.url?.trim();if(imageUrl){DOM.modal.image.src=imageUrl;DOM.modal.image.alt="Imagen de "+(item.descripcion||item.codigo||'ítem');DOM.modal.image.style.display='block';DOM.modal.imageError.style.display='none';}else{DOM.modal.image.style.display='none';DOM.modal.image.src='#';DOM.modal.imageError.textContent='URL de imagen no especificada.';DOM.modal.imageError.style.display='block';}DOM.views.itemDetailModal.style.display='flex';}}
+    function closeItemDetailModal(){/* ... same ... */DOM.views.itemDetailModal.style.display='none';DOM.modal.image.src="#";}
+    function handleIniciarDobleControl(){/* ... same ... */if(listaFoco.size===0){alert("No hay Lista Maestra cargada.");return;}listaVerificar.clear();datosVerificacionCargados=[];coincidencias.clear();DOM.inputs.verifyTextarea.value='';DOM.inputs.scannedCodesVerifyTextarea.value='';resetFileInput(DOM.inputs.verifyFileTxtCsv);resetFileInput(DOM.inputs.verifyFileExcel);updateVerifyPreview();navigateToView('dobleControlStep');}
+    function handleBorrarStorage(){/* ... same ... */if(confirm("¿Borrar Maestra local y resincronizar?")){localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);listaFoco.clear();listaFocoCacheadaLocalmente.clear();upcToCodigoMap.clear();alert("Maestra local borrada. Resincronizando...");checkInitialState();}}
+    function handleCompare(){/* ... same ... */collectVerifyDataFromInputs();if(listaVerificar.size===0){alert("Cargue o escanee Ítems para la Lista de Verificación.");return;}if(listaFoco.size===0){alert("Lista Maestra vacía. Sincronice.");navigateToView('panelInicio');return;}compareListsAndDisplayResults();navigateToView('resultadosStep');}
+    function toggleResultsLayout(){/* ... same ... */DOM.displays.outputResults.classList.toggle('grid');DOM.displays.outputResults.classList.toggle('list');DOM.buttons.layoutToggle.textContent=DOM.displays.outputResults.classList.contains('grid')?'📊 Vista Lista':'📊 Vista Cuadrícula';}
+    function downloadCsvResults(){/* ... same ... */if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;}let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n";coincidencias.forEach(item=>{const esc=(v)=>`"${(v??'').replace(/"/g,'""')}"`;csvContent+=`${esc(item.codigo)},${esc(item.upc)},${esc(item.descripcion)},${esc(item.brand)},${esc(item.url)}\n`;});const blob=new Blob(["\uFEFF"+csvContent],{type:'text/csv;charset=utf-8;'});const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`concordancias_sdci_${new Date().toISOString().slice(0,10)}.csv`;link.click();URL.revokeObjectURL(link.href);}
+    async function downloadXlsxResults() { /* ... same as previous version with high quantity items ... */ 
         const hasHighQuantityItems = datosVerificacionCargados.some(item => item.cantidad >= 100 && !coincidencias.has(item.idItem));
         if (coincidencias.size === 0 && !hasHighQuantityItems) {
             alert("No hay Ítems concordantes ni ítems con cantidad >= 100 (no en maestra) para exportar a XLSX.");
@@ -1169,7 +696,6 @@
             const groupedForXLSX = new Map();
             const itemsHandledBySpecificContainer = new Set(); 
 
-            // Step 1: Process concordant items from `datosVerificacionCargados`
             datosVerificacionCargados.forEach(uploadedItem => {
                 if (coincidencias.has(uploadedItem.idItem)) {
                     const masterDetails = coincidencias.get(uploadedItem.idItem);
@@ -1193,7 +719,6 @@
                 }
             });
             
-            // Step 2: Add concordant items not originating from a file with specific container info
             coincidencias.forEach((masterItem, itemCodigo) => {
                 if (!itemsHandledBySpecificContainer.has(itemCodigo)) {
                     const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
@@ -1210,7 +735,6 @@
                 }
             });
 
-            // Step 3: Add items from `datosVerificacionCargados` with cantidad >= 100 that are NOT concordances
             datosVerificacionCargados.forEach(uploadedItem => {
                 if (uploadedItem.cantidad >= 100 && !coincidencias.has(uploadedItem.idItem)) {
                     let contenedoraKey = (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora &&
@@ -1224,8 +748,6 @@
                     
                     const descFromUpload = uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.descripción || uploadedItem.allRowData?.description || "N/A (No en Maestra)";
                     const brandFromUpload = uploadedItem.allRowData?.marca || uploadedItem.allRowData?.brand || "N/A (No en Maestra)";
-
-                    // Ensure this specific non-concordant high-quantity item isn't duplicated in its group
                     const itemExistsCheckKey = `${uploadedItem.idItem}-${uploadedItem.cantidad}-${uploadedItem.contenedora}`;
                     let alreadyExists = false;
                     if(groupedForXLSX.get(contenedoraKey).find(it => `${it.codigo}-${it.cantidadCargada}-${it._originalUploadedItemContext?.contenedora}` === itemExistsCheckKey && it.status === "No en Maestra (Cant. >= 100)")) {
@@ -1237,8 +759,6 @@
                             codigo: uploadedItem.idItem,
                             descripcion: descFromUpload,
                             marca: brandFromUpload,
-                            upc: "N/A", 
-                            url: "N/A", 
                             cantidadCargada: uploadedItem.cantidad,
                             status: "No en Maestra (Cant. >= 100)",
                             _originalUploadedItemContext: { contenedora: uploadedItem.contenedora, cantidad: uploadedItem.cantidad }
@@ -1247,8 +767,6 @@
                 }
             });
 
-
-            // XLSX SHEET GENERATION
             const dataForSheet = [];
             const mainTitleQuery = document.querySelector('.container > h1');
             const reportTitle = mainTitleQuery ? mainTitleQuery.innerText : "Sistema de Doble Control de Ítems";
@@ -1259,11 +777,7 @@
             dataForSheet.push([`Fecha de Generación: ${currentDateFormatted}`]); 
             dataForSheet.push([]); 
 
-            const merges = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }, 
-                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, 
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } }  
-            ];
+            const merges = [ { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }, { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } } ];
             let currentRow = 4; 
 
             const sortedContenedoraKeys = Array.from(groupedForXLSX.keys()).sort((a, b) => {
@@ -1271,37 +785,19 @@
                 const defaultKey2 = "Ítems Adicionales por Cantidad (Cont. Diversas)";
                 const aIsDefault = (a === defaultKey1 || a === defaultKey2);
                 const bIsDefault = (b === defaultKey1 || b === defaultKey2);
-
-                if (aIsDefault && !bIsDefault) return 1;
-                if (!aIsDefault && bIsDefault) return -1;
-                if (a === defaultKey2 && b === defaultKey1) return 1; // Adicionales después de Concordantes Otros
-                if (a === defaultKey1 && b === defaultKey2) return -1;
+                if (aIsDefault && !bIsDefault) return 1; if (!aIsDefault && bIsDefault) return -1;
+                if (a === defaultKey2 && b === defaultKey1) return 1; if (a === defaultKey1 && b === defaultKey2) return -1;
                 return a.localeCompare(b);
             });
 
             sortedContenedoraKeys.forEach(contenedora => {
                 const itemsInContenedora = groupedForXLSX.get(contenedora);
                 if (!itemsInContenedora || itemsInContenedora.length === 0) return;
-
-                const uniqueItemsForXLSXInGroup = [];
-                const seenInThisGroup = new Set();
-                itemsInContenedora.forEach(item => {
-                    const itemKey = `${item.codigo}-${item.cantidadCargada}-${item.status || 'concordante'}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`; 
-                    if (!seenInThisGroup.has(itemKey)) {
-                        uniqueItemsForXLSXInGroup.push(item);
-                        seenInThisGroup.add(itemKey);
-                    }
-                });
-
-                dataForSheet.push([`Contenedora: ${contenedora} (${uniqueItemsForXLSXInGroup.length} ítem(s))`]);
-                merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 1 } });
-                currentRow++;
-
+                const uniqueItemsForXLSXInGroup = []; const seenInThisGroup = new Set();
+                itemsInContenedora.forEach(item => { const itemKey = `${item.codigo}-${item.cantidadCargada}-${item.status || 'concordante'}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`; if (!seenInThisGroup.has(itemKey)) { uniqueItemsForXLSXInGroup.push(item); seenInThisGroup.add(itemKey);}});
+                dataForSheet.push([`Contenedora: ${contenedora} (${uniqueItemsForXLSXInGroup.length} ítem(s))`]); merges.push({ s: { r: currentRow, c: 0 }, e: { r: currentRow, c: 1 } }); currentRow++;
                 uniqueItemsForXLSXInGroup.forEach(item => {
-                    let displayId = item.codigo || 'N/A';
-                    if (item.status === "No en Maestra (Cant. >= 100)") {
-                        displayId += " (No en Maestra)";
-                    }
+                    let displayId = item.codigo || 'N/A'; if (item.status === "No en Maestra (Cant. >= 100)") { displayId += " (No en Maestra)"; }
                     dataForSheet.push(["ID Ítem:", displayId]); currentRow++;
                     dataForSheet.push(["Descripción:", item.descripcion || 'N/A']); currentRow++;
                     dataForSheet.push(["Marca:", item.brand || 'N/A']); currentRow++;
@@ -1313,72 +809,11 @@
                 });
             });
 
-            if (dataForSheet.length <= 4) { 
-                 alert("No hay datos agrupados para generar el reporte XLSX.");
-                 btn.textContent = originalText; btn.disabled = false; return;
-            }
-
-            const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-            ws['!cols'] = [ { wch: 35 }, { wch: 65 } ]; 
-            ws['!merges'] = merges;
-
-            const titleStyle = { font: { bold: true, sz: 16, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
-            const subtitleStyle = { font: { bold: true, sz: 14, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
-            const dateStyle = { font: { sz: 10, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
-            const containerHeaderStyle = { font: { bold: true, sz: 13, color: { rgb: "002060" }, name: "Arial" }, fill: { fgColor: { rgb: "B4C6E7" } }, alignment: { vertical: "center"} };
-            const fieldLabelStyle = { font: { bold: true, name: "Arial", sz:10 } };
-            const naStyle = { font: { italic: true, color: { rgb: "808080" }, name: "Arial", sz:10 } };
-            const defaultCellStyle = { font: { name: "Arial", sz: 10 }};
-            const cantidadValueStyle = { font: { bold: true, sz: 12, name: "Arial" } }; 
-            const notInMasterTextStyle = { font: { color: { rgb: "FF0000" } } }; // Para el texto "(No en Maestra)"
-
-            for (let r_idx = 0; r_idx < dataForSheet.length; ++r_idx) {
-                for (let c_idx = 0; c_idx < (dataForSheet[r_idx] ? dataForSheet[r_idx].length : 0) ; ++c_idx) {
-                    const cellAddress = XLSX.utils.encode_cell({r:r_idx, c:c_idx});
-                    if (!ws[cellAddress]) ws[cellAddress] = { t:'s', v: dataForSheet[r_idx][c_idx] || "" }; 
-                    else if (ws[cellAddress].v === null || ws[cellAddress].v === undefined ) ws[cellAddress].v = ""; 
-
-                    let appliedStyle = null;
-                    const cellValueString = String(ws[cellAddress].v).trim();
-                    const labelString = dataForSheet[r_idx][0] ? String(dataForSheet[r_idx][0]).trim() : "";
-
-                    if (r_idx === 0 && c_idx === 0) appliedStyle = titleStyle;
-                    else if (r_idx === 1 && c_idx === 0) appliedStyle = subtitleStyle;
-                    else if (r_idx === 2 && c_idx === 0) appliedStyle = dateStyle;
-                    else if (labelString.startsWith("Contenedora:")) {
-                         appliedStyle = containerHeaderStyle;
-                    } else if (c_idx === 1 && labelString === "Cantidad (Info. Carga):") { 
-                        if (cellValueString !== 'N/A' && cellValueString !== '') {
-                             appliedStyle = cantidadValueStyle;
-                        } else {
-                             appliedStyle = naStyle; 
-                        }
-                    } else if (c_idx === 0 && labelString !== "") { 
-                         appliedStyle = fieldLabelStyle;
-                    } else if (cellValueString === 'N/A') { 
-                         appliedStyle = naStyle;
-                    } else {
-                         appliedStyle = defaultCellStyle; 
-                    }
-                    
-                    // Apply "No en Maestra" text style if applicable, potentially merging
-                    if (typeof cellValueString === 'string' && cellValueString.includes("(No en Maestra)")) {
-                        if (appliedStyle && appliedStyle.font) {
-                            appliedStyle.font = { ...appliedStyle.font, ...notInMasterTextStyle.font };
-                        } else if (appliedStyle) {
-                             appliedStyle.font = { ...notInMasterTextStyle.font };
-                        } else {
-                            appliedStyle = { font : {...notInMasterTextStyle.font }};
-                        }
-                    }
-                    ws[cellAddress].s = appliedStyle;
-                }
-            }
-            
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Ítems por Contenedora");
-            XLSX.writeFile(wb, `Informe_Items_Por_Contenedora_SDCI_${new Date().toISOString().slice(0,10)}.xlsx`);
-
+            if (dataForSheet.length <= 4) { alert("No hay datos agrupados para generar el reporte XLSX."); btn.textContent = originalText; btn.disabled = false; return;}
+            const ws = XLSX.utils.aoa_to_sheet(dataForSheet); ws['!cols'] = [ { wch: 35 }, { wch: 65 } ]; ws['!merges'] = merges;
+            const titleStyle={font:{bold:true,sz:16,name:"Arial"},alignment:{horizontal:"center",vertical:"center"}},subtitleStyle={font:{bold:true,sz:14,name:"Arial"},alignment:{horizontal:"center",vertical:"center"}},dateStyle={font:{sz:10,name:"Arial"},alignment:{horizontal:"center",vertical:"center"}},containerHeaderStyle={font:{bold:true,sz:13,color:{rgb:"002060"},name:"Arial"},fill:{fgColor:{rgb:"B4C6E7"}},alignment:{vertical:"center"}},fieldLabelStyle={font:{bold:true,name:"Arial",sz:10}},naStyle={font:{italic:true,color:{rgb:"808080"},name:"Arial",sz:10}},defaultCellStyle={font:{name:"Arial",sz:10}},cantidadValueStyle={font:{bold:true,sz:12,name:"Arial"}},notInMasterTextStyle={font:{color:{rgb:"FF0000"}}};
+            for(let r_idx=0;r_idx<dataForSheet.length;++r_idx){for(let c_idx=0;c_idx<(dataForSheet[r_idx]?dataForSheet[r_idx].length:0);++c_idx){const cellAddress=XLSX.utils.encode_cell({r:r_idx,c:c_idx});if(!ws[cellAddress])ws[cellAddress]={t:'s',v:dataForSheet[r_idx][c_idx]||""};else if(ws[cellAddress].v===null||ws[cellAddress].v===undefined)ws[cellAddress].v="";let appliedStyle=null;const cellValueString=String(ws[cellAddress].v).trim();const labelString=dataForSheet[r_idx][0]?String(dataForSheet[r_idx][0]).trim():"";if(r_idx===0&&c_idx===0)appliedStyle=titleStyle;else if(r_idx===1&&c_idx===0)appliedStyle=subtitleStyle;else if(r_idx===2&&c_idx===0)appliedStyle=dateStyle;else if(labelString.startsWith("Contenedora:"))appliedStyle=containerHeaderStyle;else if(c_idx===1&&labelString==="Cantidad (Info. Carga):"){if(cellValueString!=='N/A'&&cellValueString!=='')appliedStyle=cantidadValueStyle;else appliedStyle=naStyle;}else if(c_idx===0&&labelString!=="")appliedStyle=fieldLabelStyle;else if(cellValueString==='N/A')appliedStyle=naStyle;else appliedStyle=defaultCellStyle;if(typeof cellValueString==='string'&&cellValueString.includes("(No en Maestra)")){if(appliedStyle&&appliedStyle.font)appliedStyle.font={...appliedStyle.font,...notInMasterTextStyle.font};else if(appliedStyle)appliedStyle.font={...notInMasterTextStyle.font};else appliedStyle={font:{...notInMasterTextStyle.font}};}ws[cellAddress].s=appliedStyle;}}
+            const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Ítems por Contenedora");XLSX.writeFile(wb,`Informe_Items_Por_Contenedora_SDCI_${new Date().toISOString().slice(0,10)}.xlsx`);
         } catch (error) {
             console.error("Error generando XLSX:", error);
             alert("Error al generar archivo XLSX: " + error.message);
@@ -1388,16 +823,7 @@
         }
     }
 
-    function handleNewVerification() {
-        listaVerificar.clear(); datosVerificacionCargados = []; coincidencias.clear();
-        DOM.inputs.verifyTextarea.value = ''; DOM.inputs.scannedCodesVerifyTextarea.value = '';
-        resetFileInput(DOM.inputs.verifyFileTxtCsv); resetFileInput(DOM.inputs.verifyFileExcel);
-        updateVerifyPreview();
-        DOM.displays.outputResults.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>';
-        DOM.stats.totalVerify.textContent = '0'; DOM.stats.totalMatches.textContent = '0';
-        if(scannerVerifierActive && html5QrCodeVerifier?.isScanning) toggleScanner(); 
-        navigateToView('panelInicio');
-    }
+    function handleNewVerification() { /* ... same ... */ listaVerificar.clear();datosVerificacionCargados=[];coincidencias.clear();DOM.inputs.verifyTextarea.value='';DOM.inputs.scannedCodesVerifyTextarea.value='';resetFileInput(DOM.inputs.verifyFileTxtCsv);resetFileInput(DOM.inputs.verifyFileExcel);updateVerifyPreview();DOM.displays.outputResults.innerHTML='<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>';DOM.stats.totalVerify.textContent='0';DOM.stats.totalMatches.textContent='0';forceStopScannerAndCloseModal();navigateToView('panelInicio');}
   </script>
 </body>
 </html>
