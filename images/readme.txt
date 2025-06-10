@@ -1,2 +1,2 @@
 Imagenes aqui
-formato: "ITEM.jpeg"
+formato: "ITEM.jpg"
