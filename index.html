@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Doble Control de Ítems v2.8.9 (REFACORIZADO)</title>
+  <title>Sistema de Doble Control de Ítems v3.0.3 (Modal & Stats Refined)</title>
   <style>
     /* Estilos CSS Generales (de la v2.8.8 y mejoras) */
     body {
@@ -120,7 +120,7 @@
     .preview-item:last-child, .search-result-item:last-child { border-bottom: none; }
     .preview-item .code, .search-result-item .code { font-weight: bold; color: #34495e; flex-shrink: 0; margin-right: 10px;}
     .preview-item .desc, .search-result-item .desc { color: #7f8c8d; margin-left: 10px; font-style: italic; text-align: right; flex-grow: 1; }
-    .preview-item .upc-brand-url, .search-result-item .upc-brand-url { font-size: 0.85em; color: #555; margin-left: 10px; }
+    .preview-item .upc-brand-url { font-size: 0.85em; color: #555; margin-left: 10px; }
 
     .results-summary {
       margin-bottom: 25px;
@@ -147,24 +147,100 @@
     .barcode-item-desc { text-align: center; margin-bottom: 6px; font-size: 0.9em; color: #555; font-style: italic; }
     .barcode-item-svg svg { max-width: 100%; height: auto; display: block; margin: 0 auto;}
 
+    /* Modal de Detalles del Ítem */
     #itemDetailModal {
-      position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
-      overflow: auto; background-color: rgba(0,0,0,0.5); display: none;
-      align-items: center; justify-content: center;
+      display: none; /* Hidden by default */
+      position: fixed; /* Stay in place */
+      z-index: 1000; /* Sit on top */
+      left: 0;
+      top: 0;
+      width: 100%; /* Full width */
+      height: 100%; /* Full height */
+      overflow: auto; /* Enable scroll if needed */
+      background-color: rgba(0,0,0,0.5); /* Black w/ opacity */
+      align-items: center; /* Center vertically */
+      justify-content: center; /* Center horizontally */
     }
+
     #itemDetailModal .modal-content {
-      background-color: #fefefe; margin: auto; padding: 25px; border: 1px solid #888;
-      width: 90%; max-width: 600px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      background-color: #fefefe;
+      margin: auto;
+      padding: 25px;
+      border: 1px solid #888;
+      width: 90%; /* Could be more or less, depending on screen size */
+      max-width: 600px; /* Max width for larger screens */
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      position: relative; /* Needed for close button positioning */
       text-align: center;
-      position: relative;
     }
-    #itemDetailModal .modal-content h3 { margin-top: 0; color: #3498db; }
-    #itemDetailModal .modal-content p { margin: 8px 0; font-size: 1.1em; text-align: left;}
-    #itemDetailModal .modal-content strong { color: #555;}
-    #itemDetailModal #modalItemImageContainer { margin-top: 15px; margin-bottom: 15px; min-height: 50px; }
-    #itemDetailModal #modalItemImage { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; object-fit: contain; }
-    #itemDetailModal .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; position: absolute; top: 10px; right: 20px; }
-    #itemDetailModal .close-modal:hover, #itemDetailModal .close-modal:focus { color: black; text-decoration: none; }
+
+    #itemDetailModal .modal-content h3 {
+      margin-top: 0;
+      color: #3498db;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    #itemDetailModal .modal-content p {
+      margin: 8px 0;
+      font-size: 1.1em;
+      text-align: left;
+    }
+
+    #itemDetailModal .modal-content strong {
+      color: #555;
+    }
+
+    #itemDetailModal #modalItemImageContainer {
+      margin-top: 15px;
+      margin-bottom: 15px;
+      min-height: 50px; /* Reserve space */
+      text-align: center;
+    }
+
+    #itemDetailModal #modalItemImage {
+      max-width: 100%;
+      max-height: 300px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      object-fit: contain; /* Ensures image fits without cropping */
+    }
+
+    #itemDetailModal #modalImageError {
+      color: red;
+      font-size: 0.9em;
+      margin-top: 5px;
+      display: none; /* Hidden by default */
+    }
+
+    #itemDetailModal .close-modal {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #itemDetailModal .close-modal:hover,
+    #itemDetailModal .close-modal:focus {
+      color: black;
+      text-decoration: none;
+    }
+
+    #modalItemBarcodeSvg {
+        margin-top: 15px;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    #modalItemBarcodeSvg svg {
+        max-width: 80%;
+        height: auto;
+        display: inline-block; /* To center it */
+    }
+
 
     #scannerContainerVerify { max-width: 400px; margin: 15px auto; border: 1px solid #ccc; padding: 5px; border-radius: 4px;}
     #readerVerify { width: 100%; }
@@ -178,21 +254,80 @@
       border-top: 1px solid #eee;
     }
 
+    /* Estilos para Toasts/Snackbars */
+    #toast-container {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1050; /* Higher than modal */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        max-width: 400px;
+        pointer-events: none; /* Allows clicks through to elements below */
+    }
+
+    .toast {
+        background-color: #333;
+        color: #fff;
+        padding: 12px 20px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        transform: translateY(20px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        width: fit-content;
+        text-align: center;
+        pointer-events: auto; /* Re-enable pointer events for the toast itself */
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .toast.success { background-color: #28a745; }
+    .toast.error { background-color: #dc3545; }
+    .toast.warning { background-color: #ffc107; color: #333;}
+    .toast.info { background-color: #17a2b8; }
+
+
     /* Estilos para @media print */
     @media print {
-      .barcode-item-container {
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff !important;
+      }
+      .container {
+        box-shadow: none !important;
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0.5in !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .barcode-item-container, h4, .section, .results-summary {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
-      .no-print-pdf { 
-        display: none !important;
+      h4 {
+        page-break-before: auto !important;
+        page-break-after: avoid !important;
+      }
+      @page {
+        size: letter;
+        margin: 0.5in;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Sistema de Doble Control de Ítems v2.8.9 (REFACORIZADO)</h1>
+    <h1>Sistema de Doble Control de Ítems v3.0.3 (Modal & Stats Refined)</h1>
 
     <div id="panelInicio" class="section">
       <h2>Panel de Inicio</h2>
@@ -203,6 +338,17 @@
         <button id="btnIniciarDobleControlDesdePanel" disabled>➡️ Iniciar Doble Control</button>
         <button id="btnGestionMaestraDesdePanel" class="secondary" disabled>🔎 Ver Lista Maestra y Buscar</button>
         <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 20px;">🗑️ Borrar Maestra Local y Resincronizar</button>
+      </div>
+
+      <div class="input-group" style="margin-top:30px; border-top: 1px solid #eee; padding-top: 20px;">
+        <h3>Cargar Maestra Local (Offline)</h3>
+        <p style="font-size:0.9em; color:#555;">
+          Si necesitas trabajar sin conexión o prefieres una maestra local, sube tu archivo `.xlsx` aquí.
+          Este archivo reemplazará cualquier maestra cargada desde el repositorio o previamente guardada.
+        </p>
+        <label for="masterFileExcelUpload">Seleccionar archivo Maestran (.xlsx):</label>
+        <input type="file" id="masterFileExcelUpload" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <button id="btnUploadLocalMaestra">⬆️ Cargar Maestra Local (Offline)</button>
       </div>
     </div>
 
@@ -226,17 +372,26 @@
       <div class="input-group">
         <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción, marca o URL de imagen):</label>
         <input type="text" id="searchFocoInput" placeholder="Ingrese término de búsqueda...">
+        
+        <label for="departmentFilter">Filtrar por Departamento:</label>
+        <select id="departmentFilter">
+            <option value="">Todos los Departamentos</option>
+            </select>
+
+        <label for="segmentFilter">Filtrar por Segmento:</label>
+        <select id="segmentFilter">
+            <option value="">Todos los Segmentos</option>
+            <option value="ACP">ACP</option>
+            <option value="PPS">PPS</option>
+        </select>
       </div>
       <div id="focoSearchResults" class="search-results-area" style="margin-bottom: 20px;">Resultados de la búsqueda aparecerán aquí...</div>
 
       <div id="focoPreview" class="preview-area">
-        <h3>Estadísticas de la Lista Maestra</h3>
-        <ul id="masterListStats">
-            <li>Total de Ítems: <strong id="statTotalItems">0</strong></li>
-            <li>Ítems sin URL de imagen: <strong id="statNoImageUrl">0</strong></li>
-            <li>Ítems sin UPC: <strong id="statNoUpc">0</strong></li>
-            <li>Ítems sin Descripción: <strong id="statNoDescription">0</strong></li>
-            <li>Ítems sin Marca: <strong id="statNoBrand">0</strong></li>
+        <h3>Estadísticas por Departamento y Segmento</h3>
+        <ul id="departmentAndSegmentStats">
+            <li><strong>Total ítems por depto:</strong> <ul id="statItemsByDepartment" style="list-style-type: none; padding-left: 15px;"></ul></li>
+            <li><strong>Total ítems por segmento:</strong> <ul id="statItemsBySegment" style="list-style-type: none; padding-left: 15px;"></ul></li>
         </ul>
         <p style="font-size:0.8em; margin-top:15px; text-align:center;">
             Utiliza la barra de búsqueda de arriba para encontrar ítems específicos.
@@ -251,7 +406,7 @@
     <div id="dobleControlStep" class="section hidden">
       <h2>Paso 2: Cargar Lista de Ítems para Doble Control</h2>
       <p style="font-size:0.9em; color: #555;">
-        Puede escanear el UPC del artículo físico (si su Lista Maestra contiene UPCs) o ingresar el ID del Ítem.
+        Puede escanear el UPC del artículo físico (si su Lista Ma
         Solo se considerarán IDs de Ítem **numéricos de más de 5 dígitos**.
       </p>
        <p style="font-size:0.85em; color:#c0392b; background-color: #fdedec; padding: 5px; border-left: 3px solid #c0392b;">
@@ -307,22 +462,27 @@
     </div>
   </div>
 
-  <div id="itemDetailModal" class="hidden">
+  <div id="itemDetailModal">
     <div class="modal-content">
       <span class="close-modal" onclick="closeItemDetailModal()">&times;</span>
       <h3 id="modalItemCodigo"></h3>
       <div id="modalItemImageContainer">
-        <img id="modalItemImage" src="#" alt="Imagen del Ítem" style="display:none;">
-        <p id="modalImageError" style="display:none; color:red;">Imagen no disponible.</p>
+        <img id="modalItemImage" src="#" alt="Imagen del Ítem">
+        <p id="modalImageError">URL de imagen no especificada o error al cargar.</p>
       </div>
       <p><strong>Descripción:</strong> <span id="modalItemDescripcion"></span></p>
       <p><strong>UPC:</strong> <span id="modalItemUPC"></span></p>
       <p><strong>Marca:</strong> <span id="modalItemBrand"></span></p>
+      <p><strong>Departamento:</strong> <span id="modalItemDepartment"></span></p>
+      <p><strong>UOM:</strong> <span id="modalItemUom"></span></p>
+      <div id="modalItemBarcodeSvg"></div>
     </div>
   </div>
 
+  <div id="toast-container"></div>
+
   <footer>
-    Sistema de Doble Control de Ítems v2.8.9 - Desarrollado por fgalaz - Chile, 2025
+    Sistema de Doble Control de Ítems v3.0.3 - Desarrollado por fgalaz - Chile, 2025
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
@@ -330,8 +490,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <script>
-    // ----- URL DE LA LISTA MAESTRA EN REPOSITORIO -----
-    const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.csv';
+    // ----- URL DE LA LISTA MAESTRA EN REPOSITORIO (DEBE SER UN ARCHIVO .XLSX) -----
+    const URL_LISTA_MAESTRA_REPOSITORIO = 'https://raw.githubusercontent.com/Galaz94/Double_Control/main/maestra.xlsx'; // ¡Asegúrate de que esta URL apunte a tu XLSX!
 
     // ----- ESTADO DE LA APLICACIÓN -----
     let listaFoco = new Map();
@@ -339,7 +499,7 @@
     let listaVerificar = new Set(); 
     let datosVerificacionCargados = []; 
     let coincidencias = new Map();
-    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v2.8.9';
+    const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v3.0.3'; // Clave actualizada para la versión 3.0.3
     let listaFocoCacheadaLocalmente = new Map();
     let html5QrCodeVerifier = null;
     let scannerVerifierActive = false;
@@ -368,6 +528,7 @@
             newVerification: $('btnNewVerification'),
             confirmarCambios: $('btnConfirmarCambiosRepositorio'),
             rechazarCambios: $('btnRechazarCambiosRepositorio'),
+            uploadLocalMaestra: $('btnUploadLocalMaestra'), 
         },
         inputs: {
             searchFoco: $('searchFocoInput'),
@@ -378,6 +539,7 @@
             verifyCsvDelimiter: $('verifyCsvDelimiter'),
             verifyHasHeader: $('verifyHasHeader'),
             scannedCodesVerifyTextarea: $('scannedCodesVerifyTextarea'),
+            masterFileExcelUpload: $('masterFileExcelUpload'), 
         },
         displays: {
             panelInicioInfo: $('panelInicioInfo'),
@@ -389,14 +551,22 @@
             outputResults: $('outputResults'),
         },
         stats: {
-            totalItems: $('statTotalItems'),
-            noImageUrl: $('statNoImageUrl'),
-            noUpc: $('statNoUpc'),
-            noDescription: $('statNoDescription'),
-            noBrand: $('statNoBrand'),
+            // General stats removed
+            // totalItems: $('statTotalItems'),
+            // noImageUrl: $('statNoImageUrl'),
+            // noUpc: $('statNoUpc'),
+            // noDescription: $('statNoDescription'),
+            // noBrand: $('statNoBrand'),
+
             totalFoco: $('totalFoco'),
             totalVerify: $('totalVerify'),
             totalMatches: $('totalMatches'),
+            itemsByDepartment: $('statItemsByDepartment'),
+            itemsBySegment: $('statItemsBySegment'),
+        },
+        filters: {
+            department: $('departmentFilter'),
+            segment: $('segmentFilter'),
         },
         modal: {
             image: $('modalItemImage'),
@@ -405,6 +575,9 @@
             descripcion: $('modalItemDescripcion'),
             upc: $('modalItemUPC'),
             brand: $('modalItemBrand'),
+            department: $('modalItemDepartment'),
+            uom: $('modalItemUom'),
+            barcodeSvgContainer: $('modalItemBarcodeSvg') // Nuevo para el código de barras
         },
         resumenCambios: {
             nuevos: document.querySelector('#resumenNuevos ul'),
@@ -419,9 +592,44 @@
         addEventListeners();
     });
 
+    // --- Toast / Snackbar Implementation ---
+    function showToast(message, type = 'info', duration = 3000) {
+        let toastContainer = $('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+
+        // Force reflow to enable transition
+        void toast.offsetWidth; 
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+            toast.addEventListener('transitionend', () => {
+                toast.remove();
+            }, { once: true });
+        }, duration);
+    }
+
     function addEventListeners() {
         DOM.views.itemDetailModal.addEventListener('click', (event) => {
-            if (event.target === DOM.views.itemDetailModal) closeItemDetailModal();
+            // Only close if clicking directly on the modal background or the close button
+            if (event.target === DOM.views.itemDetailModal || event.target.classList.contains('close-modal')) {
+                closeItemDetailModal();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && DOM.views.itemDetailModal.style.display === 'flex') {
+                closeItemDetailModal();
+            }
         });
 
         DOM.modal.image.onerror = function() {
@@ -437,26 +645,26 @@
         DOM.buttons.iniciarDobleControl.addEventListener('click', handleIniciarDobleControl);
         DOM.buttons.gestionMaestra.addEventListener('click', () => navigateToView('gestionMaestraStep'));
         DOM.buttons.borrarStorage.addEventListener('click', handleBorrarStorage);
+        DOM.buttons.uploadLocalMaestra.addEventListener('click', handleMasterFileUpload); 
+        DOM.inputs.masterFileExcelUpload.addEventListener('change', () => { 
+            DOM.buttons.uploadLocalMaestra.disabled = !DOM.inputs.masterFileExcelUpload.files.length;
+        });
+        DOM.buttons.uploadLocalMaestra.disabled = true; 
 
         DOM.inputs.searchFoco.addEventListener('input', () => {
-            const searchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
-            if (!searchTerm) {
-                DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar...</p>';
-                return;
-            }
-            const results = Array.from(listaFoco.values()).filter(item =>
-                item.codigo.toLowerCase().includes(searchTerm) ||
-                (item.upc && item.upc.toLowerCase().includes(searchTerm)) ||
-                (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) ||
-                (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
-                (item.url && item.url.toLowerCase().includes(searchTerm))
-            );
-            updateFocoPreviewAndSearch(results);
+            updateFocoPreviewAndSearch(); 
         });
+
+        DOM.filters.department.addEventListener('change', () => {
+            DOM.filters.department.dataset.previousValue = DOM.filters.department.value; 
+            updateFocoPreviewAndSearch();
+        });
+        DOM.filters.segment.addEventListener('change', () => updateFocoPreviewAndSearch());
+
         DOM.buttons.volverDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
 
-        DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleFileUpload(e.target.files[0], 'textcsv'));
-        DOM.inputs.verifyFileExcel.addEventListener('change', (e) => handleFileUpload(e.target.files[0], 'excel'));
+        DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleVerifyFileUpload(e.target.files[0], 'textcsv'));
+        DOM.inputs.verifyFileExcel.addEventListener('change', (e) => handleVerifyFileUpload(e.target.files[0], 'excel'));
         DOM.buttons.startScanVerify.addEventListener('click', toggleScanner);
         DOM.buttons.compare.addEventListener('click', handleCompare);
         DOM.buttons.volverDesdeDobleControl.addEventListener('click', () => navigateToView('panelInicio'));
@@ -467,7 +675,7 @@
         DOM.buttons.newVerification.addEventListener('click', handleNewVerification);
 
         DOM.displays.outputResults.addEventListener('click', (event) => {
-            const itemContainer = event.target.closest('.barcode-item-container, .search-result-item');
+            const itemContainer = event.target.closest('.barcode-item-container');
             if (itemContainer) {
                 const itemId = itemContainer.dataset.iditem;
                 if (itemId) openItemDetailModal(itemId);
@@ -492,9 +700,11 @@
                 updateFocoPreviewAndSearch();
                 DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
+                showToast(`Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`, 'success');
             } else {
                  DOM.displays.panelInicioInfo.innerHTML = `⚠️ Error al aplicar cambios. Se mantuvo la versión actual.`;
                  DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
+                 showToast(`Error al aplicar cambios. Se mantuvo la versión actual.`, 'error');
             }
             navigateToView('panelInicio');
         });
@@ -503,26 +713,61 @@
             updateFocoPreviewAndSearch();
             DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`;
             DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
+            showToast(`Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`, 'info');
             navigateToView('panelInicio');
         });
     }
 
     function cleanText(text) { return text ? String(text).trim() : ''; }
 
-    function parsearMaestraCSV(csvText) {
-        return csvText.trim().split(/\r\n|\n/).slice(1).map(linea => {
-            if (!linea.trim()) return null;
-            const partes = linea.split(','); 
-            if (!partes[0]) return null;
-            return {
-                codigo: cleanText(partes[0]),
-                upc: cleanText(partes[1]),
-                descripcion: cleanText(partes[2]),
-                brand: cleanText(partes[3]),
-                url: cleanText(partes[4])
-            };
-        }).filter(Boolean);
+    // NUEVA FUNCIÓN para parsear XLSX para la LISTA MAESTRA
+    async function parsearMaestraXLSX(arrayBuffer) {
+        const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        if (!worksheet) throw new Error("Archivo XLSX de Maestra sin hojas.");
+
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, rawNumbers: false, defval: null });
+        if (jsonData.length === 0) return [];
+
+        const headersRow = jsonData[0].map(h => cleanText(h || '').toLowerCase());
+        const dataRows = jsonData.slice(1);
+
+        // Updated expected headers to include 'url'
+        // Add 'uom' as the preferred header, keep 'quantity' for backward compatibility
+        const expectedHeaders = ['department', 'item', 'upc', 'descripcion', 'brand', 'uom', 'quantity', 'url'];
+        const headerMap = {};
+        expectedHeaders.forEach(eh => {
+            const idx = headersRow.indexOf(eh);
+            if (idx !== -1) headerMap[eh] = idx;
+        });
+        // Special mapping for 'item' to 'codigo' if needed
+        if (headerMap['item'] === undefined) {
+             console.warn("Columna 'item' no encontrada en la maestra. Asegúrate de que el encabezado sea 'item'.");
+             throw new Error("Columna 'item' (ID de ítem) no encontrada en el archivo XLSX de la maestra.");
+        }
+
+
+        const itemsArray = dataRows.map(row => {
+            if (!row || row.every(cell => cell === null || cell === '')) return null;
+
+            const item = {};
+            item.department = cleanText(row[headerMap['department']]);
+            item.codigo = cleanText(row[headerMap['item']]); // 'item' del XLSX es 'codigo' en nuestra lógica
+            item.upc = cleanText(row[headerMap['upc']]);
+            item.descripcion = cleanText(row[headerMap['descripcion']]);
+            item.brand = cleanText(row[headerMap['brand']]);
+            // Prioritize 'uom', fallback to 'quantity' for backward compatibility
+            item.uom = cleanText(row[headerMap['uom']]) || cleanText(row[headerMap['quantity']]);
+            item.url = cleanText(row[headerMap['url']]); // Now explicitly looking for 'url' column
+
+            // Validar que el código esté presente
+            if (!item.codigo) return null; 
+            return item;
+        }).filter(Boolean); // Filtrar filas nulas o inválidas
+
+        return itemsArray;
     }
+
 
     function rebuildUpcToCodigoMap() {
         upcToCodigoMap.clear();
@@ -541,8 +786,9 @@
         try {
             const response = await fetch(`${URL_LISTA_MAESTRA_REPOSITORIO}?t=${new Date().getTime()}`);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            const csvText = await response.text();
-            const itemsArray = parsearMaestraCSV(csvText);
+            const arrayBuffer = await response.arrayBuffer(); // Obtener como ArrayBuffer para XLSX
+            const itemsArray = await parsearMaestraXLSX(arrayBuffer); // Usar la nueva función para XLSX
+
             const nuevaListaMap = new Map();
             itemsArray.forEach(item => {
                 const idItemLimpio = cleanCode(item.codigo);
@@ -550,7 +796,7 @@
             });
             return nuevaListaMap;
         } catch (error) {
-            console.error('Excepción al cargar Maestra:', error);
+            console.error('Excepción al cargar Maestra desde repositorio:', error);
             return null;
         }
     }
@@ -563,6 +809,10 @@
             } else {
                 const itemLocal = listaLocalMap.get(codigo);
                 const changedFields = {};
+                // Compare new fields
+                if ((itemLocal.department ?? '') !== (itemRemoto.department ?? '')) changedFields.department = { old: itemLocal.department, new: itemRemoto.department };
+                if ((itemLocal.uom ?? '') !== (itemRemoto.uom ?? '')) changedFields.uom = { old: itemLocal.uom, new: itemRemoto.uom };
+                // Original fields
                 if ((itemLocal.descripcion ?? '') !== (itemRemoto.descripcion ?? '')) changedFields.descripcion = { old: itemLocal.descripcion, new: itemRemoto.descripcion };
                 if ((itemLocal.upc ?? '') !== (itemRemoto.upc ?? '')) changedFields.upc = { old: itemLocal.upc, new: itemRemoto.upc };
                 if ((itemLocal.brand ?? '') !== (itemRemoto.brand ?? '')) changedFields.brand = { old: itemLocal.brand, new: itemRemoto.brand };
@@ -583,13 +833,15 @@
         const popularListaResumen = (ul, items, fmt) => {
             ul.innerHTML = items.length > 0 ? items.map(fmt).join('') : '<li>Ninguno</li>';
         };
-        const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion??'N/A'}, U:${itm.upc??'N/A'}</li>`;
+        const itemFormatter = itm => `<li><span class="code">${itm.codigo}</span>: D:${itm.descripcion??'N/A'}, U:${itm.upc??'N/A'}, Dept:${itm.department??'N/A'}, UOM:${itm.uom??'N/A'}</li>`;
         
         popularListaResumen(DOM.resumenCambios.nuevos, nuevos, itemFormatter);
         popularListaResumen(DOM.resumenCambios.eliminados, eliminados, itemFormatter);
 
         popularListaResumen(DOM.resumenCambios.modificados, modificados, itm => {
             let chgs = '';
+            if(itm.changedFields.department) chgs += `<span class="field-change">Dept: <s>${itm.changedFields.department.old??'N/A'}</s> &rarr; ${itm.changedFields.department.new??'N/A'}</span>`;
+            if(itm.changedFields.uom) chgs += `<span class="field-change">UOM: <s>${itm.changedFields.uom.old??'N/A'}</s> &rarr; ${itm.changedFields.uom.new??'N/A'}</span>`;
             if(itm.changedFields.descripcion) chgs += `<span class="field-change">Desc: <s>${itm.changedFields.descripcion.old??'N/A'}</s> &rarr; ${itm.changedFields.descripcion.new??'N/A'}</span>`;
             if(itm.changedFields.upc) chgs += `<span class="field-change">UPC: <s>${itm.changedFields.upc.old??'N/A'}</s> &rarr; ${itm.changedFields.upc.new??'N/A'}</span>`;
             if(itm.changedFields.brand) chgs += `<span class="field-change">Brand: <s>${itm.changedFields.brand.old??'N/A'}</s> &rarr; ${itm.changedFields.brand.new??'N/A'}</span>`;
@@ -622,13 +874,18 @@
             if (nuevos.length === 0 && eliminados.length === 0 && modificados.length === 0) {
                 DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems). Ya estaba actualizada.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
-                if (JSON.stringify(Array.from(listaFoco.values())) !== JSON.stringify(Array.from(maestraDesdeRepositorio.values()))) {
+                // Only update and save if the *content* is actually different, not just the object reference
+                const localValues = JSON.stringify(Array.from(listaFoco.values()));
+                const repoValues = JSON.stringify(Array.from(maestraDesdeRepositorio.values()));
+                if (localValues !== repoValues) {
                     listaFoco = new Map(maestraDesdeRepositorio); 
                     saveListaFocoToStorage(false); 
                 }
+                showToast(`Maestra Sincronizada (${listaFoco.size} ítems).`, 'success');
             } else {
                 DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios detectados en Maestra. Revisa y confirma.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
+                showToast(`Cambios detectados en Maestra. Revisa y confirma.`, 'warning');
                 mostrarConfirmacionCambios(nuevos, eliminados, modificados, maestraDesdeRepositorio);
                 return; 
             }
@@ -636,11 +893,13 @@
             if (listaFoco.size > 0) {
                 DOM.displays.panelInicioInfo.innerHTML = `⚠️ Error al cargar desde repositorio. Usando Maestra local (${listaFoco.size} ítems).`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
+                showToast(`Error al cargar desde repositorio. Usando Maestra local (${listaFoco.size} ítems).`, 'warning');
             } else {
                 DOM.displays.panelInicioInfo.innerHTML = `❌ Error al cargar y no hay Maestra local. Funcionalidad limitada.`;
                 DOM.displays.panelInicioInfo.className = 'panel-inicio-info error';
                 DOM.buttons.iniciarDobleControl.disabled = true;
                 DOM.buttons.gestionMaestra.disabled = true;
+                showToast(`Error al cargar y no hay Maestra local. Funcionalidad limitada.`, 'error');
             }
         }
         rebuildUpcToCodigoMap();
@@ -651,11 +910,23 @@
     }
 
     function navigateToView(viewName) {
-        Object.values(DOM.views).forEach(div => div.classList.add('hidden'));
-        if (viewName !== 'itemDetailModal') DOM.views.itemDetailModal.style.display = 'none';
-        
         const viewToShow = DOM.views[viewName];
-        if (viewToShow) {
+        if (!viewToShow) {
+            console.error("Vista no encontrada:", viewName);
+            return;
+        }
+
+        if (viewName === 'itemDetailModal') {
+            // Si es el modal, solo lo mostramos como una superposición
+            viewToShow.style.display = 'flex';
+        } else {
+            // Si es una vista de página, ocultamos las otras y mostramos la correcta
+            Object.entries(DOM.views).forEach(([key, div]) => {
+                if (key !== 'itemDetailModal') { // No ocultar el modal, solo las vistas de página
+                    div.classList.add('hidden');
+                }
+            });
+            DOM.views.itemDetailModal.style.display = 'none'; // Asegurarse que el modal se oculte al cambiar de página
             viewToShow.classList.remove('hidden');
             if (viewName === 'gestionMaestraStep') updateFocoPreviewAndSearch();
         }
@@ -671,39 +942,125 @@
         return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
     }
 
-    function updateFocoPreviewAndSearch(itemsToShow = null) {
-        let countNoUrl = 0, countNoUpc = 0, countNoDescription = 0, countNoBrand = 0;
+    function updateFocoPreviewAndSearch(itemsToDisplayInSearch = null) {
+        // No need for general stats now
+        // let countNoUrl = 0, countNoUpc = 0, countNoDescription = 0, countNoBrand = 0;
+        const itemsByDepartment = {};
+        let ppsCount = 0;
+        let acpCount = 0;
+        const uniqueDepartments = new Set();
+
         listaFoco.forEach(item => {
-            if (!item.url?.trim()) countNoUrl++;
-            if (!item.upc?.trim()) countNoUpc++;
-            if (!item.descripcion?.trim()) countNoDescription++;
-            if (!item.brand?.trim()) countNoBrand++;
-        });
-        DOM.stats.totalItems.textContent = listaFoco.size;
-        DOM.stats.noImageUrl.textContent = countNoUrl;
-        DOM.stats.noUpc.textContent = countNoUpc;
-        DOM.stats.noDescription.textContent = countNoDescription;
-        DOM.stats.noBrand.textContent = countNoBrand;
+            // Original stats (now only for logic, not display)
+            // if (!item.url?.trim()) countNoUrl++;
+            // if (!item.upc?.trim()) countNoUpc++;
+            // if (!item.descripcion?.trim()) countNoDescription++;
+            // if (!item.brand?.trim()) countNoBrand++;
 
-        if (itemsToShow) {
-            DOM.displays.focoSearchResults.innerHTML = '';
-            if (itemsToShow.length > 0) {
-                const fragment = document.createDocumentFragment();
-                itemsToShow.slice(0, 30).forEach(item => {
-                    const p = document.createElement('div');
-                    p.className = 'search-result-item';
-                    p.dataset.iditem = item.codigo;
-                    p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
-                    fragment.appendChild(p);
-                });
-                DOM.displays.focoSearchResults.appendChild(fragment);
-
-                if (itemsToShow.length > 30) {
-                    DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${itemsToShow.length - 30} más.</p>`;
+            // New department/segment stats
+            const department = item.department?.trim();
+            if (department) {
+                uniqueDepartments.add(department);
+                itemsByDepartment[department] = (itemsByDepartment[department] || 0) + 1;
+                const deptNum = parseInt(department, 10);
+                if (!isNaN(deptNum)) {
+                    // Departments 90, 91, 97 are PPS. Others are ACP.
+                    if (deptNum === 91 || deptNum === 90 || deptNum === 97) {
+                        ppsCount++;
+                    } else {
+                        acpCount++;
+                    }
                 }
-            } else if (DOM.inputs.searchFoco.value) {
-                DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">No se encontraron ítems.</p>';
             }
+        });
+
+        // Update basic stats (removed general stats, keep total for info)
+        // DOM.stats.totalItems.textContent = listaFoco.size;
+        // DOM.stats.noImageUrl.textContent = countNoUrl;
+        // DOM.stats.noUpc.textContent = countNoUpc;
+        // DOM.stats.noDescription.textContent = countNoDescription;
+        // DOM.stats.noBrand.textContent = countNoBrand;
+
+        // Update department stats
+        DOM.stats.itemsByDepartment.innerHTML = '';
+        Object.entries(itemsByDepartment).sort(([d1], [d2]) => d1.localeCompare(d2)).forEach(([dept, count]) => {
+            const li = document.createElement('li');
+            li.textContent = `Depto ${dept}: ${count} ítems`;
+            DOM.stats.itemsByDepartment.appendChild(li);
+        });
+
+        // Update segment stats
+        DOM.stats.itemsBySegment.innerHTML = '';
+        let liACP = document.createElement('li');
+        liACP.textContent = `ACP: ${acpCount} ítems`;
+        DOM.stats.itemsBySegment.appendChild(liACP);
+        let liPPS = document.createElement('li');
+        liPPS.textContent = `PPS: ${ppsCount} ítems`;
+        DOM.stats.itemsBySegment.appendChild(liPPS);
+
+        // Populate Department Filter
+        DOM.filters.department.innerHTML = '<option value="">Todos los Departamentos</option>';
+        Array.from(uniqueDepartments).sort((a,b) => parseInt(a) - parseInt(b)).forEach(dept => { // Sort numerically
+            const option = document.createElement('option');
+            option.value = dept;
+            option.textContent = `Departamento ${dept}`;
+            DOM.filters.department.appendChild(option);
+        });
+        // Set selected value back if it was set before refreshing options
+        if (DOM.filters.department.dataset.previousValue) {
+            DOM.filters.department.value = DOM.filters.department.dataset.previousValue;
+        }
+
+
+        // --- Search and Filtering Logic ---
+        const searchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
+        const selectedDepartment = DOM.filters.department.value;
+        const selectedSegment = DOM.filters.segment.value;
+
+        // Determine which items to filter (either all or pre-filtered from initial search input)
+        let itemsToFilter = Array.from(listaFoco.values()).filter(item =>
+            (item.codigo && item.codigo.toLowerCase().includes(searchTerm)) ||
+            (item.upc && item.upc.toLowerCase().includes(searchTerm)) ||
+            (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) ||
+            (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
+            (item.url && item.url.toLowerCase().includes(searchTerm))
+        );
+
+        const filteredResults = itemsToFilter.filter(item => {
+            const matchesDepartment = selectedDepartment === "" || (item.department && item.department === selectedDepartment);
+            
+            let matchesSegment = true;
+            if (selectedSegment !== "") {
+                const deptNum = parseInt(item.department, 10);
+                if (selectedSegment === "PPS") {
+                    matchesSegment = (deptNum === 91 || deptNum === 90 || deptNum === 97);
+                } else if (selectedSegment === "ACP") {
+                    matchesSegment = !(isNaN(deptNum) || deptNum === 91 || deptNum === 90 || deptNum === 97);
+                }
+            }
+            return matchesDepartment && matchesSegment;
+        });
+
+        DOM.displays.focoSearchResults.innerHTML = '';
+        if (filteredResults.length > 0) {
+            const fragment = document.createDocumentFragment();
+            // Limit to 30 items for preview to avoid performance issues with very large results
+            filteredResults.slice(0, 30).forEach(item => {
+                const p = document.createElement('div');
+                p.className = 'search-result-item';
+                p.dataset.iditem = item.codigo;
+                p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(Depto: ${item.department??'N/A'}, UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
+                fragment.appendChild(p);
+            });
+            DOM.displays.focoSearchResults.appendChild(fragment);
+
+            if (filteredResults.length > 30) {
+                DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${filteredResults.length - 30} más.</p>`;
+            }
+        } else if (searchTerm || selectedDepartment || selectedSegment) {
+            DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros aplicados.</p>';
+        } else {
+             DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar o use los filtros.</p>';
         }
     }
 
@@ -711,10 +1068,10 @@
         if (listaFoco.size === 0 && showAlert && !confirm("Maestra vacía. ¿Guardar vacía?")) return false;
         try {
             localStorage.setItem(LOCAL_STORAGE_KEY_LISTA_FOCO, JSON.stringify(Array.from(listaFoco.values())));
-            if (showAlert) alert(`Maestra con ${listaFoco.size} ítems guardada.`);
+            if (showAlert) showToast(`Maestra con ${listaFoco.size} ítems guardada.`, 'success');
             return true;
         } catch (e) {
-            if (showAlert) alert(`Error al guardar Maestra: ${e.message}`);
+            if (showAlert) showToast(`Error al guardar Maestra: ${e.message}`, 'error');
             return false;
         }
     }
@@ -729,15 +1086,67 @@
                     const idItemLimpio = cleanCode(item.codigo);
                     if (idItemLimpio) listaFoco.set(idItemLimpio, item);
                 });
-                if (showAlerts) alert(`Maestra local con ${listaFoco.size} ítems cargada.`);
+                if (showAlerts) showToast(`Maestra local con ${listaFoco.size} ítems cargada.`, 'info');
             } catch (e) {
-                if (showAlerts) alert("Error al cargar Maestra: datos corruptos. Se borrará.");
+                if (showAlerts) showToast("Error al cargar Maestra: datos corruptos. Se borrará.", 'error');
                 localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
             }
         }
     }
-    
-    function handleFileUpload(file, fileType) {
+
+    // Nuevo: Manejar la carga del archivo XLSX de la Maestra
+    async function handleMasterFileUpload() {
+        const file = DOM.inputs.masterFileExcelUpload.files[0];
+        if (!file) {
+            showToast("Por favor, selecciona un archivo XLSX de Maestra.", 'warning');
+            return;
+        }
+
+        DOM.displays.panelInicioInfo.innerHTML = `🔄 Cargando "${file.name}" localmente...`;
+        DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
+        DOM.buttons.uploadLocalMaestra.disabled = true;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const arrayBuffer = e.target.result;
+                const itemsArray = await parsearMaestraXLSX(arrayBuffer);
+                const nuevaListaMap = new Map();
+                itemsArray.forEach(item => {
+                    const idItemLimpio = cleanCode(item.codigo);
+                    if (idItemLimpio) nuevaListaMap.set(idItemLimpio, item);
+                });
+
+                listaFoco = nuevaListaMap;
+                rebuildUpcToCodigoMap();
+                saveListaFocoToStorage(true); 
+                updateFocoPreviewAndSearch();
+
+                DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra local "${file.name}" cargada y guardada (${listaFoco.size} ítems).`;
+                DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
+                showToast(`Maestra local "${file.name}" cargada y guardada (${listaFoco.size} ítems).`, 'success');
+                resetFileInput(DOM.inputs.masterFileExcelUpload);
+            } catch (error) {
+                console.error('Error al procesar archivo local de Maestra:', error);
+                DOM.displays.panelInicioInfo.innerHTML = `❌ Error al cargar "${file.name}": ${error.message}`;
+                DOM.displays.panelInicioInfo.className = 'panel-inicio-info error';
+                showToast(`Error al cargar el archivo de Maestra: ${error.message}`, 'error');
+            } finally {
+                DOM.buttons.uploadLocalMaestra.disabled = false;
+            }
+        };
+        reader.onerror = (e) => {
+            console.error('Error al leer el archivo:', e);
+            DOM.displays.panelInicioInfo.innerHTML = `❌ Error al leer "${file.name}".`;
+            DOM.displays.panelInicioInfo.className = 'panel-inicio-info error';
+            showToast(`Error al leer el archivo: ${file.name}`, 'error');
+            DOM.buttons.uploadLocalMaestra.disabled = false;
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    // Renombrado para evitar conflicto con la nueva función de carga de maestra
+    function handleVerifyFileUpload(file, fileType) {
         if (!file) return;
         DOM.displays.verifyPreview.innerHTML = `Procesando "${file.name}"...`;
         const idItemColUserInput = parseInt(DOM.inputs.verifyCodigoCol.value);
@@ -746,7 +1155,7 @@
         const targetFileElement = fileType === 'excel' ? DOM.inputs.verifyFileExcel : DOM.inputs.verifyFileTxtCsv;
 
         if (idItemColUserInput < 1 && fileType === 'textcsv') {
-            alert("Col. ID Ítem debe ser >= 1 para texto/CSV.");
+            showToast("Col. ID Ítem debe ser >= 1 para texto/CSV.", 'error');
             DOM.displays.verifyPreview.textContent = "Error.";
             resetFileInput(targetFileElement);
             return;
@@ -780,14 +1189,15 @@
                     }
                 });
                 updateVerifyPreview();
+                showToast(`Archivo "${file.name}" procesado. ${parsedItems.length} ítems cargados.`, 'success');
 
             } catch (error) {
-                alert(`Error procesando ${file.name}: ${error.message}`);
+                showToast(`Error procesando ${file.name}: ${error.message}`, 'error');
                 DOM.displays.verifyPreview.textContent = `Error.`;
             }
             resetFileInput(targetFileElement); 
         };
-        reader.onerror = () => { alert(`No se pudo leer ${file.name}.`); resetFileInput(targetFileElement); };
+        reader.onerror = () => { showToast(`No se pudo leer ${file.name}.`, 'error'); resetFileInput(targetFileElement); };
         
         if (fileType === 'excel') reader.readAsArrayBuffer(file);
         else reader.readAsText(file);
@@ -899,25 +1309,27 @@
         const scannedUPC = cleanText(decodedText);
         let internalCode = null;
         if (scannedUPC) {
-            internalCode = upcToCodigoMap.get(scannedUPC) ?? upcToCodigoMap.get(scannedUPC.slice(0, -1));
-            
+            // Buscar el código interno en el mapa de UPCs
+            internalCode = upcToCodigoMap.get(scannedUPC);
             if (internalCode) {
-                const cleanedInternalCode = cleanCode(internalCode);
-                if (cleanedInternalCode && /^[0-9]+$/.test(cleanedInternalCode) && cleanedInternalCode.length > 5) {
-                    listaVerificar.add(cleanedInternalCode);
-                    DOM.inputs.scannedCodesVerifyTextarea.value += `${cleanedInternalCode} (Scan UPC: ${scannedUPC})\n`;
-                    if (!datosVerificacionCargados.some(d => d.idItem === cleanedInternalCode && d.contenedora === 'N/A_SCAN')) {
-                        datosVerificacionCargados.push({
-                            idItem: cleanedInternalCode, contenedora: 'N/A_SCAN', cantidad: 0, 
-                            allRowData: { item_: cleanedInternalCode, upc_scanned: scannedUPC }, isSuitableForGroupedReport: false
-                        });
-                    }
+                // Agregar a la lista de verificación si no está
+                if (!listaVerificar.has(internalCode)) {
+                    listaVerificar.add(internalCode);
+                    datosVerificacionCargados.push({
+                        idItem: internalCode,
+                        contenedora: 'N/A_SCANNER',
+                        cantidad: 0,
+                        allRowData: { upc: scannedUPC },
+                        isSuitableForGroupedReport: false
+                    });
+                    DOM.inputs.scannedCodesVerifyTextarea.value += (DOM.inputs.scannedCodesVerifyTextarea.value ? '\n' : '') + internalCode;
                     updateVerifyPreview();
+                    showToast(`UPC escaneado (${scannedUPC}) agregado como ID ${internalCode}.`, 'success');
                 } else {
-                     alert(`Código interno (${internalCode}) asociado al UPC (${scannedUPC}) no es válido.`);
+                    showToast(`El ítem ${internalCode} ya fue agregado.`, 'info');
                 }
             } else {
-                alert(`UPC escaneado (${scannedUPC}) no encontrado en Maestra.`);
+                showToast(`UPC escaneado (${scannedUPC}) no encontrado en Maestra.`, 'warning');
             }
         }
     }
@@ -937,7 +1349,7 @@
             }
         } else {
             if(location.protocol !=='https:' && !['localhost','127.0.0.1'].includes(location.hostname)){
-                alert('Escáner requiere HTTPS o localhost.'); return;
+                showToast('Escáner requiere HTTPS o localhost.', 'error'); return;
             }
             DOM.displays.scannerContainerVerify.classList.remove('hidden');
             DOM.buttons.startScanVerify.textContent = '🛑 Detener Escáner';
@@ -948,7 +1360,7 @@
             html5QrCodeVerifier.start({ facingMode: "environment" }, config, onScanSuccessVerify, (eM) => {})
             .then(() => scannerVerifierActive = true)
             .catch(err => {
-                alert(`Error al iniciar escáner: ${err.message || err}`);
+                showToast(`Error al iniciar escáner: ${err.message || err}`, 'error');
                 DOM.displays.scannerContainerVerify.classList.add('hidden');
                 DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC';
                 scannerVerifierActive = false;
@@ -1074,38 +1486,70 @@
             });
         });
         DOM.displays.outputResults.appendChild(fragment);
+        setResultsLayoutByDevice(); // <-- Ajusta la vista automáticamente al mostrar resultados
     }
     
+    // Updated openItemDetailModal function
     function openItemDetailModal(idItem) {
-        const item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
+        const item = listaFoco.get(idItem) ?? coincidencias.get(idItem); // Check both maps
         if (item) {
             DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
             DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
             DOM.modal.upc.textContent = item.upc || 'No disponible'; 
             DOM.modal.brand.textContent = item.brand || 'No disponible';
+            DOM.modal.department.textContent = item.department || 'No disponible'; 
+            DOM.modal.uom.textContent = item.uom || 'No disponible';   
             
+            // Clear previous barcode
+            DOM.modal.barcodeSvgContainer.innerHTML = ''; 
+
+            // Generate and display barcode if item.codigo exists and is valid for barcode
+            if (item.codigo && String(item.codigo).trim().length > 0) {
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                try {
+                    JsBarcode(svg, String(item.codigo), {
+                        format: "CODE128", // Or other format like EAN13 if UPC is used
+                        width: 2,
+                        height: 50,
+                        displayValue: true, // Show the code below the barcode
+                        margin: 10
+                    });
+                    DOM.modal.barcodeSvgContainer.appendChild(svg);
+                } catch (e) {
+                    DOM.modal.barcodeSvgContainer.innerHTML = `<p style="color:red; font-size:0.8em;">Error al generar código de barras: ${e.message}</p>`;
+                }
+            } else {
+                DOM.modal.barcodeSvgContainer.innerHTML = '<p style="color:#777; font-size:0.9em;">Código de barras no disponible (ID de ítem vacío).</p>';
+            }
+
             const imageUrl = item.url?.trim(); 
             if (imageUrl) {
-                DOM.modal.image.src = imageUrl;
+                // Añadimos un parámetro único para evitar problemas de caché del navegador
+                const cacheBustedUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+                DOM.modal.image.src = cacheBustedUrl;
                 DOM.modal.image.alt = "Imagen de " + (item.descripcion || item.codigo || 'ítem');
-                DOM.modal.image.style.display = 'block'; DOM.modal.imageError.style.display = 'none';
+                DOM.modal.image.style.display = 'block'; 
+                DOM.modal.imageError.style.display = 'none';
             } else {
-                DOM.modal.image.style.display = 'none'; DOM.modal.image.src = '#';
-                DOM.modal.imageError.textContent = 'URL de imagen no especificada.'; DOM.modal.imageError.style.display = 'block';
+                DOM.modal.image.style.display = 'none'; 
+                DOM.modal.image.src = '#'; // Clear src to prevent broken image icon
+                DOM.modal.imageError.textContent = 'URL de imagen no especificada o no válida.'; 
+                DOM.modal.imageError.style.display = 'block';
             }
-            DOM.views.itemDetailModal.classList.remove('hidden');
-            DOM.views.itemDetailModal.style.display = 'flex';
+            navigateToView('itemDetailModal'); // Now uses navigateToView for display:flex
+        } else {
+            showToast("Ítem no encontrado para mostrar detalles.", 'error');
         }
     }
 
     function closeItemDetailModal() {
-        DOM.views.itemDetailModal.classList.add('hidden');
         DOM.views.itemDetailModal.style.display = 'none';
-        DOM.modal.image.src="#";
+        DOM.modal.image.src="#"; // Clear image source
+        DOM.modal.barcodeSvgContainer.innerHTML = ''; // Clear barcode
     }
 
     function handleIniciarDobleControl() {
-        if (listaFoco.size === 0) { alert("No hay Lista Maestra cargada."); return; }
+        if (listaFoco.size === 0) { showToast("No hay Lista Maestra cargada. Por favor, carga o sincroniza una maestra.", 'warning'); return; }
         listaVerificar.clear(); datosVerificacionCargados = []; coincidencias.clear();
         DOM.inputs.verifyTextarea.value = ''; DOM.inputs.scannedCodesVerifyTextarea.value = '';
         resetFileInput(DOM.inputs.verifyFileTxtCsv); resetFileInput(DOM.inputs.verifyFileExcel);
@@ -1114,18 +1558,18 @@
     }
 
     function handleBorrarStorage() {
-        if (confirm("¿Borrar Maestra local y resincronizar?")) {
+        if (confirm("¿Borrar Maestra local y resincronizar? Esto eliminará la versión local y buscará la última del repositorio.")) {
             localStorage.removeItem(LOCAL_STORAGE_KEY_LISTA_FOCO);
             listaFoco.clear(); listaFocoCacheadaLocalmente.clear(); upcToCodigoMap.clear();
-            alert("Maestra local borrada. Resincronizando...");
+            showToast("Maestra local borrada. Resincronizando desde repositorio...", 'info');
             checkInitialState(); 
         }
     }
 
     function handleCompare() {
         collectVerifyDataFromInputs(); 
-        if (listaVerificar.size === 0) { alert("Cargue o escanee Ítems para la Lista de Verificación."); return; }
-        if (listaFoco.size === 0) { alert("Lista Maestra vacía. Sincronice."); navigateToView('panelInicio'); return; }
+        if (listaVerificar.size === 0) { showToast("Cargue o escanee Ítems para la Lista de Verificación.", 'warning'); return; }
+        if (listaFoco.size === 0) { showToast("Lista Maestra vacía. Sincronice o cargue una localmente.", 'error'); navigateToView('panelInicio'); return; }
         compareListsAndDisplayResults();
         navigateToView('resultadosStep');
     }
@@ -1136,27 +1580,39 @@
         DOM.buttons.layoutToggle.textContent = DOM.displays.outputResults.classList.contains('grid') ? '📊 Vista Lista' : '📊 Vista Cuadrícula';
     }
 
+    function setResultsLayoutByDevice() {
+        const isMobile = /android|iphone|ipad|ipod|opera mini|iemobile|mobile/i.test(navigator.userAgent);
+        if (isMobile) {
+            DOM.displays.outputResults.classList.remove('grid');
+            DOM.displays.outputResults.classList.add('list');
+            DOM.buttons.layoutToggle.textContent = '📊 Vista Cuadrícula';
+        } else {
+            DOM.displays.outputResults.classList.remove('list');
+            DOM.displays.outputResults.classList.add('grid');
+            DOM.buttons.layoutToggle.textContent = '📊 Vista Lista';
+        }
+    }
+
     function downloadCsvResults(){
-        if(coincidencias.size===0){alert("No hay Ítems concordantes.");return;}
-        // Incluir también los ítems no concordantes con cantidad >= 100 en el CSV si se desea.
-        // Por ahora, mantiene el comportamiento original de solo concordancias.
-        let csvContent="ID_Item,UPC,Descripcion,Marca,URL_Imagen\n"; 
+        if(coincidencias.size===0){showToast("No hay Ítems concordantes para exportar.", 'warning');return;}
+        let csvContent="ID_Item,Departamento,UPC,Descripcion,Marca,URL_Imagen,UOM_Maestra\n"; 
         coincidencias.forEach(item=>{ 
             const esc = (v) => `"${(v??'').replace(/"/g,'""')}"`;
-            csvContent+=`${esc(item.codigo)},${esc(item.upc)},${esc(item.descripcion)},${esc(item.brand)},${esc(item.url)}\n`;
+            csvContent+=`${esc(item.codigo)},${esc(item.department)},${esc(item.upc)},${esc(item.descripcion)},${esc(item.brand)},${esc(item.url)},${esc(item.uom)}\n`;
         });
         const blob = new Blob(["\uFEFF"+csvContent],{type:'text/csv;charset=utf-8;'});
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = `concordancias_sdci_${new Date().toISOString().slice(0,10)}.csv`;
         link.click(); URL.revokeObjectURL(link.href);
+        showToast("CSV de concordancias descargado.", 'success');
     }
 
     async function downloadXlsxResults() {
         // Verifica si hay ítems concordantes O ítems con cantidad >= 100 en datosVerificacionCargados
         const hasHighQuantityItems = datosVerificacionCargados.some(item => item.cantidad >= 100 && !coincidencias.has(item.idItem));
         if (coincidencias.size === 0 && !hasHighQuantityItems) {
-            alert("No hay Ítems concordantes ni ítems con cantidad >= 100 (no en maestra) para exportar a XLSX.");
+            showToast("No hay Ítems concordantes ni ítems con cantidad >= 100 (no en maestra) para exportar a XLSX.", 'warning');
             return;
         }
 
@@ -1167,39 +1623,35 @@
 
         try {
             const groupedForXLSX = new Map();
-            const itemsHandledBySpecificContainer = new Set(); 
+            const itemsHandledBySpecificContainer = new Set();
 
-            // Step 1: Process concordant items from `datosVerificacionCargados`
+            // 1. Ítems concordantes agrupados por contenedora
             datosVerificacionCargados.forEach(uploadedItem => {
                 if (coincidencias.has(uploadedItem.idItem)) {
                     const masterDetails = coincidencias.get(uploadedItem.idItem);
                     let contenedoraKey;
-                    if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora && 
+                    if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora &&
                         uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
                         contenedoraKey = uploadedItem.contenedora.trim();
-                        itemsHandledBySpecificContainer.add(uploadedItem.idItem); 
+                        itemsHandledBySpecificContainer.add(uploadedItem.idItem);
                     } else {
                         contenedoraKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
                     }
-                    if (!groupedForXLSX.has(contenedoraKey)) {
-                        groupedForXLSX.set(contenedoraKey, []);
-                    }
+                    if (!groupedForXLSX.has(contenedoraKey)) groupedForXLSX.set(contenedoraKey, []);
                     groupedForXLSX.get(contenedoraKey).push({
                         ...masterDetails,
                         cantidadCargada: (typeof uploadedItem.cantidad === 'number') ? uploadedItem.cantidad : 'N/A',
                         status: "Concordante",
-                        _originalUploadedItemContext: { contenedora: uploadedItem.contenedora, cantidad: uploadedItem.cantidad } 
+                        _originalUploadedItemContext: { contenedora: uploadedItem.contenedora, cantidad: uploadedItem.cantidad }
                     });
                 }
             });
-            
-            // Step 2: Add concordant items not originating from a file with specific container info
+
+            // 2. Ítems concordantes no provenientes de archivo con contenedora específica
             coincidencias.forEach((masterItem, itemCodigo) => {
                 if (!itemsHandledBySpecificContainer.has(itemCodigo)) {
                     const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-                    if (!groupedForXLSX.has(defaultGroupKey)) {
-                        groupedForXLSX.set(defaultGroupKey, []);
-                    }
+                    if (!groupedForXLSX.has(defaultGroupKey)) groupedForXLSX.set(defaultGroupKey, []);
                     if (!groupedForXLSX.get(defaultGroupKey).some(item => item.codigo === itemCodigo && item.status === "Concordante")) {
                         groupedForXLSX.get(defaultGroupKey).push({
                             ...masterItem,
@@ -1210,35 +1662,32 @@
                 }
             });
 
-            // Step 3: Add items from `datosVerificacionCargados` with cantidad >= 100 that are NOT concordances
+            // 3. Ítems con cantidad >= 100 que NO están en la maestra
             datosVerificacionCargados.forEach(uploadedItem => {
                 if (uploadedItem.cantidad >= 100 && !coincidencias.has(uploadedItem.idItem)) {
                     let contenedoraKey = (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora &&
-                                      uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_'))
-                                     ? uploadedItem.contenedora.trim()
-                                     : "Ítems Adicionales por Cantidad (Cont. Diversas)";
+                        uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_'))
+                        ? uploadedItem.contenedora.trim()
+                        : "Ítems Adicionales por Cantidad (Cont. Diversas)";
 
-                    if (!groupedForXLSX.has(contenedoraKey)) {
-                        groupedForXLSX.set(contenedoraKey, []);
-                    }
-                    
+                    if (!groupedForXLSX.has(contenedoraKey)) groupedForXLSX.set(contenedoraKey, []);
+
                     const descFromUpload = uploadedItem.allRowData?.descripcion || uploadedItem.allRowData?.descripción || uploadedItem.allRowData?.description || "N/A (No en Maestra)";
                     const brandFromUpload = uploadedItem.allRowData?.marca || uploadedItem.allRowData?.brand || "N/A (No en Maestra)";
 
-                    // Ensure this specific non-concordant high-quantity item isn't duplicated in its group
+                    // Evita duplicados
                     const itemExistsCheckKey = `${uploadedItem.idItem}-${uploadedItem.cantidad}-${uploadedItem.contenedora}`;
-                    let alreadyExists = false;
-                    if(groupedForXLSX.get(contenedoraKey).find(it => `${it.codigo}-${it.cantidadCargada}-${it._originalUploadedItemContext?.contenedora}` === itemExistsCheckKey && it.status === "No en Maestra (Cant. >= 100)")) {
-                        alreadyExists = true;
-                    }
-
+                    let alreadyExists = groupedForXLSX.get(contenedoraKey).find(it =>
+                        `${it.codigo}-${it.cantidadCargada}-${it.status === "No en Maestra (Cant. >= 100)" ? 'no_orig_cont' : it._originalUploadedItemContext?.contenedora}` === itemExistsCheckKey &&
+                        it.status === "No en Maestra (Cant. >= 100)"
+                    );
                     if (!alreadyExists) {
                         groupedForXLSX.get(contenedoraKey).push({
                             codigo: uploadedItem.idItem,
                             descripcion: descFromUpload,
-                            marca: brandFromUpload,
-                            upc: "N/A", 
-                            url: "N/A", 
+                            brand: brandFromUpload,
+                            upc: "N/A",
+                            url: "N/A",
                             cantidadCargada: uploadedItem.cantidad,
                             status: "No en Maestra (Cant. >= 100)",
                             _originalUploadedItemContext: { contenedora: uploadedItem.contenedora, cantidad: uploadedItem.cantidad }
@@ -1247,24 +1696,23 @@
                 }
             });
 
-
-            // XLSX SHEET GENERATION
+            // --- Generación del XLSX ---
             const dataForSheet = [];
             const mainTitleQuery = document.querySelector('.container > h1');
             const reportTitle = mainTitleQuery ? mainTitleQuery.innerText : "Sistema de Doble Control de Ítems";
             const currentDateFormatted = new Date().toLocaleDateString("es-CL", { year: 'numeric', month: 'long', day: 'numeric' });
 
-            dataForSheet.push([reportTitle]); 
-            dataForSheet.push(["Informe de Verificación: Ítems por Contenedora"]); 
-            dataForSheet.push([`Fecha de Generación: ${currentDateFormatted}`]); 
-            dataForSheet.push([]); 
+            dataForSheet.push([reportTitle]);
+            dataForSheet.push(["Informe de Verificación: Ítems por Contenedora"]);
+            dataForSheet.push([`Fecha de Generación: ${currentDateFormatted}`]);
+            dataForSheet.push([]);
 
             const merges = [
-                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }, 
-                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } }, 
-                { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } }  
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } }
             ];
-            let currentRow = 4; 
+            let currentRow = 4;
 
             const sortedContenedoraKeys = Array.from(groupedForXLSX.keys()).sort((a, b) => {
                 const defaultKey1 = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
@@ -1274,7 +1722,7 @@
 
                 if (aIsDefault && !bIsDefault) return 1;
                 if (!aIsDefault && bIsDefault) return -1;
-                if (a === defaultKey2 && b === defaultKey1) return 1; // Adicionales después de Concordantes Otros
+                if (a === defaultKey2 && b === defaultKey1) return 1;
                 if (a === defaultKey1 && b === defaultKey2) return -1;
                 return a.localeCompare(b);
             });
@@ -1286,7 +1734,7 @@
                 const uniqueItemsForXLSXInGroup = [];
                 const seenInThisGroup = new Set();
                 itemsInContenedora.forEach(item => {
-                    const itemKey = `${item.codigo}-${item.cantidadCargada}-${item.status || 'concordante'}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`; 
+                    const itemKey = `${item.codigo}-${item.cantidadCargada}-${item.status || 'concordante'}-${item._originalUploadedItemContext?.contenedora || 'no_orig_cont'}`;
                     if (!seenInThisGroup.has(itemKey)) {
                         uniqueItemsForXLSXInGroup.push(item);
                         seenInThisGroup.add(itemKey);
@@ -1309,79 +1757,38 @@
                     dataForSheet.push(["Revisado:", "☐ " + "_".repeat(40) + " (Firma/Obs)"]); currentRow++;
                     dataForSheet.push(["Diferencias Encontradas:", "_".repeat(50)]); currentRow++;
                     dataForSheet.push(["Notas Adicionales:", "_".repeat(50)]); currentRow++;
-                    dataForSheet.push([]); currentRow++; 
+                    dataForSheet.push([]); currentRow++;
                 });
             });
 
-            if (dataForSheet.length <= 4) { 
-                 alert("No hay datos agrupados para generar el reporte XLSX.");
-                 btn.textContent = originalText; btn.disabled = false; return;
-            }
+            // --- Firma ---
+            dataForSheet.push([], [], [], []);
+            const signatureRow = [
+                null, null,
+                "___________________________", null, null,
+                "___________________________"
+            ];
+            const signatureLabelRow = [
+                null, null,
+                "Firma Responsable", null, null,
+                "Nombre y Cargo"
+            ];
+            dataForSheet.push(signatureRow, signatureLabelRow);
+            merges.push({ s: { r: currentRow + 4, c: 2 }, e: { r: currentRow + 4, c: 4 } });
+            merges.push({ s: { r: currentRow + 5, c: 2 }, e: { r: currentRow + 5, c: 4 } });
+            merges.push({ s: { r: currentRow + 4, c: 5 }, e: { r: currentRow + 4, c: 7 } });
+            merges.push({ s: { r: currentRow + 5, c: 5 }, e: { r: currentRow + 5, c: 7 } });
 
+            // --- Crear y descargar XLSX ---
             const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-            ws['!cols'] = [ { wch: 35 }, { wch: 65 } ]; 
             ws['!merges'] = merges;
-
-            const titleStyle = { font: { bold: true, sz: 16, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
-            const subtitleStyle = { font: { bold: true, sz: 14, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
-            const dateStyle = { font: { sz: 10, name: "Arial" }, alignment: { horizontal: "center", vertical: "center" } };
-            const containerHeaderStyle = { font: { bold: true, sz: 13, color: { rgb: "002060" }, name: "Arial" }, fill: { fgColor: { rgb: "B4C6E7" } }, alignment: { vertical: "center"} };
-            const fieldLabelStyle = { font: { bold: true, name: "Arial", sz:10 } };
-            const naStyle = { font: { italic: true, color: { rgb: "808080" }, name: "Arial", sz:10 } };
-            const defaultCellStyle = { font: { name: "Arial", sz: 10 }};
-            const cantidadValueStyle = { font: { bold: true, sz: 12, name: "Arial" } }; 
-            const notInMasterTextStyle = { font: { color: { rgb: "FF0000" } } }; // Para el texto "(No en Maestra)"
-
-            for (let r_idx = 0; r_idx < dataForSheet.length; ++r_idx) {
-                for (let c_idx = 0; c_idx < (dataForSheet[r_idx] ? dataForSheet[r_idx].length : 0) ; ++c_idx) {
-                    const cellAddress = XLSX.utils.encode_cell({r:r_idx, c:c_idx});
-                    if (!ws[cellAddress]) ws[cellAddress] = { t:'s', v: dataForSheet[r_idx][c_idx] || "" }; 
-                    else if (ws[cellAddress].v === null || ws[cellAddress].v === undefined ) ws[cellAddress].v = ""; 
-
-                    let appliedStyle = null;
-                    const cellValueString = String(ws[cellAddress].v).trim();
-                    const labelString = dataForSheet[r_idx][0] ? String(dataForSheet[r_idx][0]).trim() : "";
-
-                    if (r_idx === 0 && c_idx === 0) appliedStyle = titleStyle;
-                    else if (r_idx === 1 && c_idx === 0) appliedStyle = subtitleStyle;
-                    else if (r_idx === 2 && c_idx === 0) appliedStyle = dateStyle;
-                    else if (labelString.startsWith("Contenedora:")) {
-                         appliedStyle = containerHeaderStyle;
-                    } else if (c_idx === 1 && labelString === "Cantidad (Info. Carga):") { 
-                        if (cellValueString !== 'N/A' && cellValueString !== '') {
-                             appliedStyle = cantidadValueStyle;
-                        } else {
-                             appliedStyle = naStyle; 
-                        }
-                    } else if (c_idx === 0 && labelString !== "") { 
-                         appliedStyle = fieldLabelStyle;
-                    } else if (cellValueString === 'N/A') { 
-                         appliedStyle = naStyle;
-                    } else {
-                         appliedStyle = defaultCellStyle; 
-                    }
-                    
-                    // Apply "No en Maestra" text style if applicable, potentially merging
-                    if (typeof cellValueString === 'string' && cellValueString.includes("(No en Maestra)")) {
-                        if (appliedStyle && appliedStyle.font) {
-                            appliedStyle.font = { ...appliedStyle.font, ...notInMasterTextStyle.font };
-                        } else if (appliedStyle) {
-                             appliedStyle.font = { ...notInMasterTextStyle.font };
-                        } else {
-                            appliedStyle = { font : {...notInMasterTextStyle.font }};
-                        }
-                    }
-                    ws[cellAddress].s = appliedStyle;
-                }
-            }
-            
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Ítems por Contenedora");
-            XLSX.writeFile(wb, `Informe_Items_Por_Contenedora_SDCI_${new Date().toISOString().slice(0,10)}.xlsx`);
-
+            XLSX.utils.book_append_sheet(wb, ws, "Informe de Control");
+            XLSX.writeFile(wb, `Informe_Doble_Control_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            showToast("Informe XLSX descargado con éxito.", 'success');
         } catch (error) {
-            console.error("Error generando XLSX:", error);
-            alert("Error al generar archivo XLSX: " + error.message);
+            console.error('Error al generar XLSX:', error);
+            showToast(`Error al generar XLSX: ${error.message}`, 'error');
         } finally {
             btn.textContent = originalText;
             btn.disabled = false;
@@ -1389,14 +1796,26 @@
     }
 
     function handleNewVerification() {
-        listaVerificar.clear(); datosVerificacionCargados = []; coincidencias.clear();
-        DOM.inputs.verifyTextarea.value = ''; DOM.inputs.scannedCodesVerifyTextarea.value = '';
-        resetFileInput(DOM.inputs.verifyFileTxtCsv); resetFileInput(DOM.inputs.verifyFileExcel);
-        updateVerifyPreview();
-        DOM.displays.outputResults.innerHTML = '<p>No se han encontrado coincidencias o no se ha realizado la verificación.</p>';
-        DOM.stats.totalVerify.textContent = '0'; DOM.stats.totalMatches.textContent = '0';
-        if(scannerVerifierActive && html5QrCodeVerifier?.isScanning) toggleScanner(); 
-        navigateToView('panelInicio');
+        if (confirm("¿Deseas iniciar un nuevo Doble Control? Se borrarán los datos actuales de verificación.")) {
+            listaVerificar.clear();
+            datosVerificacionCargados = [];
+            coincidencias.clear();
+            DOM.inputs.verifyTextarea.value = '';
+            DOM.inputs.scannedCodesVerifyTextarea.value = '';
+            resetFileInput(DOM.inputs.verifyFileTxtCsv);
+            resetFileInput(DOM.inputs.verifyFileExcel);
+            updateVerifyPreview();
+            if (scannerVerifierActive && html5QrCodeVerifier?.isScanning) {
+                html5QrCodeVerifier.stop().then(() => {
+                    scannerVerifierActive = false;
+                    DOM.displays.scannerContainerVerify.classList.add('hidden');
+                    DOM.buttons.startScanVerify.textContent = '📷 Escanear UPC';
+                }).catch(err => console.error("Error deteniendo escáner:", err));
+            }
+            showToast("Nueva verificación iniciada. Datos anteriores borrados.", 'info');
+            navigateToView('dobleControlStep');
+            setResultsLayoutByDevice(); // <-- Ajusta la vista automáticamente
+        }
     }
   </script>
 </body>
