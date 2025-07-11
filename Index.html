@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#3498db">
+<meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Doble Control de Ítems v3.0.3</title>
+  <link rel="stylesheet" href="styles.css">
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => console.log('Service Worker registrado:', reg.scope))
+      .catch(err => console.warn('Error registrando Service Worker:', err));
+  }
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Sistema de Doble Control de Ítems v3.0.3</h1>
+
+    <!-- Panel de Inicio -->
+    <div id="panelInicio" class="section">
+      <h2>Panel de Inicio</h2>
+      <div id="panelInicioInfo" class="panel-inicio-info info">
+        Cargando información de Lista Maestra desde el repositorio...
+      </div>
+      <div class="panel-inicio-actions">
+        <button id="btnIniciarDobleControlDesdePanel" disabled>➡️ Iniciar Doble Control</button>
+        <button id="btnGestionMaestraDesdePanel" class="secondary" disabled>🔎 Ver Lista Maestra y Buscar</button>
+        <button id="btnBorrarMaestraStorage" class="danger secondary" style="margin-top: 20px;">🗑️ Borrar Maestra Local y Resincronizar</button>
+      </div>
+      <div class="input-group" style="margin-top:30px; border-top: 1px solid #eee; padding-top: 20px;">
+        <h3>Cargar Maestra Local (Offline)</h3>
+        <p style="font-size:0.9em; color:#555;">
+          Si necesitas trabajar sin conexión o prefieres una maestra local, sube tu archivo `.xlsx` aquí.
+          Este archivo reemplazará cualquier maestra cargada desde el repositorio o previamente guardada.
+        </p>
+        <label for="masterFileExcelUpload">Seleccionar archivo Maestra (.xlsx):</label>
+        <input type="file" id="masterFileExcelUpload" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        <button id="btnUploadLocalMaestra">⬆️ Cargar Maestra Local (Offline)</button>
+      </div>
+    </div>
+
+    <!-- Confirmación de Cambios -->
+    <div id="confirmacionCambiosStep" class="section hidden">
+      <h2>Confirmar Cambios de Lista Maestra (desde Repositorio)</h2>
+      <p>Se han detectado los siguientes cambios respecto a tu lista local guardada:</p>
+      <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 20px;">
+        <div id="resumenNuevos"><h3>Nuevos Ítems:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
+        <div id="resumenEliminados"><h3>Ítems Eliminados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
+        <div id="resumenModificados"><h3>Ítems Modificados:</h3><ul class="preview-area"><li>Cargando...</li></ul></div>
+      </div>
+      <p>¿Deseas aplicar estos cambios y usar la versión del repositorio en tu sesión actual?</p>
+      <div style="text-align: center;">
+        <button id="btnConfirmarCambiosRepositorio">Sí, Aplicar Cambios del Repositorio</button>
+        <button id="btnRechazarCambiosRepositorio" class="secondary">No, Mantener Mi Versión Local</button>
+      </div>
+    </div>
+
+    <!-- Gestión Maestra -->
+    <div id="gestionMaestraStep" class="section hidden">
+      <h2>Ver Lista Maestra y Buscar</h2>
+      <div class="input-group">
+        <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción, marca o URL de imagen):</label>
+        <input type="text" id="searchFocoInput" placeholder="Ingrese término de búsqueda...">
+        <label for="departmentFilter">Filtrar por Departamento:</label>
+        <select id="departmentFilter">
+          <option value="">Todos los Departamentos</option>
+        </select>
+        <label for="segmentFilter">Filtrar por Segmento:</label>
+        <select id="segmentFilter">
+          <option value="">Todos los Segmentos</option>
+          <option value="ACP">ACP</option>
+          <option value="PPS">PPS</option>
+        </select>
+      </div>
+      <div id="focoSearchResults" class="search-results-area" style="margin-bottom: 20px;">Resultados de la búsqueda aparecerán aquí...</div>
+      <div id="focoPreview" class="preview-area">
+        <h3>Estadísticas por Departamento y Segmento</h3>
+        <ul id="departmentAndSegmentStats">
+          <li><strong>Total ítems por depto:</strong> <ul id="statItemsByDepartment" style="list-style-type: none; padding-left: 15px;"></ul></li>
+          <li><strong>Total ítems por segmento:</strong> <ul id="statItemsBySegment" style="list-style-type: none; padding-left: 15px;"></ul></li>
+        </ul>
+        <p style="font-size:0.8em; margin-top:15px; text-align:center;">
+          Utiliza la barra de búsqueda de arriba para encontrar ítems específicos.
+        </p>
+      </div>
+      <div style="margin-top:20px; text-align:center;">
+        <button id="btnVolverAlPanelDesdeGestion" class="secondary">↩️ Volver al Panel de Inicio</button>
+      </div>
+    </div>
+
+    <!-- Doble Control -->
+    <div id="dobleControlStep" class="section hidden">
+      <h2>Paso 2: Cargar Lista de Ítems para Doble Control</h2>
+      <p style="font-size:0.9em; color: #555;">
+        Puede escanear el UPC del artículo físico (si su Lista Maestra tiene UPCs) o cargar IDs de ítem manualmente.
+        Solo se considerarán IDs de Ítem <strong>numéricos de más de 5 dígitos</strong>.
+      </p>
+      <p style="font-size:0.85em; color:#c0392b; background-color: #fdedec; padding: 5px; border-left: 3px solid #c0392b;">
+        Para el reporte XLSX con información de carga (contenedora, cantidad), suba un archivo Excel (.xlsx) con encabezados: <code>item_</code>, <code>contenedoras</code>, <code>cantidad</code>.
+      </p>
+      <div class="input-group">
+        <label for="verifyTextarea">Pegar IDs de Ítem a verificar (uno por línea o separados por espacio/tabulador):</label>
+        <textarea id="verifyTextarea" rows="5" inputmode="numeric"></textarea>
+      </div>
+      <div class="input-group">
+        <label>Subir archivo con IDs de Ítem a verificar:</label>
+        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Para información adicional en el reporte XLSX (contenedora, cantidad), use Excel con las columnas indicadas arriba.</p>
+        <div class="input-columns">
+          <div>
+            <label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label>
+            <input type="file" id="verifyFileTxtCsv" accept=".txt,.csv">
+          </div>
+          <div>
+            <label for="verifyFileExcel" style="font-size:0.9em;">Excel (.xlsx, .xls):</label>
+            <input type="file" id="verifyFileExcel" accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+          </div>
+        </div>
+        <div class="file-options">
+          <div class="input-columns">
+            <div>
+              <label for="verifyCodigoCol">Col. ID Ítem (ej: 1 o por header 'item_'):</label>
+              <input type="number" id="verifyCodigoCol" value="1" min="1">
+            </div>
+            <div>
+              <label for="verifyCsvDelimiter">Delimitador CSV:</label>
+              <input type="text" id="verifyCsvDelimiter" value=",">
+            </div>
+          </div>
+          <label><input type="checkbox" id="verifyHasHeader" checked> El archivo tiene encabezados</label>
+        </div>
+      </div>
+      <div class="input-group">
+        <button id="startScanVerifyBtn">📷 Escanear UPC de Artículo</button>
+        <div id="scannerContainerVerify" class="hidden"><div id="readerVerify"></div></div>
+        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">IDs de Ítem válidos identificados (desde UPC escaneado o ingresado):</label>
+        <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los IDs de Ítem válidos aparecerán aquí..." readonly></textarea>
+      </div>
+      <div id="verifyPreview" class="preview-area">Aún no se han cargado Ítems a verificar.</div>
+      <hr style="margin: 20px 0;">
+      <button id="btnVolverAlPanelDesdeDobleControl" class="secondary">&larr; Volver al Panel de Inicio</button>
+      <button id="btnCompare">Verificar y Mostrar Ítems Concordantes &rarr;</button>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultadosStep" class="section hidden">
+      <h2>Resultados: Ítems Concordantes</h2>
+      <div id="resultsSummary" class="results-summary">
+        <p>Total Ítems en Lista Maestra: <strong id="totalFoco">0</strong></p>
+        <p>Total Ítems en Lista de Verificación (válidos): <strong id="totalVerify">0</strong></p>
+        <p>Ítems Concordantes Verificados: <strong id="totalMatches">0</strong></p>
+      </div>
+      <h3>Detalle de Ítems Concordantes (Clic para ver más)</h3>
+      <div style="margin-bottom: 15px;">
+        <button id="layoutToggleResultsBtn">📊 Cambiar Vista</button>
+        <button id="downloadXlsxResultsBtn" class="secondary">📊 Descargar XLSX (Informe por Contenedora)</button>
+        <button id="downloadCsvResultsBtn" class="secondary">💾 Descargar CSV de Concordancias</button>
+      </div>
+      <div id="outputResults" class="list"><p>No se han encontrado coincidencias o no se ha realizado la verificación.</p></div>
+      <hr style="margin: 20px 0;">
+      <button id="btnNewVerification">✨ Iniciar Nuevo Doble Control</button>
+    </div>
+  </div>
+
+  <!-- Modal de Detalles del Ítem -->
+  <div id="itemDetailModal">
+    <div class="modal-content">
+      <span class="close-modal">&times;</span>
+      <h3 id="modalItemCodigo"></h3>
+      <div id="modalItemImageContainer">
+        <img id="modalItemImage" src="#" alt="Imagen del Ítem">
+        <p id="modalImageError">URL de imagen no especificada o error al cargar.</p>
+      </div>
+      <p><strong>Descripción:</strong> <span id="modalItemDescripcion"></span></p>
+      <p><strong>UPC:</strong> <span id="modalItemUPC"></span></p>
+      <p><strong>Marca:</strong> <span id="modalItemBrand"></span></p>
+      <p><strong>Departamento:</strong> <span id="modalItemDepartment"></span></p>
+      <p><strong>UOM:</strong> <span id="modalItemUom"></span></p>
+      <div id="modalItemBarcodeSvg"></div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <footer>
+    Sistema de Doble Control de Ítems v3.0.3 - Desarrollado por fgalaz - Chile, 2025
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

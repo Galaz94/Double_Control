@@ -1,0 +1,21 @@
+{
+  "name": "Sistema de Doble Control de Ítems",
+  "short_name": "Doble Control",
+  "description": "Sistema de Doble Control de Ítems v3.0.3",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#3498db",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
