@@ -873,10 +873,10 @@ function openItemDetailModal(idItem) {
         DOM.modal.department.textContent = item.department || 'No disponible';
         DOM.modal.uom.textContent = item.uom || 'No disponible';
         DOM.modal.barcodeSvgContainer.innerHTML = '';
-        if (item.codigo && String(item.codigo).trim().length > 0) {
+        if (item.upc && String(item.upc).trim().length > 0) {
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             try {
-                JsBarcode(svg, String(item.codigo), {
+                JsBarcode(svg, String(item.upc), {
                     format: "CODE128",
                     width: 2,
                     height: 50,
@@ -888,7 +888,7 @@ function openItemDetailModal(idItem) {
                 DOM.modal.barcodeSvgContainer.innerHTML = `<p style="color:red; font-size:0.8em;">Error al generar código de barras: ${e.message}</p>`;
             }
         } else {
-            DOM.modal.barcodeSvgContainer.innerHTML = '<p style="color:#777; font-size:0.9em;">Código de barras no disponible (ID de ítem vacío).</p>';
+            DOM.modal.barcodeSvgContainer.innerHTML = '<p style="color:#777; font-size:0.9em;">Código de barras no disponible (UPC vacío).</p>';
         }
         const imageUrl = item.url?.trim();
         if (imageUrl) {
