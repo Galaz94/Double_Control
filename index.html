@@ -2,25 +2,25 @@
 <html lang="es">
 <head>
   <link rel="manifest" href="manifest.json">
-<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
-<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#3498db">
-<meta charset="UTF-8">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#3498db">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Doble Control de Ítems v3.0.3</title>
   <meta name="description" content="Sistema de Doble Control de Ítems para gestión y verificación eficiente de inventario.">
   <link rel="stylesheet" href="styles.css">
   <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(reg => console.log('Service Worker registrado:', reg.scope))
-      .catch(err => console.warn('Error registrando Service Worker:', err));
-  }
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(reg => console.log('Service Worker registrado:', reg.scope))
+        .catch(err => console.warn('Error registrando Service Worker:', err));
+    }
   </script>
 </head>
 
@@ -28,7 +28,6 @@
   <div class="container">
     <h1>Sistema de Doble Control de Ítems v3.0.3</h1>
 
-    <!-- Panel de Inicio -->
     <div id="panelInicio" class="section">
       <h2>Panel de Inicio</h2>
       <div id="panelInicioInfo" class="panel-inicio-info info">
@@ -51,7 +50,6 @@
       </div>
     </div>
 
-    <!-- Confirmación de Cambios -->
     <div id="confirmacionCambiosStep" class="section hidden">
       <h2>Confirmar Cambios de Lista Maestra (desde Repositorio)</h2>
       <p>Se han detectado los siguientes cambios respecto a tu lista local guardada:</p>
@@ -67,12 +65,11 @@
       </div>
     </div>
 
-    <!-- Gestión Maestra -->
     <div id="gestionMaestraStep" class="section hidden">
-      <h2>Ver Lista Maestra y Buscar</h2>
+      <h2>Ver Lista Maestra y Buscar <button id="helpGestionMaestra" class="help-btn">?</button></h2>
       <div class="input-group">
-        <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción, marca o URL de imagen):</label>
-        <input type="text" id="searchFocoInput" placeholder="Ingrese término de búsqueda...">
+        <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción o marca):</label>
+        <input type="text" id="searchFocoInput" placeholder="Ej: jamon queso...">
         <label for="departmentFilter">Filtrar por Departamento:</label>
         <select id="departmentFilter">
           <option value="">Todos los Departamentos</option>
@@ -83,40 +80,36 @@
           <option value="ACP">ACP</option>
           <option value="PPS">PPS</option>
         </select>
+        <button id="btnMostrarItemsFiltrados" class="button" style="margin-top: 15px;">Mostrar Ítems Filtrados</button>
       </div>
-      <div id="focoSearchResults" class="search-results-area" style="margin-bottom: 20px;">Resultados de la búsqueda aparecerán aquí...</div>
-      <div id="focoPreview" class="preview-area">
-        <h3>Estadísticas por Departamento y Segmento</h3>
-        <ul id="departmentAndSegmentStats">
-          <li><strong>Total ítems por depto:</strong> <ul id="statItemsByDepartment" style="list-style-type: none; padding-left: 15px;"></ul></li>
-          <li><strong>Total ítems por segmento:</strong> <ul id="statItemsBySegment" style="list-style-type: none; padding-left: 15px;"></ul></li>
-        </ul>
-        <p style="font-size:0.8em; margin-top:15px; text-align:center;">
-          Utiliza la barra de búsqueda de arriba para encontrar ítems específicos.
-        </p>
+      <div id="filteredItemsDisplay" class="filtered-items-container"></div>
+      
+      <hr>
+
+      <h4>Vista Previa de Búsqueda (hasta 30 ítems)</h4>
+      <div id="focoSearchResults" class="search-results-area">Ingrese un término para buscar o use los filtros.</div>
+      
+      <div id="focoPreview" class="preview-area" style="margin-top: 20px;">
+        <h3>Resumen por Segmento</h3>
+        <ul id="statItemsBySegment" style="list-style-type: none; padding-left: 0;"></ul>
       </div>
+
       <div style="margin-top:20px; text-align:center;">
         <button id="btnVolverAlPanelDesdeGestion" class="secondary">↩️ Volver al Panel de Inicio</button>
       </div>
     </div>
 
-    <!-- Doble Control -->
     <div id="dobleControlStep" class="section hidden">
-      <h2>Paso 2: Cargar Lista de Ítems para Doble Control</h2>
-      <p style="font-size:0.9em; color: #555;">
-        Puede escanear el UPC del artículo físico (si su Lista Maestra tiene UPCs) o cargar IDs de ítem manualmente.
-        Solo se considerarán IDs de Ítem <strong>numéricos de más de 5 dígitos</strong>.
-      </p>
+      <h2>Paso 2: Cargar Lista de Ítems para Doble Control <button id="helpDobleControl" class="help-btn">?</button></h2>
       <p style="font-size:0.85em; color:#c0392b; background-color: #fdedec; padding: 5px; border-left: 3px solid #c0392b;">
-        Para el reporte XLSX con información de carga (contenedora, cantidad), suba un archivo Excel (.xlsx) con encabezados: <code>item_</code>, <code>contenedoras</code>, <code>cantidad</code>.
+        <b>Importante para Reportes:</b> Para que el informe XLSX incluya detalles de carga, suba un Excel con encabezados exactos: <code>item_</code>, <code>contenedoras</code>, y <code>cantidad</code>.
       </p>
       <div class="input-group">
-        <label for="verifyTextarea">Pegar IDs de Ítem a verificar (uno por línea o separados por espacio/tabulador):</label>
+        <label for="verifyTextarea">Pegar IDs de Ítem a verificar (separados por espacio o salto de línea):</label>
         <textarea id="verifyTextarea" rows="5" inputmode="numeric"></textarea>
       </div>
       <div class="input-group">
         <label>Subir archivo con IDs de Ítem a verificar:</label>
-        <p style="font-size:0.85em; color:#666;">Se tomarán los IDs de Ítem de la columna especificada. Para información adicional en el reporte XLSX (contenedora, cantidad), use Excel con las columnas indicadas arriba.</p>
         <div class="input-columns">
           <div>
             <label for="verifyFileTxtCsv" style="font-size:0.9em;">Texto (.txt, .csv):</label>
@@ -130,7 +123,7 @@
         <div class="file-options">
           <div class="input-columns">
             <div>
-              <label for="verifyCodigoCol">Col. ID Ítem (ej: 1 o por header 'item_'):</label>
+              <label for="verifyCodigoCol">Col. ID Ítem (ej: 1):</label>
               <input type="number" id="verifyCodigoCol" value="1" min="1">
             </div>
             <div>
@@ -144,7 +137,7 @@
       <div class="input-group">
         <button id="startScanVerifyBtn">📷 Escanear UPC de Artículo</button>
         <div id="scannerContainerVerify" class="hidden"><div id="readerVerify"></div></div>
-        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">IDs de Ítem válidos identificados (desde UPC escaneado o ingresado):</label>
+        <label for="scannedCodesVerifyTextarea" style="margin-top:10px;">IDs de Ítem válidos identificados (desde UPC escaneado):</label>
         <textarea id="scannedCodesVerifyTextarea" rows="3" placeholder="Los IDs de Ítem válidos aparecerán aquí..." readonly></textarea>
       </div>
       <div id="verifyPreview" class="preview-area">Aún no se han cargado Ítems a verificar.</div>
@@ -153,7 +146,6 @@
       <button id="btnCompare">Verificar y Mostrar Ítems Concordantes &rarr;</button>
     </div>
 
-    <!-- Resultados -->
     <div id="resultadosStep" class="section hidden">
       <h2>Resultados: Ítems Concordantes</h2>
       <div id="resultsSummary" class="results-summary">
@@ -173,8 +165,7 @@
     </div>
   </div>
 
-  <!-- Modal de Detalles del Ítem -->
-  <div id="itemDetailModal">
+  <div id="itemDetailModal" class="modal-overlay hidden">
     <div class="modal-content">
       <span class="close-modal">&times;</span>
       <h3 id="modalItemCodigo"></h3>
@@ -188,6 +179,14 @@
       <p><strong>Departamento:</strong> <span id="modalItemDepartment"></span></p>
       <p><strong>UOM:</strong> <span id="modalItemUom"></span></p>
       <div id="modalItemBarcodeSvg"></div>
+    </div>
+  </div>
+
+  <div id="helpModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <span class="close-modal" id="closeHelpModal">&times;</span>
+        <h3 id="helpModalTitle"></h3>
+        <div id="helpModalBody"></div>
     </div>
   </div>
 
