@@ -435,13 +435,20 @@ function navigateToView(viewName) {
     const allViews = Object.values(DOM.views);
     allViews.forEach(div => div.classList.add('hidden'));
 
-    if (viewName === 'itemDetailModal' || viewName === 'helpModal') {
-        viewToShow.classList.remove('hidden');
-        viewToShow.style.display = 'flex'; // Usar flex para centrar
-    } else {
-        viewToShow.classList.remove('hidden');
-        if (viewName === 'gestionMaestraStep') updateFocoPreviewAndSearch();
-    }
+    // Solo quitar la clase .hidden, no manipular style.display
+    viewToShow.classList.remove('hidden');
+    // Si es modal, puedes agregar una clase extra para centrar con flex si lo necesitas
+}
+
+// Para cerrar el modal:
+function closeItemDetailModal() {
+    DOM.views.itemDetailModal.classList.add('hidden');
+    DOM.modal.image.src = "#";
+    DOM.modal.barcodeSvgContainer.innerHTML = '';
+}
+
+function closeHelpModal() {
+    DOM.views.helpModal.classList.add('hidden');
 }
 
 function cleanCode(code) {
@@ -559,24 +566,40 @@ function handleMostrarItemsFiltrados() {
     display.innerHTML = '';
 
     if (results.length > 0) {
-        const header = document.createElement('h4');
-        header.textContent = `Mostrando ${results.length} ítem(s) filtrado(s)`;
-        display.appendChild(header);
+        // Simula una verificación con los ítems filtrados
+        const tempSet = new Set(results.map(item => item.codigo));
+        const tempCoincidencias = new Map();
+        results.forEach(item => tempCoincidencias.set(item.codigo, item));
 
-        const list = document.createElement('ul');
-        list.className = 'filtered-items-list';
-        results.forEach(item => {
-            const li = document.createElement('li');
-            li.className = 'search-result-item'; // Reutilizamos el estilo
-            li.dataset.iditem = item.codigo;
-            li.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(Depto: ${item.department??'N/A'}, UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
-            li.addEventListener('click', () => openItemDetailModal(item.codigo));
-            list.appendChild(li);
-        });
-        display.appendChild(list);
+        // Reutiliza la función de visualización
+        displayFilteredResults(tempCoincidencias, display);
     } else {
         display.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros actuales.</p>';
     }
+}
+
+// Nueva función para mostrar resultados filtrados como verificación
+function displayFilteredResults(filteredMap, container) {
+    container.innerHTML = '';
+    if (filteredMap.size === 0) {
+        container.innerHTML = '<p>No se encontraron Ítems filtrados.</p>';
+        return;
+    }
+    const fragment = document.createDocumentFragment();
+    filteredMap.forEach(item => {
+        const cD = document.createElement("div");
+        cD.className = "barcode-item-container";
+        cD.dataset.iditem = item.codigo;
+        const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
+        const brandText = `<p style="font-size:0.8em;text-align:center;color:#777;">Marca: ${item.brand??'N/A'}</p>`;
+        cD.innerHTML = `<p class="barcode-item-code">${item.codigo}</p>${descText}${brandText}<div class="barcode-item-svg"></div>`;
+        const barcodeValue = (item.upc && String(item.upc).trim().length > 0) ? String(item.upc).trim() : item.codigo;
+        const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
+        try { JsBarcode(svg, barcodeValue, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); cD.querySelector('.barcode-item-svg').appendChild(svg); }
+        catch(e) { cD.querySelector('.barcode-item-svg').innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; }
+        fragment.appendChild(cD);
+    });
+    container.appendChild(fragment);
 }
 
 
@@ -1016,9 +1039,7 @@ function openItemDetailModal(idItem) {
 
 
 function closeItemDetailModal() {
-    // MODIFICADO: Cambiado para usar classList y volver a ocultar
     DOM.views.itemDetailModal.classList.add('hidden');
-    DOM.views.itemDetailModal.style.display = 'none';
     DOM.modal.image.src = "#";
     DOM.modal.barcodeSvgContainer.innerHTML = '';
 }
