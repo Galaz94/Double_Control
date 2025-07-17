@@ -524,7 +524,8 @@ function getFilteredItems() {
             (item.codigo && item.codigo.toLowerCase().includes(term)) ||
             (item.upc && item.upc.toLowerCase().includes(term)) ||
             (item.descripcion && item.descripcion.toLowerCase().includes(term)) ||
-            (item.brand && item.brand.toLowerCase().includes(term))
+            (item.brand && item.brand.toLowerCase().includes(term)) ||
+            (item.url && item.url.toLowerCase().includes(term))
         );
 
         // Filtro por departamento
