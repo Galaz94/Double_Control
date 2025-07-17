@@ -21,6 +21,7 @@ const DOM = {
         resultadosStep: $('resultadosStep'),
         confirmacionCambiosStep: $('confirmacionCambiosStep'),
         itemDetailModal: $('itemDetailModal'),
+        helpModal: $('helpModal'), // NUEVO: Modal de ayuda
     },
     buttons: {
         iniciarDobleControl: $('btnIniciarDobleControlDesdePanel'),
@@ -37,6 +38,10 @@ const DOM = {
         confirmarCambios: $('btnConfirmarCambiosRepositorio'),
         rechazarCambios: $('btnRechazarCambiosRepositorio'),
         uploadLocalMaestra: $('btnUploadLocalMaestra'),
+        mostrarItemsFiltrados: $('btnMostrarItemsFiltrados'), // NUEVO: Botón para mostrar ítems filtrados
+        helpGestionMaestra: $('helpGestionMaestra'), // NUEVO: Botón de ayuda para Gestión
+        helpDobleControl: $('helpDobleControl'), // NUEVO: Botón de ayuda para Doble Control
+        closeHelpModal: $('closeHelpModal'), // NUEVO: Botón para cerrar modal de ayuda
     },
     inputs: {
         searchFoco: $('searchFocoInput'),
@@ -57,12 +62,12 @@ const DOM = {
         scannerContainerVerify: $('scannerContainerVerify'),
         readerVerify: $('readerVerify'),
         outputResults: $('outputResults'),
+        filteredItemsDisplay: $('filteredItemsDisplay'), // NUEVO: Contenedor para resultados de ítems filtrados
     },
     stats: {
         totalFoco: $('totalFoco'),
         totalVerify: $('totalVerify'),
         totalMatches: $('totalMatches'),
-        itemsByDepartment: $('statItemsByDepartment'),
         itemsBySegment: $('statItemsBySegment'),
     },
     filters: {
@@ -78,7 +83,9 @@ const DOM = {
         brand: $('modalItemBrand'),
         department: $('modalItemDepartment'),
         uom: $('modalItemUom'),
-        barcodeSvgContainer: $('modalItemBarcodeSvg')
+        barcodeSvgContainer: $('modalItemBarcodeSvg'),
+        helpTitle: $('helpModalTitle'), // NUEVO
+        helpBody: $('helpModalBody'), // NUEVO
     },
     resumenCambios: {
         nuevos: document.querySelector('#resumenNuevos ul'),
@@ -143,9 +150,7 @@ function addEventListeners() {
         DOM.buttons.uploadLocalMaestra.disabled = !DOM.inputs.masterFileExcelUpload.files.length;
     });
     DOM.buttons.uploadLocalMaestra.disabled = true;
-    DOM.inputs.searchFoco.addEventListener('input', () => {
-        updateFocoPreviewAndSearch();
-    });
+    DOM.inputs.searchFoco.addEventListener('input', () => updateFocoPreviewAndSearch());
     DOM.filters.department.addEventListener('change', () => {
         DOM.filters.department.dataset.previousValue = DOM.filters.department.value;
         updateFocoPreviewAndSearch();
@@ -170,9 +175,9 @@ function addEventListeners() {
     });
     DOM.displays.focoSearchResults.addEventListener('click', (event) => {
         const itemContainer = event.target.closest('.search-result-item');
-        if(itemContainer) {
+        if (itemContainer) {
             const itemId = itemContainer.dataset.iditem;
-            if(itemId) openItemDetailModal(itemId);
+            if (itemId) openItemDetailModal(itemId);
         }
     });
     DOM.buttons.confirmarCambios.addEventListener('click', () => {
@@ -203,7 +208,57 @@ function addEventListeners() {
         showToast(`Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`, 'info');
         navigateToView('panelInicio');
     });
+
+    // --- NUEVO: Listeners para Modales de Ayuda y nuevo botón ---
+    DOM.buttons.helpGestionMaestra.addEventListener('click', () => {
+        openHelpModal(
+            'Ayuda: Gestión de Lista Maestra',
+            `<p>Esta sección te permite visualizar y gestionar la lista maestra de ítems.</p>
+             <ul>
+                <li><b>Buscar:</b> Ingresa uno o más términos (ej: "leche chocolate") para encontrar ítems. La búsqueda se aplica sobre el código, UPC, descripción y marca.</li>
+                <li><b>Filtros:</b> Puedes filtrar los ítems por Departamento y Segmento (ACP/PPS).</li>
+                <li><b>Resultados de Búsqueda:</b> Se muestra una vista previa de hasta 30 ítems. Haz clic en uno para ver sus detalles.</li>
+                <li><b>Mostrar Ítems Filtrados:</b> Este botón listará TODOS los ítems que coincidan con tu búsqueda y filtros actuales.</li>
+                <li><b>Resumen por Segmento:</b> Muestra un conteo rápido de ítems clasificados como ACP y PPS.</li>
+             </ul>`
+        );
+    });
+
+    DOM.buttons.helpDobleControl.addEventListener('click', () => {
+        openHelpModal(
+            'Ayuda: Cargar Lista de Verificación',
+            `<p>Aquí puedes cargar los ítems que deseas verificar contra la lista maestra. Tienes varias opciones:</p>
+             <ul>
+                <li><b>Pegar desde Texto:</b> Pega una lista de códigos de ítem separados por espacios o saltos de línea.</li>
+                <li><b>Subir Archivo (TXT/CSV):</b> Carga un archivo de texto plano o CSV. Debes especificar en qué columna se encuentra el código del ítem.</li>
+                <li><b>Subir Archivo (Excel):</b> Carga un archivo .xlsx. El sistema buscará automáticamente una columna llamada 'item_'.</li>
+                <li><b>Escanear UPC:</b> Usa la cámara de tu dispositivo para escanear códigos de barra UPC. El sistema los convertirá al código de ítem interno correspondiente.</li>
+             </ul>
+             <p>Todos los ítems cargados se acumularán en la "Lista a Verificar" antes de realizar la comparación.</p>`
+        );
+    });
+
+    DOM.buttons.closeHelpModal.addEventListener('click', closeHelpModal);
+    DOM.views.helpModal.addEventListener('click', (event) => {
+        if (event.target === DOM.views.helpModal) {
+            closeHelpModal();
+        }
+    });
+
+    DOM.buttons.mostrarItemsFiltrados.addEventListener('click', handleMostrarItemsFiltrados);
 }
+
+// --- NUEVO: Funciones para el Modal de Ayuda ---
+function openHelpModal(title, bodyHtml) {
+    DOM.modal.helpTitle.textContent = title;
+    DOM.modal.helpBody.innerHTML = bodyHtml;
+    DOM.views.helpModal.classList.remove('hidden');
+}
+
+function closeHelpModal() {
+    DOM.views.helpModal.classList.add('hidden');
+}
+
 
 function cleanText(text) { return text ? String(text).trim() : ''; }
 
@@ -370,15 +425,14 @@ async function checkInitialState() {
 function navigateToView(viewName) {
     const viewToShow = DOM.views[viewName];
     if (!viewToShow) return;
-    if (viewName === 'itemDetailModal') {
-        viewToShow.style.display = 'flex';
+
+    const allViews = Object.values(DOM.views);
+    allViews.forEach(div => div.classList.add('hidden'));
+
+    if (viewName === 'itemDetailModal' || viewName === 'helpModal') {
+        viewToShow.classList.remove('hidden');
+        viewToShow.style.display = 'flex'; // Usar flex para centrar
     } else {
-        Object.entries(DOM.views).forEach(([key, div]) => {
-            if (key !== 'itemDetailModal') {
-                div.classList.add('hidden');
-            }
-        });
-        DOM.views.itemDetailModal.style.display = 'none';
         viewToShow.classList.remove('hidden');
         if (viewName === 'gestionMaestraStep') updateFocoPreviewAndSearch();
     }
@@ -394,8 +448,9 @@ function getDelimiterRegex(d) {
     return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
 }
 
-function updateFocoPreviewAndSearch(itemsToDisplayInSearch = null) {
-    const itemsByDepartment = {};
+// MODIFICADO: Reestructurada para simplificar y mejorar la búsqueda
+function updateFocoPreviewAndSearch() {
+    // 1. Actualizar resúmenes y filtros
     let ppsCount = 0;
     let acpCount = 0;
     const uniqueDepartments = new Set();
@@ -403,10 +458,9 @@ function updateFocoPreviewAndSearch(itemsToDisplayInSearch = null) {
         const department = item.department?.trim();
         if (department) {
             uniqueDepartments.add(department);
-            itemsByDepartment[department] = (itemsByDepartment[department] || 0) + 1;
             const deptNum = parseInt(department, 10);
             if (!isNaN(deptNum)) {
-                if (deptNum === 91 || deptNum === 90 || deptNum === 97) {
+                if ([90, 91, 97].includes(deptNum)) {
                     ppsCount++;
                 } else {
                     acpCount++;
@@ -414,21 +468,13 @@ function updateFocoPreviewAndSearch(itemsToDisplayInSearch = null) {
             }
         }
     });
-    DOM.stats.itemsByDepartment.innerHTML = '';
-    Object.entries(itemsByDepartment).sort(([d1], [d2]) => d1.localeCompare(d2)).forEach(([dept, count]) => {
-        const li = document.createElement('li');
-        li.textContent = `Depto ${dept}: ${count} ítems`;
-        DOM.stats.itemsByDepartment.appendChild(li);
-    });
-    DOM.stats.itemsBySegment.innerHTML = '';
-    let liACP = document.createElement('li');
-    liACP.textContent = `ACP: ${acpCount} ítems`;
-    DOM.stats.itemsBySegment.appendChild(liACP);
-    let liPPS = document.createElement('li');
-    liPPS.textContent = `PPS: ${ppsCount} ítems`;
-    DOM.stats.itemsBySegment.appendChild(liPPS);
+
+    DOM.stats.itemsBySegment.innerHTML = `
+        <li>ACP: ${acpCount} ítems</li>
+        <li>PPS: ${ppsCount} ítems</li>`;
+
     DOM.filters.department.innerHTML = '<option value="">Todos los Departamentos</option>';
-    Array.from(uniqueDepartments).sort((a,b) => parseInt(a) - parseInt(b)).forEach(dept => {
+    Array.from(uniqueDepartments).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dept => {
         const option = document.createElement('option');
         option.value = dept;
         option.textContent = `Departamento ${dept}`;
@@ -437,30 +483,14 @@ function updateFocoPreviewAndSearch(itemsToDisplayInSearch = null) {
     if (DOM.filters.department.dataset.previousValue) {
         DOM.filters.department.value = DOM.filters.department.dataset.previousValue;
     }
-    const searchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
-    const selectedDepartment = DOM.filters.department.value;
-    const selectedSegment = DOM.filters.segment.value;
-    let itemsToFilter = Array.from(listaFoco.values()).filter(item =>
-        (item.codigo && item.codigo.toLowerCase().includes(searchTerm)) ||
-        (item.upc && item.upc.toLowerCase().includes(searchTerm)) ||
-        (item.descripcion && item.descripcion.toLowerCase().includes(searchTerm)) ||
-        (item.brand && item.brand.toLowerCase().includes(searchTerm)) ||
-        (item.url && item.url.toLowerCase().includes(searchTerm))
-    );
-    const filteredResults = itemsToFilter.filter(item => {
-        const matchesDepartment = selectedDepartment === "" || (item.department && item.department === selectedDepartment);
-        let matchesSegment = true;
-        if (selectedSegment !== "") {
-            const deptNum = parseInt(item.department, 10);
-            if (selectedSegment === "PPS") {
-                matchesSegment = (deptNum === 91 || deptNum === 90 || deptNum === 97);
-            } else if (selectedSegment === "ACP") {
-                matchesSegment = !(isNaN(deptNum) || deptNum === 91 || deptNum === 90 || deptNum === 97);
-            }
-        }
-        return matchesDepartment && matchesSegment;
-    });
+
+    // 2. Aplicar filtros para la vista previa
+    const filteredResults = getFilteredItems();
     DOM.displays.focoSearchResults.innerHTML = '';
+    
+    // Limpiar la vista de reporte completo al cambiar filtros
+    DOM.displays.filteredItemsDisplay.innerHTML = ''; 
+
     if (filteredResults.length > 0) {
         const fragment = document.createDocumentFragment();
         filteredResults.slice(0, 30).forEach(item => {
@@ -472,14 +502,77 @@ function updateFocoPreviewAndSearch(itemsToDisplayInSearch = null) {
         });
         DOM.displays.focoSearchResults.appendChild(fragment);
         if (filteredResults.length > 30) {
-            DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${filteredResults.length - 30} más.</p>`;
+            DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${filteredResults.length - 30} más. Presiona "Mostrar Ítems Filtrados" para verlos todos.</p>`;
         }
-    } else if (searchTerm || selectedDepartment || selectedSegment) {
+    } else if (DOM.inputs.searchFoco.value || DOM.filters.department.value || DOM.filters.segment.value) {
         DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros aplicados.</p>';
     } else {
         DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar o use los filtros.</p>';
     }
 }
+
+// NUEVO: Función de ayuda para obtener ítems filtrados
+function getFilteredItems() {
+    const rawSearchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
+    const searchTerms = rawSearchTerm.split(/[\s,.;:\-]+/).filter(Boolean); // Separa por múltiples delimitadores
+    const selectedDepartment = DOM.filters.department.value;
+    const selectedSegment = DOM.filters.segment.value;
+
+    return Array.from(listaFoco.values()).filter(item => {
+        // Filtro por búsqueda de texto (condición OR para múltiples términos)
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term =>
+            (item.codigo && item.codigo.toLowerCase().includes(term)) ||
+            (item.upc && item.upc.toLowerCase().includes(term)) ||
+            (item.descripcion && item.descripcion.toLowerCase().includes(term)) ||
+            (item.brand && item.brand.toLowerCase().includes(term)) ||
+            (item.url && item.url.toLowerCase().includes(term))
+        );
+
+        // Filtro por departamento
+        const matchesDepartment = !selectedDepartment || item.department === selectedDepartment;
+
+        // Filtro por segmento
+        let matchesSegment = true;
+        if (selectedSegment) {
+            const deptNum = parseInt(item.department, 10);
+            if (selectedSegment === "PPS") {
+                matchesSegment = [90, 91, 97].includes(deptNum);
+            } else if (selectedSegment === "ACP") {
+                matchesSegment = !isNaN(deptNum) && ![90, 91, 97].includes(deptNum);
+            }
+        }
+
+        return matchesSearch && matchesDepartment && matchesSegment;
+    });
+}
+
+// NUEVO: Handler para el botón "Mostrar Ítems Filtrados"
+function handleMostrarItemsFiltrados() {
+    const results = getFilteredItems();
+    const display = DOM.displays.filteredItemsDisplay;
+    display.innerHTML = '';
+
+    if (results.length > 0) {
+        const header = document.createElement('h4');
+        header.textContent = `Mostrando ${results.length} ítem(s) filtrado(s)`;
+        display.appendChild(header);
+
+        const list = document.createElement('ul');
+        list.className = 'filtered-items-list';
+        results.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'search-result-item'; // Reutilizamos el estilo
+            li.dataset.iditem = item.codigo;
+            li.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(Depto: ${item.department??'N/A'}, UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
+            li.addEventListener('click', () => openItemDetailModal(item.codigo));
+            list.appendChild(li);
+        });
+        display.appendChild(list);
+    } else {
+        display.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros actuales.</p>';
+    }
+}
+
 
 function saveListaFocoToStorage(showAlert = true) {
     if (listaFoco.size === 0 && showAlert && !confirm("Maestra vacía. ¿Guardar vacía?")) return false;
@@ -863,6 +956,7 @@ function displayFinalResults() {
     setResultsLayoutByDevice();
 }
 
+// MODIFICADO: Se prioriza UPC, si no existe, se usa el código de ítem (item.codigo)
 function openItemDetailModal(idItem) {
     const item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
     if (item) {
@@ -873,10 +967,14 @@ function openItemDetailModal(idItem) {
         DOM.modal.department.textContent = item.department || 'No disponible';
         DOM.modal.uom.textContent = item.uom || 'No disponible';
         DOM.modal.barcodeSvgContainer.innerHTML = '';
-        if (item.upc && String(item.upc).trim().length > 0) {
+
+        // MODIFICADO: Lógica para seleccionar el valor del código de barras
+        const barcodeValue = (item.upc && String(item.upc).trim().length > 0) ? String(item.upc).trim() : item.codigo;
+
+        if (barcodeValue) {
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             try {
-                JsBarcode(svg, String(item.upc), {
+                JsBarcode(svg, barcodeValue, {
                     format: "CODE128",
                     width: 2,
                     height: 50,
@@ -888,8 +986,9 @@ function openItemDetailModal(idItem) {
                 DOM.modal.barcodeSvgContainer.innerHTML = `<p style="color:red; font-size:0.8em;">Error al generar código de barras: ${e.message}</p>`;
             }
         } else {
-            DOM.modal.barcodeSvgContainer.innerHTML = '<p style="color:#777; font-size:0.9em;">Código de barras no disponible (UPC vacío).</p>';
+            DOM.modal.barcodeSvgContainer.innerHTML = '<p style="color:#777; font-size:0.9em;">Código de barras no disponible.</p>';
         }
+
         const imageUrl = item.url?.trim();
         if (imageUrl) {
             const cacheBustedUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
@@ -909,9 +1008,12 @@ function openItemDetailModal(idItem) {
     }
 }
 
+
 function closeItemDetailModal() {
+    // MODIFICADO: Cambiado para usar classList y volver a ocultar
+    DOM.views.itemDetailModal.classList.add('hidden');
     DOM.views.itemDetailModal.style.display = 'none';
-    DOM.modal.image.src="#";
+    DOM.modal.image.src = "#";
     DOM.modal.barcodeSvgContainer.innerHTML = '';
 }
 
