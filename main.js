@@ -11,6 +11,8 @@ const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v3.0.3';
 let listaFocoCacheadaLocalmente = new Map();
 let html5QrCodeVerifier = null;
 let scannerVerifierActive = false;
+// Variable para controlar el tiempo de espera antes de realizar la búsqueda
+let searchDebounceTimeout; // Para optimizar la búsqueda con un debounce
 
 const $ = (id) => document.getElementById(id);
 const DOM = {
@@ -150,7 +152,11 @@ function addEventListeners() {
         DOM.buttons.uploadLocalMaestra.disabled = !DOM.inputs.masterFileExcelUpload.files.length;
     });
     DOM.buttons.uploadLocalMaestra.disabled = true;
-    DOM.inputs.searchFoco.addEventListener('input', () => updateFocoPreviewAndSearch());
+    // Optimizando la búsqueda: Usando "debounce" para no ejecutar la búsqueda con cada cambio en el input
+    DOM.inputs.searchFoco.addEventListener('input', () => {
+        clearTimeout(searchDebounceTimeout);
+        searchDebounceTimeout = setTimeout(() => updateFocoPreviewAndSearch(), 250); // Espera 250ms antes de buscar
+    });
     DOM.filters.department.addEventListener('change', () => {
         DOM.filters.department.dataset.previousValue = DOM.filters.department.value;
         updateFocoPreviewAndSearch();
