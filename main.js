@@ -562,19 +562,26 @@ function getFilteredItems() {
 // NUEVO: Handler para el botón "Mostrar Ítems Filtrados"
 function handleMostrarItemsFiltrados() {
     const results = getFilteredItems();
-    const display = DOM.displays.filteredItemsDisplay;
-    display.innerHTML = '';
-
     if (results.length > 0) {
-        // Simula una verificación con los ítems filtrados
-        const tempSet = new Set(results.map(item => item.codigo));
-        const tempCoincidencias = new Map();
-        results.forEach(item => tempCoincidencias.set(item.codigo, item));
-
-        // Reutiliza la función de visualización
-        displayFilteredResults(tempCoincidencias, display);
+        // Limpiar lista de verificación y datos previos
+        listaVerificar.clear();
+        datosVerificacionCargados = [];
+        // Cargar los ítems filtrados como lista a verificar
+        results.forEach(item => {
+            listaVerificar.add(item.codigo);
+            datosVerificacionCargados.push({
+                idItem: item.codigo,
+                contenedora: 'N/A_FILTRO',
+                cantidad: 0,
+                allRowData: { item_: item.codigo },
+                isSuitableForGroupedReport: false
+            });
+        });
+        updateVerifyPreview();
+        showToast(`Se cargaron ${results.length} ítems filtrados para verificación.`, 'success');
+        navigateToView('dobleControlStep');
     } else {
-        display.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros actuales.</p>';
+        showToast('No se encontraron ítems con los filtros actuales.', 'warning');
     }
 }
 
@@ -1130,13 +1137,15 @@ async function downloadXlsxResults() {
                 const masterDetails = coincidencias.get(uploadedItem.idItem);
                 let contenedoraKey;
                 if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora &&
-                    uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
+                uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
                     contenedoraKey = uploadedItem.contenedora.trim();
                     itemsHandledBySpecificContainer.add(uploadedItem.idItem);
                 } else {
                     contenedoraKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
                 }
-                if (!groupedForXLSX.has(contenedoraKey)) groupedForXLSX.set(contenedoraKey, []);
+                if (!groupedForXLSX.has(contenedoraKey)) {
+                    groupedForXLSX.set(contenedoraKey, []);
+                }
                 groupedForXLSX.get(contenedoraKey).push({
                     ...masterDetails,
                     cantidadCargada: (typeof uploadedItem.cantidad === 'number') ? uploadedItem.cantidad : 'N/A',
