@@ -1302,3 +1302,11 @@ function handleNewVerification() {
         setResultsLayoutByDevice();
     }
 }
+
+// ----- CIERRE DE MODALES POR BOTONES ESPECÍFICOS -----
+document.getElementById('closeItemDetailModal').onclick = () => {
+  document.getElementById('itemDetailModal').classList.add('hidden');
+};
+document.getElementById('closeHelpModal').onclick = () => {
+  document.getElementById('helpModal').classList.add('hidden');
+};
