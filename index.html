@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#3498db">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Doble Control de Ítems v3.9.0</title>
+  <title>Sistema de Doble Control de Ítems v3.9.1</title>
   <meta name="description" content="Sistema de Doble Control de Ítems para gestión y verificación eficiente de inventario.">
   <link rel="stylesheet" href="styles.css">
   <script>
@@ -26,7 +26,7 @@
 
 <body>
   <div class="container">
-    <h1>Sistema de Doble Control de Ítems v3.9.0</h1>
+    <h1>Sistema de Doble Control de Ítems v3.9.1</h1>
 
     <div id="panelInicio" class="section">
       <h2>Panel de Inicio</h2>
@@ -70,25 +70,24 @@
       <div class="input-group">
         <label for="searchFocoInput">Buscar Ítem (por ID, UPC, descripción o marca):</label>
         <input type="text" id="searchFocoInput" placeholder="Ej: jamon queso...">
-        <label for="departmentFilter">Filtrar por Departamento:</label>
-        <select id="departmentFilter">
-          <option value="">Todos los Departamentos</option>
-        </select>
         <label for="segmentFilter">Filtrar por Segmento:</label>
         <select id="segmentFilter">
           <option value="">Todos los Segmentos</option>
           <option value="ACP">ACP</option>
           <option value="PPS">PPS</option>
         </select>
-        <button id="btnMostrarItemsFiltrados" style="margin-top: 15px;">Mostrar Ítems Filtrados</button>
+        <label>Filtrar por Departamento (selección múltiple):</label>
+        <div id="departmentFilterContainer" class="checkbox-container">
+            </div>
+        <button id="btnMostrarItemsFiltrados" style="margin-top: 15px;">🔍 Buscar y Verificar Ítems Filtrados</button>
       </div>
       <div id="filteredItemsDisplay" class="filtered-items-container"></div>
-      
+
       <hr>
 
       <h4>Vista Previa de Búsqueda (hasta 30 ítems)</h4>
       <div id="focoSearchResults" class="search-results-area">Ingrese un término para buscar o use los filtros.</div>
-      
+
       <div id="focoPreview" class="preview-area" style="margin-top: 20px;">
         <h3>Resumen por Segmento</h3>
         <ul id="statItemsBySegment" style="list-style-type: none; padding-left: 0;"></ul>
@@ -165,13 +164,12 @@
     </div>
   </div>
 
-   <!-- Modales -->
    <div id="itemDetailModal" class="modal-overlay hidden">
     <div class="modal-content">
       <span class="close-modal" id="closeItemDetailModal">&times;</span>
       <h3 id="modalItemCodigo"></h3>
       <div id="modalItemImageContainer">
-        <img id="modalItemImage" src="#" alt="Imagen del Ítem" style="max-width:100%;max-height:120px;display:block;margin:auto;">
+        <img id="modalItemImage" src="#" alt="Imagen del Ítem">
         <p id="modalImageError" style="color:#c0392b;display:none;">URL de imagen no especificada o error al cargar.</p>
       </div>
       <p><strong>Descripción:</strong> <span id="modalItemDescripcion"></span></p>
@@ -194,7 +192,7 @@
   <div id="toast-container"></div>
 
   <footer>
-    Sistema de Doble Control de Ítems v3.9.0 - Desarrollado por fgalaz - Chile, 2025
+    Sistema de Doble Control de Ítems v3.9.1 - Desarrollado por fgalaz - Chile, 2025
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
