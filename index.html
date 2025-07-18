@@ -165,13 +165,14 @@
     </div>
   </div>
 
+   <!-- Modales -->
    <div id="itemDetailModal" class="modal-overlay hidden">
     <div class="modal-content">
-      <span class="close-modal">&times;</span>
+      <span class="close-modal" id="closeItemDetailModal">&times;</span>
       <h3 id="modalItemCodigo"></h3>
       <div id="modalItemImageContainer">
-        <img id="modalItemImage" src="#" alt="Imagen del Ítem">
-        <p id="modalImageError">URL de imagen no especificada o error al cargar.</p>
+        <img id="modalItemImage" src="#" alt="Imagen del Ítem" style="max-width:100%;max-height:120px;display:block;margin:auto;">
+        <p id="modalImageError" style="color:#c0392b;display:none;">URL de imagen no especificada o error al cargar.</p>
       </div>
       <p><strong>Descripción:</strong> <span id="modalItemDescripcion"></span></p>
       <p><strong>UPC:</strong> <span id="modalItemUPC"></span></p>
@@ -184,9 +185,9 @@
 
   <div id="helpModal" class="modal-overlay hidden">
     <div class="modal-content">
-        <span class="close-modal" id="closeHelpModal">&times;</span>
-        <h3 id="helpModalTitle"></h3>
-        <div id="helpModalBody"></div>
+      <span class="close-modal" id="closeHelpModal">&times;</span>
+      <h3 id="helpModalTitle"></h3>
+      <div id="helpModalBody"></div>
     </div>
   </div>
 
