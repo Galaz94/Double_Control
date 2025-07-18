@@ -11,8 +11,7 @@ const LOCAL_STORAGE_KEY_LISTA_FOCO = 'sDCI_listaFocoGuardada_v3.0.3';
 let listaFocoCacheadaLocalmente = new Map();
 let html5QrCodeVerifier = null;
 let scannerVerifierActive = false;
-// Variable para controlar el tiempo de espera antes de realizar la búsqueda
-let searchDebounceTimeout; // Para optimizar la búsqueda con un debounce
+let searchDebounceTimeout;
 
 const $ = (id) => document.getElementById(id);
 const DOM = {
@@ -23,7 +22,7 @@ const DOM = {
         resultadosStep: $('resultadosStep'),
         confirmacionCambiosStep: $('confirmacionCambiosStep'),
         itemDetailModal: $('itemDetailModal'),
-        helpModal: $('helpModal'), // NUEVO: Modal de ayuda
+        helpModal: $('helpModal'),
     },
     buttons: {
         iniciarDobleControl: $('btnIniciarDobleControlDesdePanel'),
@@ -40,10 +39,10 @@ const DOM = {
         confirmarCambios: $('btnConfirmarCambiosRepositorio'),
         rechazarCambios: $('btnRechazarCambiosRepositorio'),
         uploadLocalMaestra: $('btnUploadLocalMaestra'),
-        mostrarItemsFiltrados: $('btnMostrarItemsFiltrados'), // NUEVO: Botón para mostrar ítems filtrados
-        helpGestionMaestra: $('helpGestionMaestra'), // NUEVO: Botón de ayuda para Gestión
-        helpDobleControl: $('helpDobleControl'), // NUEVO: Botón de ayuda para Doble Control
-        closeHelpModal: $('closeHelpModal'), // NUEVO: Botón para cerrar modal de ayuda
+        mostrarItemsFiltrados: $('btnMostrarItemsFiltrados'),
+        helpGestionMaestra: $('helpGestionMaestra'),
+        helpDobleControl: $('helpDobleControl'),
+        closeHelpModal: $('closeHelpModal'),
     },
     inputs: {
         searchFoco: $('searchFocoInput'),
@@ -64,7 +63,7 @@ const DOM = {
         scannerContainerVerify: $('scannerContainerVerify'),
         readerVerify: $('readerVerify'),
         outputResults: $('outputResults'),
-        filteredItemsDisplay: $('filteredItemsDisplay'), // NUEVO: Contenedor para resultados de ítems filtrados
+        filteredItemsDisplay: $('filteredItemsDisplay'),
     },
     stats: {
         totalFoco: $('totalFoco'),
@@ -73,7 +72,7 @@ const DOM = {
         itemsBySegment: $('statItemsBySegment'),
     },
     filters: {
-        department: $('departmentFilter'),
+        departmentContainer: $('departmentFilterContainer'),
         segment: $('segmentFilter'),
     },
     modal: {
@@ -86,8 +85,8 @@ const DOM = {
         department: $('modalItemDepartment'),
         uom: $('modalItemUom'),
         barcodeSvgContainer: $('modalItemBarcodeSvg'),
-        helpTitle: $('helpModalTitle'), // NUEVO
-        helpBody: $('helpModalBody'), // NUEVO
+        helpTitle: $('helpModalTitle'),
+        helpBody: $('helpModalBody'),
     },
     resumenCambios: {
         nuevos: document.querySelector('#resumenNuevos ul'),
@@ -102,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     addEventListeners();
 });
 
-// --- Toast / Snackbar Implementation ---
 function showToast(message, type = 'info', duration = 3000) {
     let toastContainer = $('toast-container');
     if (!toastContainer) {
@@ -118,15 +116,13 @@ function showToast(message, type = 'info', duration = 3000) {
     toast.classList.add('show');
     setTimeout(() => {
         toast.classList.remove('show');
-        toast.addEventListener('transitionend', () => {
-            toast.remove();
-        }, { once: true });
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }, duration);
 }
 
 function addEventListeners() {
     DOM.views.itemDetailModal.addEventListener('click', (event) => {
-        if (event.target === DOM.views.itemDetailModal || event.target.classList.contains('close-modal')) {
+        if (event.target === DOM.views.itemDetailModal || event.target.id === 'closeItemDetailModal') {
             closeItemDetailModal();
         }
     });
@@ -135,15 +131,16 @@ function addEventListeners() {
             closeItemDetailModal();
         }
     });
+
     DOM.modal.image.onerror = function() {
         this.style.display = 'none';
         DOM.modal.imageError.style.display = 'block';
-        DOM.modal.imageError.textContent = 'Error al cargar imagen o URL no válida.';
     };
     DOM.modal.image.onload = function() {
         this.style.display = 'block';
         DOM.modal.imageError.style.display = 'none';
     };
+
     DOM.buttons.iniciarDobleControl.addEventListener('click', handleIniciarDobleControl);
     DOM.buttons.gestionMaestra.addEventListener('click', () => navigateToView('gestionMaestraStep'));
     DOM.buttons.borrarStorage.addEventListener('click', handleBorrarStorage);
@@ -152,16 +149,15 @@ function addEventListeners() {
         DOM.buttons.uploadLocalMaestra.disabled = !DOM.inputs.masterFileExcelUpload.files.length;
     });
     DOM.buttons.uploadLocalMaestra.disabled = true;
-    // Optimizando la búsqueda: Usando "debounce" para no ejecutar la búsqueda con cada cambio en el input
+
     DOM.inputs.searchFoco.addEventListener('input', () => {
         clearTimeout(searchDebounceTimeout);
-        searchDebounceTimeout = setTimeout(() => updateFocoPreviewAndSearch(), 250); // Espera 250ms antes de buscar
+        searchDebounceTimeout = setTimeout(updateFocoPreviewAndSearch, 250);
     });
-    DOM.filters.department.addEventListener('change', () => {
-        DOM.filters.department.dataset.previousValue = DOM.filters.department.value;
-        updateFocoPreviewAndSearch();
-    });
-    DOM.filters.segment.addEventListener('change', () => updateFocoPreviewAndSearch());
+    
+    DOM.filters.segment.addEventListener('change', updateFocoPreviewAndSearch);
+    DOM.filters.departmentContainer.addEventListener('change', updateFocoPreviewAndSearch);
+
     DOM.buttons.volverDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
     DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleVerifyFileUpload(e.target.files[0], 'textcsv'));
     DOM.inputs.verifyFileExcel.addEventListener('change', (e) => handleVerifyFileUpload(e.target.files[0], 'excel'));
@@ -172,36 +168,30 @@ function addEventListeners() {
     DOM.buttons.downloadCsv.addEventListener('click', downloadCsvResults);
     DOM.buttons.downloadXlsx.addEventListener('click', downloadXlsxResults);
     DOM.buttons.newVerification.addEventListener('click', handleNewVerification);
+
     DOM.displays.outputResults.addEventListener('click', (event) => {
         const itemContainer = event.target.closest('.barcode-item-container');
-        if (itemContainer) {
-            const itemId = itemContainer.dataset.iditem;
-            if (itemId) openItemDetailModal(itemId);
-        }
+        if (itemContainer?.dataset.iditem) openItemDetailModal(itemContainer.dataset.iditem);
     });
     DOM.displays.focoSearchResults.addEventListener('click', (event) => {
         const itemContainer = event.target.closest('.search-result-item');
-        if (itemContainer) {
-            const itemId = itemContainer.dataset.iditem;
-            if (itemId) openItemDetailModal(itemId);
-        }
+        if (itemContainer?.dataset.iditem) openItemDetailModal(itemContainer.dataset.iditem);
     });
+
     DOM.buttons.confirmarCambios.addEventListener('click', () => {
         const maestraRepositorioMap = JSON.parse(DOM.buttons.confirmarCambios.dataset.maestraRepositorio || '{}', (key, value) => {
             if (typeof value === 'object' && value !== null && value.__isMap__) return new Map(value.data);
             return value;
         });
-        if (maestraRepositorioMap && maestraRepositorioMap.size > 0) {
+        if (maestraRepositorioMap?.size > 0) {
             listaFoco = maestraRepositorioMap;
             rebuildUpcToCodigoMap();
             saveListaFocoToStorage();
             updateFocoPreviewAndSearch();
             DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`;
-            DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
             showToast(`Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`, 'success');
         } else {
             DOM.displays.panelInicioInfo.innerHTML = `⚠️ Error al aplicar cambios. Se mantuvo la versión actual.`;
-            DOM.displays.panelInicioInfo.className = 'panel-inicio-info warning';
             showToast(`Error al aplicar cambios. Se mantuvo la versión actual.`, 'error');
         }
         navigateToView('panelInicio');
@@ -210,66 +200,279 @@ function addEventListeners() {
         rebuildUpcToCodigoMap();
         updateFocoPreviewAndSearch();
         DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`;
-        DOM.displays.panelInicioInfo.className = 'panel-inicio-info info';
-        showToast(`Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`, 'info');
+        showToast(`Cambios del repositorio ignorados.`, 'info');
         navigateToView('panelInicio');
     });
 
-    // --- NUEVO: Listeners para Modales de Ayuda y nuevo botón ---
     DOM.buttons.helpGestionMaestra.addEventListener('click', () => {
-        openHelpModal(
-            'Ayuda: Gestión de Lista Maestra',
-            `<p>Esta sección te permite visualizar y gestionar la lista maestra de ítems.</p>
+        openHelpModal('Ayuda: Gestión de Lista Maestra', `<p>Esta sección te permite visualizar y gestionar la lista maestra de ítems.</p>
              <ul>
-                <li><b>Buscar:</b> Ingresa uno o más términos (ej: "leche chocolate") para encontrar ítems. La búsqueda se aplica sobre el código, UPC, descripción y marca.</li>
-                <li><b>Filtros:</b> Puedes filtrar los ítems por Departamento y Segmento (ACP/PPS).</li>
-                <li><b>Resultados de Búsqueda:</b> Se muestra una vista previa de hasta 30 ítems. Haz clic en uno para ver sus detalles.</li>
-                <li><b>Mostrar Ítems Filtrados:</b> Este botón listará TODOS los ítems que coincidan con tu búsqueda y filtros actuales.</li>
-                <li><b>Resumen por Segmento:</b> Muestra un conteo rápido de ítems clasificados como ACP y PPS.</li>
-             </ul>`
-        );
+                <li><b>Buscar:</b> Ingresa uno o más términos para encontrar ítems por código, UPC, descripción o marca.</li>
+                <li><b>Filtros de Segmento:</b> Puedes filtrar los ítems por ACP o PPS. Esto actualizará la lista de departamentos disponibles.</li>
+                <li><b>Filtros de Departamento:</b> Marca uno o más departamentos para acotar tu búsqueda. La lista de departamentos depende del segmento que hayas elegido.</li>
+                <li><b>Buscar y Verificar Ítems Filtrados:</b> Este botón toma todos los filtros activos, busca los ítems y te lleva directamente a la pantalla de resultados.</li>
+             </ul>`);
     });
-
     DOM.buttons.helpDobleControl.addEventListener('click', () => {
-        openHelpModal(
-            'Ayuda: Cargar Lista de Verificación',
-            `<p>Aquí puedes cargar los ítems que deseas verificar contra la lista maestra. Tienes varias opciones:</p>
+        openHelpModal('Ayuda: Cargar Lista de Verificación', `<p>Aquí puedes cargar los ítems que deseas verificar contra la lista maestra.</p>
              <ul>
                 <li><b>Pegar desde Texto:</b> Pega una lista de códigos de ítem separados por espacios o saltos de línea.</li>
-                <li><b>Subir Archivo (TXT/CSV):</b> Carga un archivo de texto plano o CSV. Debes especificar en qué columna se encuentra el código del ítem.</li>
-                <li><b>Subir Archivo (Excel):</b> Carga un archivo .xlsx. El sistema buscará automáticamente una columna llamada 'item_'.</li>
-                <li><b>Escanear UPC:</b> Usa la cámara de tu dispositivo para escanear códigos de barra UPC. El sistema los convertirá al código de ítem interno correspondiente.</li>
-             </ul>
-             <p>Todos los ítems cargados se acumularán en la "Lista a Verificar" antes de realizar la comparación.</p>`
-        );
+                <li><b>Subir Archivo:</b> Carga un archivo de texto, CSV o Excel. Debes especificar en qué columna está el código del ítem.</li>
+                <li><b>Escanear UPC:</b> Usa la cámara para escanear códigos de barra UPC. El sistema los convertirá al código de ítem correspondiente.</li>
+             </ul>`);
     });
-
     DOM.buttons.closeHelpModal.addEventListener('click', closeHelpModal);
     DOM.views.helpModal.addEventListener('click', (event) => {
-        if (event.target === DOM.views.helpModal) {
-            closeHelpModal();
-        }
+        if (event.target === DOM.views.helpModal) closeHelpModal();
     });
 
-    DOM.buttons.mostrarItemsFiltrados.addEventListener('click', handleMostrarItemsFiltrados);
-    
-    // Listener para el botón de cierre del modal de item (el que está dentro del modal)
-    document.getElementById('closeItemDetailModal').addEventListener('click', closeItemDetailModal);
+    DOM.buttons.mostrarItemsFiltrados.addEventListener('click', handleMostrarItemsFiltradosYVerificar);
 }
 
-// --- NUEVO: Funciones para el Modal de Ayuda (CORREGIDAS) ---
+function openItemDetailModal(idItem) {
+    let item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
+    if (!item) {
+        const filteredItems = getFilteredItems();
+        item = filteredItems.find(i => i.codigo === idItem);
+    }
+    if (item) {
+        DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
+        DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
+        DOM.modal.upc.textContent = item.upc || 'No disponible';
+        DOM.modal.brand.textContent = item.brand || 'No disponible';
+        DOM.modal.department.textContent = item.department || 'No disponible';
+        DOM.modal.uom.textContent = item.uom || 'No disponible';
+        DOM.modal.barcodeSvgContainer.innerHTML = '';
+        const barcodeValue = (item.upc && String(item.upc).trim().length > 0) ? String(item.upc).trim() : item.codigo;
+        if (barcodeValue) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            try {
+                JsBarcode(svg, barcodeValue, { format: "CODE128", width: 2, height: 50, displayValue: true, margin: 10 });
+                DOM.modal.barcodeSvgContainer.appendChild(svg);
+            } catch (e) {
+                DOM.modal.barcodeSvgContainer.innerHTML = `<p style="color:red; font-size:0.8em;">Error al generar código de barras.</p>`;
+            }
+        }
+        const imageUrl = item.url?.trim();
+        if (imageUrl) {
+            DOM.modal.image.src = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+            DOM.modal.image.style.display = 'block';
+            DOM.modal.imageError.style.display = 'none';
+        } else {
+            DOM.modal.image.style.display = 'none';
+            DOM.modal.imageError.style.display = 'block';
+        }
+        DOM.views.itemDetailModal.classList.remove('hidden');
+        DOM.views.itemDetailModal.style.display = 'flex';
+    } else {
+        showToast("Ítem no encontrado para mostrar detalles.", 'error');
+    }
+}
+
+function closeItemDetailModal() {
+    DOM.views.itemDetailModal.classList.add('hidden');
+    DOM.views.itemDetailModal.style.display = 'none';
+    DOM.modal.image.src = "#";
+    DOM.modal.barcodeSvgContainer.innerHTML = '';
+}
+
 function openHelpModal(title, bodyHtml) {
     DOM.modal.helpTitle.textContent = title;
     DOM.modal.helpBody.innerHTML = bodyHtml;
     DOM.views.helpModal.classList.remove('hidden');
-    DOM.views.helpModal.style.display = 'flex'; // <-- CAMBIO CORREGIDO
+    DOM.views.helpModal.style.display = 'flex';
 }
 
 function closeHelpModal() {
     DOM.views.helpModal.classList.add('hidden');
-    DOM.views.helpModal.style.display = 'none'; // <-- CAMBIO CORREGIDO
+    DOM.views.helpModal.style.display = 'none';
 }
 
+function updateFocoPreviewAndSearch() {
+    let ppsCount = 0;
+    let acpCount = 0;
+    const departmentsInSegment = new Set();
+    const selectedSegment = DOM.filters.segment.value;
+
+    listaFoco.forEach(item => {
+        const department = item.department?.trim();
+        if (department) {
+            const deptNum = parseInt(department, 10);
+            if (!isNaN(deptNum)) {
+                if ([90, 91, 97].includes(deptNum)) {
+                    ppsCount++;
+                    if (selectedSegment === "PPS" || selectedSegment === "") {
+                        departmentsInSegment.add(department);
+                    }
+                } else {
+                    acpCount++;
+                    if (selectedSegment === "ACP" || selectedSegment === "") {
+                        departmentsInSegment.add(department);
+                    }
+                }
+            }
+        }
+    });
+
+    DOM.stats.itemsBySegment.innerHTML = `<li>ACP: ${acpCount} ítems</li><li>PPS: ${ppsCount} ítems</li>`;
+
+    const departmentContainer = DOM.filters.departmentContainer;
+    departmentContainer.innerHTML = '';
+    Array.from(departmentsInSegment).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dept => {
+        const checkboxId = `dept-checkbox-${dept}`;
+        const label = document.createElement('label');
+        label.htmlFor = checkboxId;
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = checkboxId;
+        checkbox.value = dept;
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` ${dept}`));
+        departmentContainer.appendChild(label);
+    });
+
+    const filteredResults = getFilteredItems();
+    DOM.displays.focoSearchResults.innerHTML = '';
+    DOM.displays.filteredItemsDisplay.innerHTML = '';
+
+    if (filteredResults.length > 0) {
+        const fragment = document.createDocumentFragment();
+        filteredResults.slice(0, 30).forEach(item => {
+            const p = document.createElement('div');
+            p.className = 'search-result-item';
+            p.dataset.iditem = item.codigo;
+            p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(Depto: ${item.department??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
+            fragment.appendChild(p);
+        });
+        DOM.displays.focoSearchResults.appendChild(fragment);
+        if (filteredResults.length > 30) {
+            DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${filteredResults.length - 30} más.</p>`;
+        }
+    } else if (DOM.inputs.searchFoco.value || selectedSegment || document.querySelectorAll('#departmentFilterContainer input:checked').length > 0) {
+        DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros aplicados.</p>';
+    } else {
+        DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar o use los filtros.</p>';
+    }
+}
+
+function getFilteredItems() {
+    const rawSearchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
+    const searchTerms = rawSearchTerm.split(/[\s,.;:\-]+/).filter(Boolean);
+    const selectedSegment = DOM.filters.segment.value;
+    
+    const selectedDepartments = Array.from(document.querySelectorAll('#departmentFilterContainer input:checked')).map(cb => cb.value);
+
+    return Array.from(listaFoco.values()).filter(item => {
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term =>
+            (item.codigo?.toLowerCase().includes(term)) ||
+            (item.upc?.toLowerCase().includes(term)) ||
+            (item.descripcion?.toLowerCase().includes(term)) ||
+            (item.brand?.toLowerCase().includes(term))
+        );
+
+        const matchesDepartment = selectedDepartments.length === 0 || selectedDepartments.includes(item.department);
+
+        let matchesSegment = true;
+        if (selectedSegment) {
+            const deptNum = parseInt(item.department, 10);
+            if (selectedSegment === "PPS") {
+                matchesSegment = [90, 91, 97].includes(deptNum);
+            } else if (selectedSegment === "ACP") {
+                matchesSegment = !isNaN(deptNum) && ![90, 91, 97].includes(deptNum);
+            }
+        }
+
+        return matchesSearch && matchesDepartment && matchesSegment;
+    });
+}
+
+function handleMostrarItemsFiltradosYVerificar() {
+    const results = getFilteredItems();
+    if (results.length === 0) {
+        showToast('No se encontraron ítems con los filtros actuales para verificar.', 'warning');
+        return;
+    }
+
+    listaVerificar.clear();
+    datosVerificacionCargados = [];
+    results.forEach(item => {
+        listaVerificar.add(item.codigo);
+        datosVerificacionCargados.push({
+            idItem: item.codigo,
+            contenedora: 'N/A_FILTRO',
+            cantidad: 0,
+            allRowData: { item_: item.codigo },
+            isSuitableForGroupedReport: false
+        });
+    });
+    
+    showToast(`${results.length} ítems filtrados cargados. Verificando...`, 'info');
+    handleCompare();
+}
+
+function displayFinalResults() {
+    DOM.stats.totalFoco.textContent = listaFoco.size;
+    DOM.stats.totalVerify.textContent = listaVerificar.size;
+    DOM.stats.totalMatches.textContent = coincidencias.size;
+    DOM.displays.outputResults.innerHTML = '';
+    DOM.displays.outputResults.className = 'list';
+
+    if (coincidencias.size === 0) {
+        DOM.displays.outputResults.innerHTML = '<p>No se encontraron Ítems concordantes.</p>';
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    coincidencias.forEach(item => {
+        const cD = document.createElement("div");
+        cD.className = "barcode-item-container";
+        cD.dataset.iditem = item.codigo;
+        
+        const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
+        const brandText = `<p style="font-size:0.8em;text-align:center;color:#777;">Marca: ${item.brand??'N/A'}</p>`;
+        
+        cD.innerHTML = `<p class="barcode-item-code">${item.codigo}</p>${descText}${brandText}<div class="barcode-item-svg"></div>`;
+        
+        const barcodeValue = (item.upc && String(item.upc).trim().length > 0) ? String(item.upc).trim() : item.codigo;
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        
+        try {
+            JsBarcode(svg, barcodeValue, { format: "CODE128", width: 1.5, height: 40, displayValue: false, margin: 5 });
+            cD.querySelector('.barcode-item-svg').appendChild(svg);
+        } catch (e) {
+            cD.querySelector('.barcode-item-svg').innerHTML = `<p style="color:red;font-size:0.8em;">Error BC</p>`;
+        }
+        
+        fragment.appendChild(cD);
+    });
+    
+    DOM.displays.outputResults.appendChild(fragment);
+    setResultsLayoutByDevice();
+}
+
+function handleCompare() {
+    if(listaVerificar.size === 0) {
+       collectVerifyDataFromInputs();
+    }
+    
+    if (listaVerificar.size === 0) {
+        showToast("Cargue o escanee Ítems para la Lista de Verificación.", 'warning');
+        return;
+    }
+    if (listaFoco.size === 0) {
+        showToast("Lista Maestra vacía. Sincronice o cargue una localmente.", 'error');
+        navigateToView('panelInicio');
+        return;
+    }
+    
+    compareListsAndDisplayResults();
+    navigateToView('resultadosStep');
+}
+
+// ----- El resto de funciones (checkInitialState, parseo, carga de archivos, etc.) no necesitan cambios y se omiten por brevedad -----
+// ----- Debes mantener el resto de tu código como estaba -----
 
 function cleanText(text) { return text ? String(text).trim() : ''; }
 
@@ -437,7 +640,6 @@ function navigateToView(viewName) {
     const viewToShow = DOM.views[viewName];
     if (!viewToShow) return;
 
-    // Oculta todas las vistas principales, pero deja los modales intactos
     Object.values(DOM.views).forEach(div => {
         if (div.id !== 'itemDetailModal' && div.id !== 'helpModal') {
             div.classList.add('hidden');
@@ -447,7 +649,6 @@ function navigateToView(viewName) {
     viewToShow.classList.remove('hidden');
 }
 
-
 function cleanCode(code) {
     if (typeof code !== 'string' && typeof code !== 'number') return '';
     return String(code).trim().replace(/[^a-zA-Z0-9\-]+/g, '').toUpperCase();
@@ -456,118 +657,6 @@ function resetFileInput(el) { if(el) el.value = null; }
 function getDelimiterRegex(d) {
     if (d.toLowerCase()==='<tab>') return /\t/;
     return new RegExp(d.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
-}
-
-function updateFocoPreviewAndSearch() {
-    let ppsCount = 0;
-    let acpCount = 0;
-    const uniqueDepartments = new Set();
-    listaFoco.forEach(item => {
-        const department = item.department?.trim();
-        if (department) {
-            uniqueDepartments.add(department);
-            const deptNum = parseInt(department, 10);
-            if (!isNaN(deptNum)) {
-                if ([90, 91, 97].includes(deptNum)) {
-                    ppsCount++;
-                } else {
-                    acpCount++;
-                }
-            }
-        }
-    });
-
-    DOM.stats.itemsBySegment.innerHTML = `
-        <li>ACP: ${acpCount} ítems</li>
-        <li>PPS: ${ppsCount} ítems</li>`;
-
-    // Guarda el valor seleccionado actualmente para no perderlo
-    const currentSelectedDept = DOM.filters.department.value;
-    DOM.filters.department.innerHTML = '<option value="">Todos los Departamentos</option>';
-    Array.from(uniqueDepartments).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dept => {
-        const option = document.createElement('option');
-        option.value = dept;
-        option.textContent = `Departamento ${dept}`;
-        DOM.filters.department.appendChild(option);
-    });
-    // Restaura la selección si existía
-    if (currentSelectedDept) {
-        DOM.filters.department.value = currentSelectedDept;
-    }
-
-    const filteredResults = getFilteredItems();
-    DOM.displays.focoSearchResults.innerHTML = '';
-    DOM.displays.filteredItemsDisplay.innerHTML = ''; 
-
-    if (filteredResults.length > 0) {
-        const fragment = document.createDocumentFragment();
-        filteredResults.slice(0, 30).forEach(item => {
-            const p = document.createElement('div');
-            p.className = 'search-result-item';
-            p.dataset.iditem = item.codigo;
-            p.innerHTML = `<span class="code">${item.codigo}</span> <span class="upc-brand-url">(Depto: ${item.department??'N/A'}, UPC: ${item.upc??'N/A'})</span> <span class="desc">${item.descripcion??'(S/D)'}</span>`;
-            fragment.appendChild(p);
-        });
-        DOM.displays.focoSearchResults.appendChild(fragment);
-        if (filteredResults.length > 30) {
-            DOM.displays.focoSearchResults.innerHTML += `<p style="text-align:center; font-style:italic;">... y ${filteredResults.length - 30} más. Presiona "Mostrar Ítems Filtrados" para verlos todos.</p>`;
-        }
-    } else if (DOM.inputs.searchFoco.value || DOM.filters.department.value || DOM.filters.segment.value) {
-        DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">No se encontraron ítems con los filtros aplicados.</p>';
-    } else {
-        DOM.displays.focoSearchResults.innerHTML = '<p style="text-align:center;">Ingrese un término para buscar o use los filtros.</p>';
-    }
-}
-
-function getFilteredItems() {
-    const rawSearchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
-    const searchTerms = rawSearchTerm.split(/[\s,.;:\-]+/).filter(Boolean);
-    const selectedDepartment = DOM.filters.department.value;
-    const selectedSegment = DOM.filters.segment.value;
-
-    return Array.from(listaFoco.values()).filter(item => {
-        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term =>
-            (item.codigo && item.codigo.toLowerCase().includes(term)) ||
-            (item.upc && item.upc.toLowerCase().includes(term)) ||
-            (item.descripcion && item.descripcion.toLowerCase().includes(term)) ||
-            (item.brand && item.brand.toLowerCase().includes(term)) ||
-            (item.url && item.url.toLowerCase().includes(term))
-        );
-        const matchesDepartment = !selectedDepartment || item.department === selectedDepartment;
-        let matchesSegment = true;
-        if (selectedSegment) {
-            const deptNum = parseInt(item.department, 10);
-            if (selectedSegment === "PPS") {
-                matchesSegment = [90, 91, 97].includes(deptNum);
-            } else if (selectedSegment === "ACP") {
-                matchesSegment = !isNaN(deptNum) && ![90, 91, 97].includes(deptNum);
-            }
-        }
-        return matchesSearch && matchesDepartment && matchesSegment;
-    });
-}
-
-function handleMostrarItemsFiltrados() {
-    const results = getFilteredItems();
-    if (results.length > 0) {
-        listaVerificar.clear();
-        datosVerificacionCargados = [];
-        results.forEach(item => {
-            listaVerificar.add(item.codigo);
-            datosVerificacionCargados.push({
-                idItem: item.codigo,
-                contenedora: 'N/A_FILTRO',
-                cantidad: 0,
-                allRowData: { item_: item.codigo },
-                isSuitableForGroupedReport: false
-            });
-        });
-        updateVerifyPreview();
-        showToast(`Se cargaron ${results.length} ítems filtrados para verificación.`, 'success');
-        navigateToView('dobleControlStep');
-    } else {
-        showToast('No se encontraron ítems con los filtros actuales.', 'warning');
-    }
 }
 
 function saveListaFocoToStorage(showAlert = true) {
@@ -855,164 +944,6 @@ function compareListsAndDisplayResults(){
     displayFinalResults();
 }
 
-function displayFinalResults() {
-    DOM.stats.totalFoco.textContent = listaFoco.size;
-    DOM.stats.totalVerify.textContent = listaVerificar.size;
-    DOM.stats.totalMatches.textContent = coincidencias.size;
-    DOM.displays.outputResults.innerHTML = '';
-    DOM.displays.outputResults.className = 'list';
-    if (coincidencias.size === 0) {
-        DOM.displays.outputResults.innerHTML = '<p>No se encontraron Ítems concordantes.</p>';
-        return;
-    }
-    const fragment = document.createDocumentFragment();
-    const groupedForDisplay = new Map();
-    const itemsHandledBySpecificContainer = new Set();
-    datosVerificacionCargados.forEach(uploadedItem => {
-        if (coincidencias.has(uploadedItem.idItem)) {
-            const masterDetails = coincidencias.get(uploadedItem.idItem);
-            let contenedoraKey;
-            if (uploadedItem.isSuitableForGroupedReport && uploadedItem.contenedora &&
-                uploadedItem.contenedora.trim() !== '' && !uploadedItem.contenedora.startsWith('N/A_')) {
-                contenedoraKey = uploadedItem.contenedora.trim();
-                itemsHandledBySpecificContainer.add(uploadedItem.idItem);
-            } else {
-                contenedoraKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-            }
-            if (!groupedForDisplay.has(contenedoraKey)) {
-                groupedForDisplay.set(contenedoraKey, []);
-            }
-            groupedForDisplay.get(contenedoraKey).push({
-                ...masterDetails,
-                cantidadOriginal: uploadedItem.cantidad,
-                isFromSpecificContainerContext: (contenedoraKey !== "Ítems Concordantes (Otros/Sin Contenedora Específica)")
-            });
-        }
-    });
-    coincidencias.forEach(masterItem => {
-        if (!itemsHandledBySpecificContainer.has(masterItem.codigo)) {
-            const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-            if (!groupedForDisplay.has(defaultGroupKey)) {
-                groupedForDisplay.set(defaultGroupKey, []);
-            }
-            if (!groupedForDisplay.get(defaultGroupKey).some(existing => existing.codigo === masterItem.codigo)) {
-                groupedForDisplay.get(defaultGroupKey).push({
-                    ...masterItem,
-                    cantidadOriginal: null,
-                    isFromSpecificContainerContext: false
-                });
-            }
-        }
-    });
-    if (groupedForDisplay.size === 0 && coincidencias.size > 0) {
-        coincidencias.forEach(masterItem => {
-            const defaultGroupKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-            if (!groupedForDisplay.has(defaultGroupKey)) groupedForDisplay.set(defaultGroupKey, []);
-            if (!groupedForDisplay.get(defaultGroupKey).some(ex => ex.codigo === masterItem.codigo)) {
-                groupedForDisplay.get(defaultGroupKey).push({ ...masterItem, cantidadOriginal: null, isFromSpecificContainerContext: false });
-            }
-        });
-    }
-    if (groupedForDisplay.size === 0) {
-        DOM.displays.outputResults.innerHTML='<p>No hay ítems concordantes para mostrar después de agrupar.</p>';
-        return;
-    }
-    const sortedContenedoraKeys = Array.from(groupedForDisplay.keys()).sort((a, b) => {
-        const defaultKey = "Ítems Concordantes (Otros/Sin Contenedora Específica)";
-        if (a === defaultKey && b !== defaultKey) return 1;
-        if (a !== defaultKey && b === defaultKey) return -1;
-        return a.localeCompare(b);
-    });
-    sortedContenedoraKeys.forEach(contenedora => {
-        const itemsArray = groupedForDisplay.get(contenedora);
-        const uniqueItemsInGroup = itemsArray.filter((item, index, self) =>
-            index === self.findIndex((t) => t.codigo === item.codigo && t.cantidadOriginal === item.cantidadOriginal)
-        );
-        if (uniqueItemsInGroup.length === 0) return;
-        const contenedoraHeader = document.createElement('h4');
-        contenedoraHeader.textContent = `${contenedora} (${uniqueItemsInGroup.length} ítem(s) únicos)`;
-        contenedoraHeader.style.marginTop = "20px";
-        contenedoraHeader.style.borderBottom = "1px solid #ccc";
-        fragment.appendChild(contenedoraHeader);
-        uniqueItemsInGroup.forEach(item => {
-            const cD = document.createElement("div");
-            cD.className = "barcode-item-container";
-            cD.dataset.iditem = item.codigo;
-            const descText = item.descripcion ? `<p class="barcode-item-desc">${item.descripcion}</p>` : '';
-            const brandText = `<p style="font-size:0.8em;text-align:center;color:#777;">Marca: ${item.brand??'N/A'}</p>`;
-            const cantidadText = (typeof item.cantidadOriginal === 'number' && item.cantidadOriginal !== null && item.isFromSpecificContainerContext) ? `<p style="font-size:0.9em;text-align:center;font-weight:bold;">Cantidad: ${item.cantidadOriginal}</p>` : '';
-            cD.innerHTML = `<p class="barcode-item-code">${item.codigo}</p>${descText}${brandText}${cantidadText}<div class="barcode-item-svg"></div>`;
-            const svg = document.createElementNS("http://www.w3.org/2000/svg","svg");
-            try { JsBarcode(svg, item.codigo, {format:"CODE128",width:2,height:50,displayValue:false,margin:5}); cD.querySelector('.barcode-item-svg').appendChild(svg); }
-            catch(e) { cD.querySelector('.barcode-item-svg').innerHTML=`<p style="color:red;font-size:0.8em;">Error BC</p>`; }
-            fragment.appendChild(cD);
-        });
-    });
-    DOM.displays.outputResults.appendChild(fragment);
-    setResultsLayoutByDevice();
-}
-
-// --- FUNCIÓN openItemDetailModal (CORREGIDA) ---
-function openItemDetailModal(idItem) {
-    let item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
-
-    if (!item && DOM.displays.filteredItemsDisplay) {
-        const filteredItems = getFilteredItems();
-        item = filteredItems.find(i => i.codigo === idItem);
-    }
-
-    if (item) {
-        DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
-        DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
-        DOM.modal.upc.textContent = item.upc || 'No disponible';
-        DOM.modal.brand.textContent = item.brand || 'No disponible';
-        DOM.modal.department.textContent = item.department || 'No disponible';
-        DOM.modal.uom.textContent = item.uom || 'No disponible';
-        DOM.modal.barcodeSvgContainer.innerHTML = '';
-
-        const barcodeValue = (item.upc && String(item.upc).trim().length > 0) ? String(item.upc).trim() : item.codigo;
-
-        if (barcodeValue) {
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            try {
-                JsBarcode(svg, barcodeValue, { format: "CODE128", width: 2, height: 50, displayValue: true, margin: 10 });
-                DOM.modal.barcodeSvgContainer.appendChild(svg);
-            } catch (e) {
-                DOM.modal.barcodeSvgContainer.innerHTML = `<p style="color:red; font-size:0.8em;">Error al generar código de barras: ${e.message}</p>`;
-            }
-        } else {
-            DOM.modal.barcodeSvgContainer.innerHTML = '<p style="color:#777; font-size:0.9em;">Código de barras no disponible.</p>';
-        }
-
-        const imageUrl = item.url?.trim();
-        if (imageUrl) {
-            const cacheBustedUrl = imageUrl + (imageUrl.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-            DOM.modal.image.src = cacheBustedUrl;
-            DOM.modal.image.alt = "Imagen de " + (item.descripcion || item.codigo || 'ítem');
-            DOM.modal.image.style.display = 'block';
-            DOM.modal.imageError.style.display = 'none';
-        } else {
-            DOM.modal.image.style.display = 'none';
-            DOM.modal.image.src = '#';
-            DOM.modal.imageError.textContent = 'URL de imagen no especificada o no válida.';
-            DOM.modal.imageError.style.display = 'block';
-        }
-
-        DOM.views.itemDetailModal.classList.remove('hidden');
-        DOM.views.itemDetailModal.style.display = 'flex'; // <-- CAMBIO CORREGIDO
-    } else {
-        showToast("Ítem no encontrado para mostrar detalles.", 'error');
-    }
-}
-
-// --- FUNCIÓN closeItemDetailModal (CORREGIDA) ---
-function closeItemDetailModal() {
-    DOM.views.itemDetailModal.classList.add('hidden');
-    DOM.views.itemDetailModal.style.display = 'none'; // <-- CAMBIO CORREGIDO
-    DOM.modal.image.src = "#";
-    DOM.modal.barcodeSvgContainer.innerHTML = '';
-}
-
 function handleIniciarDobleControl() {
     if (listaFoco.size === 0) { showToast("No hay Lista Maestra cargada. Por favor, carga o sincroniza una maestra.", 'warning'); return; }
     listaVerificar.clear(); datosVerificacionCargados = []; coincidencias.clear();
@@ -1029,14 +960,6 @@ function handleBorrarStorage() {
         showToast("Maestra local borrada. Resincronizando desde repositorio...", 'info');
         checkInitialState();
     }
-}
-
-function handleCompare() {
-    collectVerifyDataFromInputs();
-    if (listaVerificar.size === 0) { showToast("Cargue o escanee Ítems para la Lista de Verificación.", 'warning'); return; }
-    if (listaFoco.size === 0) { showToast("Lista Maestra vacía. Sincronice o cargue una localmente.", 'error'); navigateToView('panelInicio'); return; }
-    compareListsAndDisplayResults();
-    navigateToView('resultadosStep');
 }
 
 function toggleResultsLayout(){
