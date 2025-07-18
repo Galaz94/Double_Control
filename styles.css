@@ -328,11 +328,8 @@ button.danger:hover {
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.modal-overlay.hidden {
-  opacity: 0;
-  visibility: hidden;
-  /* CAMBIO: Añadimos pointer-events para asegurar que no interfiera cuando está oculto */
-  pointer-events: none;
+.modal-overlay:not(.hidden) {
+  display: flex; /* Usamos flex para centrar el contenido */
 }
 
 .modal-content {
@@ -349,7 +346,7 @@ button.danger:hover {
   transition: transform 0.3s ease;
 }
 
-.modal-overlay.hidden .modal-content {
+.hidden .modal-content {
   transform: scale(0.9);
 }
 

@@ -186,8 +186,8 @@ function addEventListeners() {
         if (maestraRepositorioMap?.size > 0) {
             listaFoco = maestraRepositorioMap;
             rebuildUpcToCodigoMap();
-            saveListaFocoToStorage();
-            updateFocoPreviewAndSearch();
+            saveListaFocoToStorage(true);
+            updateStatsAndFilters();
             DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`;
             showToast(`Maestra Sincronizada (${listaFoco.size} ítems) y guardada.`, 'success');
         } else {
@@ -198,7 +198,7 @@ function addEventListeners() {
     });
     DOM.buttons.rechazarCambios.addEventListener('click', () => {
         rebuildUpcToCodigoMap();
-        updateFocoPreviewAndSearch();
+        updateStatsAndFilters();
         DOM.displays.panelInicioInfo.innerHTML = `ℹ️ Cambios del repositorio ignorados. Maestra local (${listaFoco.size} ítems).`;
         showToast(`Cambios del repositorio ignorados.`, 'info');
         navigateToView('panelInicio');
@@ -263,7 +263,6 @@ function openItemDetailModal(idItem) {
             DOM.modal.imageError.style.display = 'block';
         }
         DOM.views.itemDetailModal.classList.remove('hidden');
-        DOM.views.itemDetailModal.style.display = 'flex';
     } else {
         showToast("Ítem no encontrado para mostrar detalles.", 'error');
     }
@@ -271,7 +270,6 @@ function openItemDetailModal(idItem) {
 
 function closeItemDetailModal() {
     DOM.views.itemDetailModal.classList.add('hidden');
-    DOM.views.itemDetailModal.style.display = 'none';
     DOM.modal.image.src = "#";
     DOM.modal.barcodeSvgContainer.innerHTML = '';
 }
@@ -280,12 +278,10 @@ function openHelpModal(title, bodyHtml) {
     DOM.modal.helpTitle.textContent = title;
     DOM.modal.helpBody.innerHTML = bodyHtml;
     DOM.views.helpModal.classList.remove('hidden');
-    DOM.views.helpModal.style.display = 'flex';
 }
 
 function closeHelpModal() {
     DOM.views.helpModal.classList.add('hidden');
-    DOM.views.helpModal.style.display = 'none';
 }
 
 function updateFocoPreviewAndSearch() {
@@ -540,18 +536,19 @@ async function cargarMaestraDesdeRepositorio() {
 
 function compararListas(listaLocalMap, listaRemotaMap) {
     const nuevos = [], eliminados = [], modificados = [];
+    const fieldsToCompare = ['department', 'uom', 'descripcion', 'upc', 'brand', 'url'];
+
     listaRemotaMap.forEach((itemRemoto, codigo) => {
         if (!listaLocalMap.has(codigo)) {
             nuevos.push(itemRemoto);
         } else {
             const itemLocal = listaLocalMap.get(codigo);
             const changedFields = {};
-            if ((itemLocal.department ?? '') !== (itemRemoto.department ?? '')) changedFields.department = { old: itemLocal.department, new: itemRemoto.department };
-            if ((itemLocal.uom ?? '') !== (itemRemoto.uom ?? '')) changedFields.uom = { old: itemLocal.uom, new: itemRemoto.uom };
-            if ((itemLocal.descripcion ?? '') !== (itemRemoto.descripcion ?? '')) changedFields.descripcion = { old: itemLocal.descripcion, new: itemRemoto.descripcion };
-            if ((itemLocal.upc ?? '') !== (itemRemoto.upc ?? '')) changedFields.upc = { old: itemLocal.upc, new: itemRemoto.upc };
-            if ((itemLocal.brand ?? '') !== (itemRemoto.brand ?? '')) changedFields.brand = { old: itemLocal.brand, new: itemRemoto.brand };
-            if ((itemLocal.url ?? '') !== (itemRemoto.url ?? '')) changedFields.url = { old: itemLocal.url, new: itemRemoto.url };
+            fieldsToCompare.forEach(field => {
+                if ((itemLocal[field] ?? '') !== (itemRemoto[field] ?? '')) {
+                    changedFields[field] = { old: itemLocal[field], new: itemRemoto[field] };
+                }
+            });
             if (Object.keys(changedFields).length > 0) {
                 modificados.push({ ...itemRemoto, changedFields });
             }
@@ -630,7 +627,7 @@ async function checkInitialState() {
         }
     }
     rebuildUpcToCodigoMap();
-    updateFocoPreviewAndSearch();
+    updateStatsAndFilters();
     if(DOM.views.confirmacionCambiosStep.classList.contains('hidden')){
         navigateToView('panelInicio');
     }
@@ -711,7 +708,7 @@ async function handleMasterFileUpload() {
             listaFoco = nuevaListaMap;
             rebuildUpcToCodigoMap();
             saveListaFocoToStorage(true);
-            updateFocoPreviewAndSearch();
+            updateStatsAndFilters();
             DOM.displays.panelInicioInfo.innerHTML = `✅ Maestra local "${file.name}" cargada y guardada (${listaFoco.size} ítems).`;
             DOM.displays.panelInicioInfo.className = 'panel-inicio-info';
             showToast(`Maestra local "${file.name}" cargada y guardada (${listaFoco.size} ítems).`, 'success');
