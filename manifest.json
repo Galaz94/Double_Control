@@ -1,7 +1,7 @@
 {
   "name": "Sistema de Doble Control de Ítems",
   "short_name": "Doble Control",
-  "description": "Sistema de Doble Control de Ítems v3.0.3",
+  "description": "Sistema de Doble Control de Ítems v3.9.0",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

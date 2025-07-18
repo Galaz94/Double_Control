@@ -1046,7 +1046,7 @@ function openItemDetailModal(idItem) {
             DOM.modal.imageError.textContent = 'URL de imagen no especificada o no válida.';
             DOM.modal.imageError.style.display = 'block';
         }
-        navigateToView('itemDetailModal');
+        DOM.views.itemDetailModal.classList.remove('hidden');
     } else {
         showToast("Ítem no encontrado para mostrar detalles.", 'error');
     }
