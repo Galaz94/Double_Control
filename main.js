@@ -44,6 +44,7 @@ const DOM = {
         helpGestionMaestra: $('helpGestionMaestra'),
         helpDobleControl: $('helpDobleControl'),
         closeHelpModal: $('closeHelpModal'),
+        themeToggle: $('theme-toggle-btn'),
     },
     inputs: {
         searchFoco: $('searchFocoInput'),
@@ -98,6 +99,7 @@ const DOM = {
 
 document.addEventListener('DOMContentLoaded', () => {
     checkInitialState();
+    applyInitialTheme();
     navigateToView('panelInicio');
     addEventListeners();
 });
@@ -122,6 +124,8 @@ function showToast(message, type = 'info', duration = 3000) {
 }
 
 function addEventListeners() {
+    DOM.buttons.themeToggle.addEventListener('click', toggleTheme);
+
     DOM.views.itemDetailModal.addEventListener('click', (event) => {
         if (event.target === DOM.views.itemDetailModal || event.target.id === 'closeItemDetailModal') {
             closeItemDetailModal();
@@ -1186,4 +1190,23 @@ function handleNewVerification() {
         navigateToView('dobleControlStep');
         setResultsLayoutByDevice();
     }
+}
+
+function setTheme(theme) {
+    document.body.classList.toggle('dark-mode', theme === 'dark');
+    DOM.buttons.themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('theme', theme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+}
+
+function applyInitialTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+    setTheme(initialTheme);
 }
