@@ -12,6 +12,7 @@ let listaFocoCacheadaLocalmente = new Map();
 let html5QrCodeVerifier = null;
 let scannerVerifierActive = false;
 let searchDebounceTimeout;
+const PPS_DEPARTMENTS = [90, 91, 97];
 
 const $ = (id) => document.getElementById(id);
 const DOM = {
@@ -155,8 +156,11 @@ function addEventListeners() {
         searchDebounceTimeout = setTimeout(updateFocoPreviewAndSearch, 250);
     });
     
-    DOM.filters.segment.addEventListener('change', updateFocoPreviewAndSearch);
-    DOM.filters.departmentContainer.addEventListener('change', updateFocoPreviewAndSearch);
+    DOM.filters.segment.addEventListener('change', () => {
+        updateDepartmentFilterUI(); // Actualiza la lista de checkboxes
+        updateFocoPreviewAndSearch(); // Y luego filtra los resultados
+    });
+    DOM.filters.departmentContainer.addEventListener('change', updateFocoPreviewAndSearch); // Esto ahora solo filtra
 
     DOM.buttons.volverDesdeGestion.addEventListener('click', () => navigateToView('panelInicio'));
     DOM.inputs.verifyFileTxtCsv.addEventListener('change', (e) => handleVerifyFileUpload(e.target.files[0], 'textcsv'));
@@ -285,50 +289,7 @@ function closeHelpModal() {
 }
 
 function updateFocoPreviewAndSearch() {
-    let ppsCount = 0;
-    let acpCount = 0;
-    const departmentsInSegment = new Set();
     const selectedSegment = DOM.filters.segment.value;
-
-    listaFoco.forEach(item => {
-        const department = item.department?.trim();
-        if (department) {
-            const deptNum = parseInt(department, 10);
-            if (!isNaN(deptNum)) {
-                if ([90, 91, 97].includes(deptNum)) {
-                    ppsCount++;
-                    if (selectedSegment === "PPS" || selectedSegment === "") {
-                        departmentsInSegment.add(department);
-                    }
-                } else {
-                    acpCount++;
-                    if (selectedSegment === "ACP" || selectedSegment === "") {
-                        departmentsInSegment.add(department);
-                    }
-                }
-            }
-        }
-    });
-
-    DOM.stats.itemsBySegment.innerHTML = `<li>ACP: ${acpCount} ítems</li><li>PPS: ${ppsCount} ítems</li>`;
-
-    const departmentContainer = DOM.filters.departmentContainer;
-    departmentContainer.innerHTML = '';
-    Array.from(departmentsInSegment).sort((a, b) => parseInt(a) - parseInt(b)).forEach(dept => {
-        const checkboxId = `dept-checkbox-${dept}`;
-        const label = document.createElement('label');
-        label.htmlFor = checkboxId;
-        
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = checkboxId;
-        checkbox.value = dept;
-
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(` ${dept}`));
-        departmentContainer.appendChild(label);
-    });
-
     const filteredResults = getFilteredItems();
     DOM.displays.focoSearchResults.innerHTML = '';
     DOM.displays.filteredItemsDisplay.innerHTML = '';
@@ -353,6 +314,56 @@ function updateFocoPreviewAndSearch() {
     }
 }
 
+function updateStatsAndFilters() {
+    let ppsCount = 0;
+    let acpCount = 0;
+
+    listaFoco.forEach(item => {
+        const department = item.department?.trim();
+        if (department) {
+            const deptNum = parseInt(department, 10);
+            if (!isNaN(deptNum)) {
+                if (PPS_DEPARTMENTS.includes(deptNum)) {
+                    ppsCount++;
+                } else {
+                    acpCount++;
+                }
+            }
+        }
+    });
+
+    DOM.stats.itemsBySegment.innerHTML = `<li>ACP: ${acpCount} ítems</li><li>PPS: ${ppsCount} ítems</li>`;
+    updateDepartmentFilterUI();
+    updateFocoPreviewAndSearch();
+}
+
+function updateDepartmentFilterUI() {
+    const selectedSegment = DOM.filters.segment.value;
+    const departmentsInSegment = new Set();
+
+    listaFoco.forEach(item => {
+        const department = item.department?.trim();
+        if (department) {
+            const deptNum = parseInt(department, 10);
+            if (!isNaN(deptNum)) {
+                if (selectedSegment === "" ||
+                   (selectedSegment === "PPS" && PPS_DEPARTMENTS.includes(deptNum)) ||
+                   (selectedSegment === "ACP" && !PPS_DEPARTMENTS.includes(deptNum))) {
+                    departmentsInSegment.add(department);
+                }
+            }
+        }
+    });
+
+    const departmentContainer = DOM.filters.departmentContainer;
+    departmentContainer.innerHTML = ''; // Limpiamos el contenedor
+    const sortedDepartments = Array.from(departmentsInSegment).sort((a, b) => parseInt(a) - parseInt(b));
+    sortedDepartments.forEach(dept => {
+        const checkboxId = `dept-checkbox-${dept}`;
+        departmentContainer.innerHTML += `<label for="${checkboxId}"><input type="checkbox" id="${checkboxId}" value="${dept}"> ${dept}</label>`;
+    });
+}
+
 function getFilteredItems() {
     const rawSearchTerm = DOM.inputs.searchFoco.value.toLowerCase().trim();
     const searchTerms = rawSearchTerm.split(/[\s,.;:\-]+/).filter(Boolean);
@@ -374,9 +385,9 @@ function getFilteredItems() {
         if (selectedSegment) {
             const deptNum = parseInt(item.department, 10);
             if (selectedSegment === "PPS") {
-                matchesSegment = [90, 91, 97].includes(deptNum);
+                matchesSegment = PPS_DEPARTMENTS.includes(deptNum);
             } else if (selectedSegment === "ACP") {
-                matchesSegment = !isNaN(deptNum) && ![90, 91, 97].includes(deptNum);
+                matchesSegment = !isNaN(deptNum) && !PPS_DEPARTMENTS.includes(deptNum);
             }
         }
 
