@@ -987,7 +987,15 @@ function displayFinalResults() {
 
 // MODIFICADO: Se prioriza UPC, si no existe, se usa el código de ítem (item.codigo)
 function openItemDetailModal(idItem) {
-    const item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
+    // Busca en listaFoco, coincidencias y en los resultados filtrados
+    let item = listaFoco.get(idItem) ?? coincidencias.get(idItem);
+
+    // Si no lo encuentra, busca en los resultados filtrados (si existe)
+    if (!item && DOM.displays.filteredItemsDisplay) {
+        const filteredItems = getFilteredItems();
+        item = filteredItems.find(i => i.codigo === idItem);
+    }
+
     if (item) {
         DOM.modal.codigo.textContent = "ID Ítem: " + (item.codigo || 'N/A');
         DOM.modal.descripcion.textContent = item.descripcion || 'No disponible';
@@ -997,7 +1005,7 @@ function openItemDetailModal(idItem) {
         DOM.modal.uom.textContent = item.uom || 'No disponible';
         DOM.modal.barcodeSvgContainer.innerHTML = '';
 
-        // MODIFICADO: Lógica para seleccionar el valor del código de barras
+        // Prioriza UPC para el código de barras
         const barcodeValue = (item.upc && String(item.upc).trim().length > 0) ? String(item.upc).trim() : item.codigo;
 
         if (barcodeValue) {
