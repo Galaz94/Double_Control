@@ -17,8 +17,8 @@
   --border-radius: 8px;
 }
 
-/* CAMBIO: Modo Oscuro basado en clase para el toggle manual */
-body.dark-mode {
+/* CAMBIO: Modo Oscuro mejorado */
+@media (prefers-color-scheme: dark) {
   :root {
     --primary-color: #3498db;
     --primary-hover-color: #5dade2;
@@ -30,23 +30,13 @@ body.dark-mode {
     --input-bg-color: #2c3e50;
     --border-color: #7f8c8d;
   }
-  /* CAMBIO: Colores de alerta corregidos para modo oscuro */
-  .panel-inicio-info.info, .results-summary, .field-change {
+  .panel-inicio-info.info, .results-summary {
     background-color: #2c3e50;
   }
-  .panel-inicio-info.warning {
-    background-color: #5d4c15;
-    border-color: var(--warning-color);
-  }
-  .panel-inicio-info.error {
-    background-color: #5a2a27;
-    border-color: var(--danger-color);
+  .field-change {
+    background-color: #2c3e50;
   }
   .search-result-item:hover {
-    background-color: #4a6572;
-  }
-  /* CAMBIO: Estilo del botón de tema en modo oscuro */
-  .theme-toggle {
     background-color: #4a6572;
   }
 }
@@ -76,22 +66,6 @@ h1, h2, h3, h4 {
   margin-top: 0;
   border-bottom: 2px solid var(--border-color);
   padding-bottom: 10px;
-}
-/* CAMBIO: Estilo para el botón de tema */
-h1 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.theme-toggle {
-  background-color: #f0f0f0;
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  font-size: 1.2em;
-  padding: 0;
 }
 h1 { font-size: 1.8em; }
 h2 { font-size: 1.5em; margin-top: 20px;}
